@@ -1,65 +1,188 @@
-import Image from "next/image";
+import AnalyzeInput from "./components/AnalyzeInput";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="flex flex-col min-h-screen">
+      {/* NAV */}
+      <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <span className="text-xl font-bold text-orange-500">
+          🍬 CarSweetSpot
+        </span>
+        <a
+          href="#analyze"
+          className="bg-orange-500 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-orange-600 transition-colors"
+        >
+          Analyze My Listing
+        </a>
+      </nav>
+
+      {/* HERO */}
+      <section className="flex flex-col items-center text-center px-6 pt-20 pb-16 bg-gradient-to-b from-orange-50 to-white">
+        <div className="inline-block bg-orange-100 text-orange-600 text-sm font-semibold px-4 py-1 rounded-full mb-6">
+          Free Sweet Spot Score — No signup needed
+        </div>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 max-w-2xl leading-tight">
+          Sell Your Car Faster,{" "}
+          <span className="text-orange-500">For More Money</span>
+        </h1>
+        <p className="mt-6 text-lg text-gray-600 max-w-xl">
+          Paste your Craigslist or Facebook Marketplace listing — our AI
+          analyzes it in seconds and tells you exactly what's holding buyers
+          back.
+        </p>
+
+        {/* INPUT BOX */}
+        <div id="analyze" className="mt-10 w-full flex justify-center">
+          <AnalyzeInput />
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="px-6 py-16 max-w-4xl mx-auto w-full">
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-12">
+          How it works
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          {[
+            {
+              step: "1",
+              icon: "🔗",
+              title: "Paste your listing",
+              desc: "Drop in your Craigslist, Facebook, or any car listing URL.",
+            },
+            {
+              step: "2",
+              icon: "🤖",
+              title: "AI analyzes it",
+              desc: "We score your photos, title, price, description, and trust signals.",
+            },
+            {
+              step: "3",
+              icon: "🍬",
+              title: "Get your Sweet Spot",
+              desc: "See your score, what's hurting you, and how to fix it fast.",
+            },
+          ].map((item) => (
+            <div key={item.step} className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center text-2xl mb-4">
+                {item.icon}
+              </div>
+              <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SCORE PREVIEW */}
+      <section className="bg-gray-50 px-6 py-16">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">
+            Your listing, scored across 4 Sweet Spots
+          </h2>
+          <p className="text-center text-gray-500 mb-10 text-sm">
+            Most sellers lose money on just one of these. Find out which one.
           </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              {
+                icon: "💰",
+                title: "Pricing Sweet Spot",
+                desc: "Is your price too high, too low, or just right for your market?",
+                color: "border-green-200 bg-green-50",
+              },
+              {
+                icon: "📝",
+                title: "Listing Sweet Spot",
+                desc: "Are your photos, title, and description actually selling the car?",
+                color: "border-blue-200 bg-blue-50",
+              },
+              {
+                icon: "🤝",
+                title: "Trust Sweet Spot",
+                desc: "Do buyers feel safe enough to reach out and show up?",
+                color: "border-purple-200 bg-purple-50",
+              },
+              {
+                icon: "📅",
+                title: "Financing Sweet Spot",
+                desc: "Does your buyer know what this costs per month? Most don't.",
+                color: "border-orange-200 bg-orange-50",
+              },
+            ].map((spot) => (
+              <div
+                key={spot.title}
+                className={`rounded-2xl border p-6 ${spot.color}`}
+              >
+                <div className="text-2xl mb-3">{spot.icon}</div>
+                <h3 className="font-bold text-gray-900 mb-1">{spot.title}</h3>
+                <p className="text-sm text-gray-600">{spot.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* SOCIAL PROOF */}
+      <section className="px-6 py-16 max-w-4xl mx-auto w-full">
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">
+          What sellers are saying
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {[
+            {
+              name: "Mike T.",
+              location: "Phoenix, AZ",
+              quote:
+                "Listed my truck for 3 weeks with no calls. Got the score, changed my title and price — sold in 4 days.",
+            },
+            {
+              name: "Sara K.",
+              location: "Austin, TX",
+              quote:
+                "I had no idea my photos were the problem. The AI was brutally honest and it was exactly what I needed.",
+            },
+            {
+              name: "James R.",
+              location: "Denver, CO",
+              quote:
+                "Worth every penny. The optimized listing they wrote for me got 3 offers in one weekend.",
+            },
+          ].map((review) => (
+            <div
+              key={review.name}
+              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
+            >
+              <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                "{review.quote}"
+              </p>
+              <p className="text-sm font-semibold text-gray-900">{review.name}</p>
+              <p className="text-xs text-gray-400">{review.location}</p>
+            </div>
+          ))}
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* BOTTOM CTA */}
+      <section className="bg-orange-500 px-6 py-16 text-white text-center">
+        <h2 className="text-3xl font-extrabold mb-4">
+          Find your car's Sweet Spot — free
+        </h2>
+        <p className="text-orange-100 mb-8 text-base max-w-md mx-auto">
+          Stop guessing why buyers aren't calling. Get your score in 10 seconds.
+        </p>
+        <a
+          href="#analyze"
+          className="inline-block bg-white text-orange-500 font-bold px-8 py-3 rounded-full hover:bg-orange-50 transition-colors text-base"
+        >
+          Analyze My Listing →
+        </a>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="text-center text-xs text-gray-400 py-6 border-t border-gray-100">
+        © 2026 CarSweetSpot · carsweetspot.com
+      </footer>
+    </main>
   );
 }
