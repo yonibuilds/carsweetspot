@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 
 type SpotScore = {
   score: number;
@@ -29,37 +29,23 @@ type AnalysisResult = {
   locked_count: number;
 };
 
-const SPOT_META = {
-  pricing: { icon: "💰", title: "Pricing" },
-  listing: { icon: "📝", title: "Listing" },
-  trust: { icon: "🤝", title: "Trust" },
-  financing: { icon: "📅", title: "Financing" },
-};
-
 const SPOT_AFFILIATE: Partial<Record<QuickWin["spot"], { cta: string; url: string }>> = {
   trust: { cta: "Get CARFAX →", url: "https://www.carfax.com" },
   financing: { cta: "See rates →", url: "https://www.lendingtree.com/auto" },
 };
 
-function monthlyPayment(price: number, annualRate = 0.07, months = 60): number {
-  if (!price) return 0;
-  const r = annualRate / 12;
-  return Math.round((price * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1));
+function parseBoost(boost: string): number {
+  const n = parseInt(boost.replace(/[^0-9]/g, ""));
+  return isNaN(n) ? 0 : n;
 }
 
 type CandyTheme = { primary: string; light: string; label: string; emoji: string };
 
 function candyTheme(score: number): CandyTheme {
-  if (score >= 90) return { primary: "#10B981", light: "#D1FAE5", label: "Sweet Deal", emoji: "🍬" };
-  if (score >= 75) return { primary: "#A855F7", light: "#F3E8FF", label: "Almost Sweet", emoji: "🍭" };
-  if (score >= 55) return { primary: "#F59E0B", light: "#FEF3C7", label: "Needs Sugar", emoji: "🫤" };
-  return { primary: "#84CC16", light: "#ECFCCB", label: "Sour Deal", emoji: "🍋" };
-}
-
-function spotStyle(score: number) {
-  if (score >= 80) return { bg: "#F0FDF4", border: "#BBF7D0", color: "#16A34A" };
-  if (score >= 60) return { bg: "#FFFBEB", border: "#FDE68A", color: "#D97706" };
-  return { bg: "#FFF1F2", border: "#FECDD3", color: "#E11D48" };
+  if (score >= 90) return { primary: "#2FBF71", light: "#DCFCE7", label: "Sweet Deal", emoji: "🍬" };
+  if (score >= 75) return { primary: "#10B981", light: "#D1FAE5", label: "Almost Sweet", emoji: "🍭" };
+  if (score >= 55) return { primary: "#FF7A45", light: "#FFF0EB", label: "Needs Sugar", emoji: "🫤" };
+  return { primary: "#EF4444", light: "#FEE2E2", label: "Sour Deal", emoji: "🍋" };
 }
 
 export default function Results({
@@ -69,349 +55,447 @@ export default function Results({
   result: AnalysisResult;
   onReset: () => void;
 }) {
+  const [step, setStep] = useState(1);
   const [completed, setCompleted] = useState<Set<number>>(new Set());
-  const [showInstructions, setShowInstructions] = useState(false);
-  const [expandedSpot, setExpandedSpot] = useState<string | null>(null);
-
-  function markComplete(text: string, index: number) {
-    navigator.clipboard.writeText(text);
-    setCompleted((prev) => new Set([...prev, index]));
-  }
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const [copied, setCopied] = useState<number | null>(null);
 
   const score = result.overall_score;
   const theme = candyTheme(score);
-  const monthly = result.asking_price ? monthlyPayment(result.asking_price) : 0;
   const wins = result.quick_wins ?? [];
+  const totalBoost = wins.reduce((s, w) => s + parseBoost(w.boost), 0);
+  const potentialScore = Math.min(100, score + totalBoost);
+  const earnedPts = wins.filter((_, i) => completed.has(i)).reduce((s, w) => s + parseBoost(w.boost), 0);
+  const currentScore = Math.min(100, score + earnedPts);
+  const carPct = totalBoost > 0 ? (earnedPts / totalBoost) * 100 : 0;
 
-  const potentialBoost = wins.reduce((sum, win) => {
-    const n = parseInt(win.boost.replace("+", ""));
-    return sum + (isNaN(n) ? 0 : n);
-  }, 0);
-  const potentialScore = Math.min(100, score + potentialBoost);
-  const earnedPts = wins
-    .filter((_, i) => completed.has(i))
-    .reduce((sum, win) => {
-      const n = parseInt(win.boost.replace("+", ""));
-      return sum + (isNaN(n) ? 0 : n);
-    }, 0);
+  function copyText(text: string, index: number) {
+    navigator.clipboard.writeText(text);
+    setCopied(index);
+    setCompleted((prev) => new Set([...prev, index]));
+    setTimeout(() => setCopied(null), 2000);
+  }
 
-  const r = 70;
-  const circumference = 2 * Math.PI * r;
-  const strokeDash = (score / 100) * circumference;
+  // STEP 1 — REVEAL
+  if (step === 1) {
+    return (
+      <div style={{
+        minHeight: "calc(100vh - 57px)",
+        background: "#0F172A",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "40px 24px",
+        textAlign: "center",
+      }}>
+        <p style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "#475569", marginBottom: 32, fontFamily: "var(--font-inter)" }}>
+          {result.vehicle}
+        </p>
 
-  return (
-    <div>
+        <p style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#64748B", marginBottom: 12, fontFamily: "var(--font-inter)" }}>
+          Your Listing Score
+        </p>
 
-      {/* FULL-WIDTH HERO */}
-      <div className="bg-[#0F172A] w-full py-14 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <p className="text-zinc-500 text-xs font-bold tracking-widest uppercase mb-8">
-            {result.vehicle}
+        <div style={{ fontSize: 112, fontWeight: 800, color: "white", lineHeight: 1, marginBottom: 12, fontFamily: "var(--font-manrope)" }}>
+          {score}
+        </div>
+
+        <div style={{ fontSize: 28, fontWeight: 700, color: theme.primary, marginBottom: 6, fontFamily: "var(--font-manrope)" }}>
+          {theme.label} {theme.emoji}
+        </div>
+
+        {potentialScore > score && (
+          <p style={{ fontSize: 16, color: "#94A3B8", marginBottom: 40, fontFamily: "var(--font-inter)" }}>
+            You could reach <strong style={{ color: "#2FBF71", fontWeight: 700 }}>{potentialScore}</strong> 🍬
           </p>
+        )}
 
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <svg width="180" height="180" className="-rotate-90">
-                <circle cx="90" cy="90" r={r} fill="none" stroke="#1e293b" strokeWidth="12" />
-                <circle
-                  cx="90" cy="90" r={r} fill="none"
-                  stroke={theme.primary}
-                  strokeWidth="12"
-                  strokeDasharray={`${circumference} ${circumference}`}
-                  strokeLinecap="round"
-                  className="score-ring"
-                  style={{
-                    "--circumference": circumference,
-                    "--dash-offset": circumference - strokeDash,
-                  } as React.CSSProperties}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-7xl font-black text-white leading-none">{score}</span>
-                <span className="text-sm text-zinc-500 mt-1">/ 100</span>
+        {wins.length > 0 ? (
+          <button
+            onClick={() => setStep(2)}
+            style={{
+              background: theme.primary,
+              color: "white",
+              border: "none",
+              borderRadius: 14,
+              padding: "16px 40px",
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "var(--font-manrope)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Improve My Score →
+          </button>
+        ) : (
+          <button
+            onClick={() => setStep(3)}
+            style={{
+              background: theme.primary,
+              color: "white",
+              border: "none",
+              borderRadius: 14,
+              padding: "16px 40px",
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "var(--font-manrope)",
+            }}
+          >
+            See What's Hurting You →
+          </button>
+        )}
+
+        <button
+          onClick={onReset}
+          style={{ marginTop: 24, fontSize: 12, color: "#475569", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-inter)" }}
+        >
+          ← Analyze another listing
+        </button>
+      </div>
+    );
+  }
+
+  // STEP 2 — FIXES
+  if (step === 2) {
+    return (
+      <div style={{ minHeight: "calc(100vh - 57px)", background: "#FFFDF8" }}>
+
+        {/* CAR TRACKER */}
+        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: "20px 24px" }}>
+          <div style={{ maxWidth: 560, margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#94A3B8", marginBottom: 10, fontFamily: "var(--font-inter)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <span>Listed</span>
+              <span style={{ color: completed.size === wins.length ? "#2FBF71" : "#94A3B8", fontWeight: completed.size === wins.length ? 700 : 400 }}>
+                {completed.size === wins.length ? "Ready to sell! 🎉" : `${completed.size} of ${wins.length} fixes done`}
+              </span>
+              <span>Deal</span>
+            </div>
+
+            <div style={{ position: "relative", height: 28, display: "flex", alignItems: "center" }}>
+              {/* Track */}
+              <div style={{ position: "absolute", left: 0, right: 0, height: 3, background: "#E2E8F0", borderRadius: 99 }} />
+              {/* Fill */}
+              <div style={{
+                position: "absolute",
+                left: 0,
+                height: 3,
+                borderRadius: 99,
+                background: theme.primary,
+                width: `${carPct}%`,
+                transition: "width 0.6s cubic-bezier(0.4,0,0.2,1)",
+              }} />
+              {/* Car */}
+              <div style={{
+                position: "absolute",
+                left: `calc(${carPct}% - 14px)`,
+                fontSize: 24,
+                transition: "left 0.6s cubic-bezier(0.4,0,0.2,1)",
+                lineHeight: 1,
+              }}>
+                🚗
               </div>
+              {/* Destination dot */}
+              <div style={{
+                position: "absolute",
+                right: 0,
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                border: `2px solid ${theme.primary}`,
+                background: "white",
+              }} />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 12, fontFamily: "var(--font-manrope)", fontWeight: 700 }}>
+              <span style={{ color: "#1F2937" }}>{currentScore}</span>
+              <span style={{ color: theme.primary }}>{potentialScore}</span>
             </div>
           </div>
-
-          <p className="text-4xl font-black mb-2" style={{ color: theme.primary }}>
-            {theme.label} {theme.emoji}
-          </p>
-          <p className="text-zinc-500 text-sm mb-8">Sweet Spot Score</p>
-
-          {wins.length > 0 && (
-            <div className="space-y-4">
-              <p className="text-zinc-300 text-lg">
-                {completed.size === wins.length ? (
-                  <span>
-                    🎉 All fixes applied!{" "}
-                    <span className="font-black" style={{ color: theme.primary }}>
-                      You&apos;re at {potentialScore}
-                    </span>
-                  </span>
-                ) : (
-                  <span>
-                    Complete{" "}
-                    <span className="text-white font-black">{wins.length - completed.size} fix{wins.length - completed.size !== 1 ? "es" : ""}</span>
-                    {" "}to reach{" "}
-                    <span className="font-black" style={{ color: theme.primary }}>{potentialScore}</span>
-                  </span>
-                )}
-              </p>
-
-              <div className="max-w-sm mx-auto">
-                <div className="flex justify-between text-xs text-zinc-500 mb-2">
-                  <span>{completed.size} of {wins.length} completed</span>
-                  {earnedPts > 0 && (
-                    <span className="font-bold" style={{ color: theme.primary }}>+{earnedPts} pts earned</span>
-                  )}
-                </div>
-                <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${wins.length ? (completed.size / wins.length) * 100 : 0}%`,
-                      backgroundColor: theme.primary,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* SPOT SCORES ROW */}
-      <div className="bg-white border-b border-zinc-100">
-        <div className="max-w-3xl mx-auto px-4 py-5">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {(Object.entries(result.spots) as [keyof typeof SPOT_META, SpotScore][]).map(([key, spot]) => {
-              const style = spotStyle(spot.score);
-              const isOpen = expandedSpot === key;
+        {/* FIXES */}
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1F2937", marginBottom: 6, fontFamily: "var(--font-manrope)" }}>
+            {wins.length} thing{wins.length !== 1 ? "s" : ""} hurting your listing
+          </h2>
+          <p style={{ fontSize: 14, color: "#94A3B8", marginBottom: 20, fontFamily: "var(--font-inter)" }}>
+            Each fix moves your car closer to the deal.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {wins.map((win, i) => {
+              const done = completed.has(i);
+              const isOpen = expanded === i;
+              const boost = parseBoost(win.boost);
+              const affiliate = SPOT_AFFILIATE[win.spot];
+
               return (
-                <div key={key}>
+                <div key={i} style={{
+                  background: done ? "#F0FDF4" : "white",
+                  border: `1px solid ${done ? "#BBF7D0" : isOpen ? theme.primary + "60" : "#F1F5F9"}`,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  transition: "all 0.2s",
+                }}>
                   <button
-                    onClick={() => setExpandedSpot(isOpen ? null : key)}
-                    className="w-full rounded-2xl p-4 border text-left transition-shadow hover:shadow-md"
-                    style={{ backgroundColor: style.bg, borderColor: isOpen ? style.color : style.border }}
+                    onClick={() => !done && setExpanded(isOpen ? null : i)}
+                    style={{
+                      width: "100%",
+                      padding: "16px",
+                      background: "none",
+                      border: "none",
+                      cursor: done ? "default" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      textAlign: "left",
+                    }}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-base">{SPOT_META[key].icon}</span>
-                      <span className="text-xl font-black" style={{ color: style.color }}>
-                        {spot.score}
-                      </span>
+                    <div style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      border: `2px solid ${done ? "#2FBF71" : "#E2E8F0"}`,
+                      background: done ? "#2FBF71" : "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      fontSize: 12,
+                      color: "white",
+                      fontWeight: 700,
+                    }}>
+                      {done ? "✓" : ""}
                     </div>
-                    <p className="text-xs font-bold text-zinc-500 mb-2">{SPOT_META[key].title}</p>
-                    <div className="h-1.5 rounded-full" style={{ backgroundColor: style.color + "25" }}>
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${spot.score}%`, backgroundColor: style.color }}
-                      />
-                    </div>
-                    {key === "financing" && monthly > 0 && (
-                      <p className="text-xs font-bold mt-2" style={{ color: style.color }}>
-                        ${monthly}/mo
+
+                    <div style={{ flex: 1 }}>
+                      <p style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: done ? "#6B7280" : "#1F2937",
+                        textDecoration: done ? "line-through" : "none",
+                        margin: 0,
+                        fontFamily: "var(--font-manrope)",
+                      }}>
+                        {win.spot === "financing" ? "Add financing info" :
+                         win.spot === "trust" ? "Add trust signals" :
+                         win.spot === "listing" ? "Improve listing copy" :
+                         "Improve pricing context"}
                       </p>
+                    </div>
+
+                    <span style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: done ? "#2FBF71" : theme.primary,
+                      fontFamily: "var(--font-manrope)",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {done ? `+${boost} ✓` : `+${boost} pts`}
+                    </span>
+
+                    {!done && (
+                      <span style={{ fontSize: 16, color: "#CBD5E1", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
+                        ›
+                      </span>
                     )}
                   </button>
 
-                  {isOpen && (
-                    <div
-                      className="mt-2 rounded-2xl p-4 border text-xs leading-relaxed"
-                      style={{ backgroundColor: style.bg, borderColor: style.border, color: style.color + "CC" }}
-                    >
-                      {spot.summary}
-                      {key === "financing" && monthly > 0 && (
-                        <div className="mt-3 flex gap-3 bg-white/60 rounded-xl p-3 text-center">
-                          <div className="flex-1">
-                            <div className="text-sm font-black text-zinc-900">${monthly}/mo</div>
-                            <div className="text-xs text-zinc-400 mt-0.5">60 mo @ 7%</div>
-                          </div>
-                          <div className="w-px bg-zinc-200" />
-                          <div className="flex-1">
-                            <div className="text-sm font-black text-zinc-900">
-                              ${Math.round(monthlyPayment(result.asking_price, 0.07, 48))}/mo
-                            </div>
-                            <div className="text-xs text-zinc-400 mt-0.5">48 mo @ 7%</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* MAIN CONTENT */}
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
-
-        {/* QUICK WINS */}
-        {wins.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-black text-zinc-400 uppercase tracking-widest">
-                Your fixes
-              </h2>
-              {potentialBoost > 0 && (
-                <span className="text-xs font-bold text-zinc-400">+{potentialBoost} pts available</span>
-              )}
-            </div>
-
-            {wins.map((win, i) => {
-              const done = completed.has(i);
-              const affiliate = SPOT_AFFILIATE[win.spot];
-              const boost = parseInt(win.boost.replace("+", ""));
-              return (
-                <div
-                  key={i}
-                  className="rounded-3xl overflow-hidden border transition-all duration-300"
-                  style={done
-                    ? { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }
-                    : { backgroundColor: "#FFFFFF", borderColor: "#E4E4E7" }
-                  }
-                >
-                  <div
-                    className="px-5 py-3 flex items-center justify-between"
-                    style={done
-                      ? { backgroundColor: "#DCFCE7" }
-                      : { backgroundColor: theme.light }
-                    }
-                  >
-                    <span className="text-xs font-bold text-zinc-600 uppercase tracking-widest">
-                      {SPOT_META[win.spot].icon} {SPOT_META[win.spot].title}
-                    </span>
-                    <span
-                      className="text-xs font-black px-2.5 py-0.5 rounded-full"
-                      style={done
-                        ? { backgroundColor: "#BBF7D0", color: "#16A34A" }
-                        : { backgroundColor: theme.primary + "22", color: theme.primary }
-                      }
-                    >
-                      {done ? `✓ +${boost} pts` : `+${boost} pts`}
-                    </span>
-                  </div>
-
-                  <div className="px-5 py-4">
-                    <p className="font-mono text-sm text-zinc-700 leading-relaxed mb-4 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3">
-                      {win.text}
-                    </p>
-
-                    {done ? (
-                      <div className="flex items-center gap-2 text-sm font-bold text-emerald-600">
-                        <span className="text-lg">✓</span>
-                        Added to listing
+                  {isOpen && !done && (
+                    <div style={{ padding: "0 16px 16px" }}>
+                      <div style={{
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
+                        borderRadius: 10,
+                        padding: "12px 14px",
+                        fontFamily: "var(--font-inter)",
+                        fontSize: 13,
+                        color: "#374151",
+                        lineHeight: 1.7,
+                        marginBottom: 12,
+                      }}>
+                        {win.text}
                       </div>
-                    ) : (
-                      <div className="flex gap-2">
+
+                      <div style={{ display: "flex", gap: 8 }}>
                         <button
-                          onClick={() => markComplete(win.text, i)}
-                          className="flex-1 text-sm font-black py-3 rounded-2xl text-white transition-opacity hover:opacity-90"
-                          style={{ backgroundColor: theme.primary }}
+                          onClick={() => { copyText(win.text, i); setExpanded(null); }}
+                          style={{
+                            flex: 1,
+                            padding: "11px",
+                            background: theme.primary,
+                            color: "white",
+                            border: "none",
+                            borderRadius: 10,
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            fontFamily: "var(--font-manrope)",
+                          }}
                         >
-                          Copy & Add to Listing →
+                          {copied === i ? "✓ Copied!" : "Copy & mark done →"}
                         </button>
                         {affiliate && (
                           <a
                             href={affiliate.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-4 text-sm font-bold py-3 rounded-2xl border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors whitespace-nowrap"
+                            style={{
+                              padding: "11px 14px",
+                              background: "white",
+                              border: "1px solid #E2E8F0",
+                              borderRadius: 10,
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: "#6B7280",
+                              textDecoration: "none",
+                              fontFamily: "var(--font-manrope)",
+                            }}
                           >
                             {affiliate.cta}
                           </a>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
-
-            <div>
-              <button
-                onClick={() => setShowInstructions(!showInstructions)}
-                className="text-xs text-zinc-400 hover:text-zinc-600 flex items-center gap-1.5 transition-colors"
-              >
-                <span className="text-[10px]">{showInstructions ? "▲" : "▼"}</span>
-                How to edit my listing
-              </button>
-              {showInstructions && (
-                <div className="mt-3 grid grid-cols-2 gap-4 text-xs bg-white rounded-2xl border border-zinc-100 p-4">
-                  <div>
-                    <p className="font-bold text-zinc-700 mb-2">Craigslist</p>
-                    <ol className="space-y-1 text-zinc-400 list-decimal list-inside">
-                      <li>My Account → Active listings</li>
-                      <li>Click Edit on your listing</li>
-                      <li>Paste at end of description</li>
-                      <li>Click Update</li>
-                    </ol>
-                  </div>
-                  <div>
-                    <p className="font-bold text-zinc-700 mb-2">Facebook Marketplace</p>
-                    <ol className="space-y-1 text-zinc-400 list-decimal list-inside">
-                      <li>Open listing → Edit listing</li>
-                      <li>Scroll to Description</li>
-                      <li>Paste at the end</li>
-                      <li>Click Save</li>
-                    </ol>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
-        )}
 
-        {/* INSIGHTS */}
-        <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
-          <div className="px-6 pt-5 pb-1">
-            <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest">
-              Here&apos;s what&apos;s costing you buyers
-            </h3>
-          </div>
-          {result.free_insights.map((insight, i) => (
-            <div key={i} className="flex gap-5 px-6 py-5 border-t border-zinc-50">
-              <span className="text-2xl font-black text-zinc-100 shrink-0 leading-tight select-none">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <p className="text-sm text-zinc-600 leading-relaxed pt-1">{insight}</p>
-            </div>
-          ))}
+          <button
+            onClick={() => setStep(3)}
+            style={{
+              width: "100%",
+              marginTop: 24,
+              padding: "14px",
+              background: completed.size > 0 ? theme.primary : "white",
+              color: completed.size > 0 ? "white" : "#94A3B8",
+              border: `1px solid ${completed.size > 0 ? theme.primary : "#E2E8F0"}`,
+              borderRadius: 12,
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "var(--font-manrope)",
+              transition: "all 0.3s",
+            }}
+          >
+            {completed.size === wins.length ? "All done → See why buyers hesitate" : "Skip → See why buyers hesitate"}
+          </button>
         </div>
+      </div>
+    );
+  }
 
-        {/* LOCKED */}
-        <div className="bg-[#0F172A] rounded-3xl overflow-hidden">
-          <div className="p-6 space-y-3 opacity-[0.15] blur-[3px] select-none pointer-events-none">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex gap-4">
-                <span className="text-2xl font-black text-zinc-400 shrink-0 leading-tight">0{i + 4}</span>
-                <p className="text-sm text-zinc-300 leading-relaxed pt-1">
-                  Your listing title is missing the exact keywords buyers search for — here is the complete rewrite ready to paste.
+  // STEP 3 — WHY
+  if (step === 3) {
+    return (
+      <div style={{ minHeight: "calc(100vh - 57px)", background: "#FFFDF8" }}>
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 16px" }}>
+
+          <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: 12, fontFamily: "var(--font-manrope)", fontWeight: 700 }}>
+            Why buyers are hesitating
+          </p>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1F2937", marginBottom: 32, fontFamily: "var(--font-manrope)", lineHeight: 1.2 }}>
+            Here&apos;s what&apos;s costing you calls
+          </h2>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 40 }}>
+            {result.free_insights.map((insight, i) => (
+              <div key={i} style={{
+                display: "flex",
+                gap: 14,
+                padding: "16px",
+                background: "white",
+                borderRadius: 12,
+                border: "1px solid #F1F5F9",
+              }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
+                <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.6, margin: 0, fontFamily: "var(--font-inter)" }}>
+                  {insight}
                 </p>
               </div>
             ))}
           </div>
-          <div className="px-6 pb-7 text-center -mt-2">
-            <span className="text-3xl mb-3 block">🔒</span>
-            <p className="text-white font-black text-lg mb-1">
-              {result.locked_count} more insights + full rewrite
-            </p>
-            <p className="text-zinc-400 text-sm mb-5">
-              Rewritten title, description & pricing recommendation
-            </p>
-            <button
-              className="w-full font-black py-4 rounded-2xl text-white text-base transition-opacity hover:opacity-90"
-              style={{ backgroundColor: theme.primary }}
-            >
-              Unlock Full Report — $29
-            </button>
-          </div>
+
+          <button
+            onClick={() => setStep(4)}
+            style={{
+              width: "100%",
+              padding: "14px",
+              background: theme.primary,
+              color: "white",
+              border: "none",
+              borderRadius: 12,
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "var(--font-manrope)",
+            }}
+          >
+            See all {result.locked_count} improvements →
+          </button>
+
+          <button
+            onClick={() => setStep(2)}
+            style={{ display: "block", margin: "16px auto 0", fontSize: 12, color: "#94A3B8", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-inter)" }}
+          >
+            ← Back to fixes
+          </button>
         </div>
+      </div>
+    );
+  }
+
+  // STEP 4 — UNLOCK
+  return (
+    <div style={{ minHeight: "calc(100vh - 57px)", background: "#0F172A", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
+      <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+
+        <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
+
+        <h2 style={{ fontSize: 26, fontWeight: 800, color: "white", marginBottom: 8, fontFamily: "var(--font-manrope)" }}>
+          We found {result.locked_count} more improvements
+        </h2>
+        <p style={{ fontSize: 15, color: "#64748B", marginBottom: 32, fontFamily: "var(--font-inter)" }}>
+          The free analysis gave you a head start.<br />The full report seals the deal.
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32, textAlign: "left" }}>
+          {["Exact pricing recommendation", "Complete listing rewrite", "Buyer objection analysis", "Marketplace ranking insights", "Word-for-word title fix"].map((item) => (
+            <div key={item} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "#1E293B", borderRadius: 10 }}>
+              <span style={{ color: "#475569", fontSize: 14 }}>🔒</span>
+              <span style={{ fontSize: 14, color: "#94A3B8", fontFamily: "var(--font-inter)" }}>{item}</span>
+            </div>
+          ))}
+        </div>
+
+        <button style={{
+          width: "100%",
+          padding: "16px",
+          background: theme.primary,
+          color: "white",
+          border: "none",
+          borderRadius: 14,
+          fontSize: 16,
+          fontWeight: 800,
+          cursor: "pointer",
+          fontFamily: "var(--font-manrope)",
+          marginBottom: 12,
+        }}>
+          Unlock Full Report — $29
+        </button>
+
+        <p style={{ fontSize: 12, color: "#475569", marginBottom: 24, fontFamily: "var(--font-inter)" }}>
+          One-time payment · Instant access
+        </p>
 
         <button
           onClick={onReset}
-          className="w-full text-xs text-zinc-400 hover:text-zinc-600 py-4 transition-colors"
+          style={{ fontSize: 12, color: "#475569", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-inter)" }}
         >
           ← Analyze another listing
         </button>
