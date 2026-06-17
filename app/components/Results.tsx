@@ -65,12 +65,6 @@ function scoreLabel(score: number) {
   return { text: "Sour Deal 🍋", color: "text-red-400" };
 }
 
-function scoreBgLight(score: number) {
-  if (score >= 80) return "bg-green-50 border-green-200";
-  if (score >= 60) return "bg-orange-50 border-orange-200";
-  return "bg-red-50 border-red-200";
-}
-
 export default function Results({
   result,
   onReset,
@@ -90,96 +84,107 @@ export default function Results({
   const label = scoreLabel(result.overall_score);
   const monthly = result.asking_price ? monthlyPayment(result.asking_price) : 0;
   const score = result.overall_score;
-  const r = 54;
+  const r = 58;
   const circumference = 2 * Math.PI * r;
   const strokeDash = (score / 100) * circumference;
   const color = scoreColor(score);
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4">
-      <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start">
 
-        {/* LEFT COLUMN — sticky on desktop */}
+        {/* LEFT COLUMN */}
         <div className="space-y-3 lg:sticky lg:top-6">
 
           {/* SCORE CARD */}
-          <div className="bg-slate-900 rounded-3xl p-7 text-center shadow-xl">
-            <p className="text-slate-400 text-sm mb-4 tracking-wide">{result.vehicle}</p>
-            <div className="relative inline-flex items-center justify-center mb-4">
-              <svg width="130" height="130" className="-rotate-90">
-                <circle cx="65" cy="65" r={r} fill="none" stroke="#1e293b" strokeWidth="10" />
-                <circle
-                  cx="65" cy="65" r={r} fill="none"
-                  stroke={color}
-                  strokeWidth="10"
-                  strokeDasharray={`${strokeDash} ${circumference}`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-5xl font-black text-white">{score}</span>
-                <span className="text-xs text-slate-400 mt-0.5">/ 100</span>
+          <div className="bg-slate-900 rounded-2xl p-8 shadow-xl">
+            <p className="text-zinc-500 text-xs font-medium mb-6 tracking-widest uppercase text-center">
+              {result.vehicle}
+            </p>
+            <div className="flex items-center gap-6">
+              <div className="relative shrink-0">
+                <svg width="140" height="140" className="-rotate-90">
+                  <circle cx="70" cy="70" r={r} fill="none" stroke="#1e293b" strokeWidth="8" />
+                  <circle
+                    cx="70" cy="70" r={r} fill="none"
+                    stroke={color}
+                    strokeWidth="8"
+                    strokeDasharray={`${strokeDash} ${circumference}`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-6xl font-black text-white leading-none">{score}</span>
+                  <span className="text-xs text-zinc-500 mt-1">/ 100</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-zinc-400 text-xs uppercase tracking-widest mb-1">Sweet Spot Score</p>
+                <p className={`text-xl font-black ${label.color}`}>{label.text}</p>
+                <p className="text-zinc-500 text-xs mt-3 leading-relaxed">
+                  Based on pricing, listing quality, trust signals & financing
+                </p>
               </div>
             </div>
-            <p className="text-white text-base font-bold mb-1">Sweet Spot Score</p>
-            <p className={`text-sm font-semibold ${label.color}`}>{label.text}</p>
           </div>
 
-          {/* SPOTS — vertical stack with inline fixes */}
+          {/* SPOT CARDS */}
           <div className="space-y-2">
             {(Object.entries(result.spots) as [keyof typeof SPOT_META, SpotScore][]).map(([key, spot]) => {
-              const isWeak = spot.score < 75;
-              const fix = isWeak ? SPOT_FIX[key] : undefined;
+              const fix = spot.score < 75 ? SPOT_FIX[key] : undefined;
               return (
-                <div key={key} className={`rounded-2xl border p-4 ${scoreBgLight(spot.score)}`}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">
-                      {SPOT_META[key].icon} {SPOT_META[key].title}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {fix && (
-                        <span className="text-xs font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
-                          Fix this
+                <div key={key} className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden flex">
+                  <div className="w-1 shrink-0" style={{ backgroundColor: scoreColor(spot.score) }} />
+                  <div className="flex-1 p-4">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <span className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+                          {SPOT_META[key].icon} {SPOT_META[key].title}
                         </span>
-                      )}
-                      <span className="text-xl font-black" style={{ color: scoreColor(spot.score) }}>
+                      </div>
+                      <span
+                        className="text-3xl font-black leading-none shrink-0"
+                        style={{ color: scoreColor(spot.score) }}
+                      >
                         {spot.score}
                       </span>
                     </div>
-                  </div>
-                  <div className="h-2.5 bg-white/60 rounded-full mb-2">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${spot.score}%`, backgroundColor: scoreColor(spot.score) }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 leading-relaxed">{spot.summary}</p>
-                  {key === "financing" && monthly > 0 && (
-                    <div className="mt-2 flex gap-3 bg-white/70 rounded-xl p-2 text-center">
-                      <div className="flex-1">
-                        <div className="text-sm font-extrabold text-gray-900">${monthly}/mo</div>
-                        <div className="text-xs text-gray-400">60 mo @ 7%</div>
-                      </div>
-                      <div className="w-px bg-gray-200" />
-                      <div className="flex-1">
-                        <div className="text-sm font-extrabold text-gray-900">
-                          ${Math.round(monthlyPayment(result.asking_price, 0.07, 48))}/mo
-                        </div>
-                        <div className="text-xs text-gray-400">48 mo @ 7%</div>
-                      </div>
+                    <div className="h-1.5 bg-zinc-100 rounded-full mb-3">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${spot.score}%`, backgroundColor: scoreColor(spot.score) }}
+                      />
                     </div>
-                  )}
-                  {fix && (
-                    <a
-                      href={fix.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 flex items-center justify-between w-full text-xs font-bold px-3 py-2 rounded-xl bg-white border border-gray-200 hover:border-orange-300 hover:text-orange-500 transition-colors group"
-                    >
-                      <span>{fix.cta}</span>
-                      <span className="text-green-600 group-hover:text-green-700">{fix.boost} ↑</span>
-                    </a>
-                  )}
+                    <p className="text-xs text-zinc-500 leading-relaxed">{spot.summary}</p>
+
+                    {key === "financing" && monthly > 0 && (
+                      <div className="mt-3 flex gap-3 bg-zinc-50 rounded-xl p-3 text-center border border-zinc-100">
+                        <div className="flex-1">
+                          <div className="text-sm font-black text-zinc-900">${monthly}/mo</div>
+                          <div className="text-xs text-zinc-400 mt-0.5">60 mo @ 7%</div>
+                        </div>
+                        <div className="w-px bg-zinc-200" />
+                        <div className="flex-1">
+                          <div className="text-sm font-black text-zinc-900">
+                            ${Math.round(monthlyPayment(result.asking_price, 0.07, 48))}/mo
+                          </div>
+                          <div className="text-xs text-zinc-400 mt-0.5">48 mo @ 7%</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {fix && (
+                      <a
+                        href={fix.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 flex items-center justify-between w-full text-xs font-semibold px-3 py-2 rounded-xl border border-zinc-200 hover:border-orange-300 hover:bg-orange-50 transition-all group"
+                      >
+                        <span className="text-zinc-700 group-hover:text-orange-600">{fix.cta}</span>
+                        <span className="text-green-600 font-bold">{fix.boost} ↑</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -190,61 +195,60 @@ export default function Results({
         <div className="space-y-4">
 
           {/* INSIGHTS */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-5 pt-5 pb-2">
-              <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
+          <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden">
+            <div className="px-6 pt-6 pb-1">
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
                 What&apos;s holding your listing back
               </h3>
             </div>
             {result.free_insights.map((insight, i) => (
-              <div key={i} className="flex gap-4 px-5 py-4 border-t border-gray-50">
-                <span className="text-xs font-black text-orange-400 mt-0.5 shrink-0 w-5">
+              <div key={i} className="flex gap-5 px-6 py-5 border-t border-zinc-50">
+                <span className="text-2xl font-black text-zinc-100 shrink-0 leading-tight select-none">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <p className="text-sm text-gray-700 leading-relaxed">{insight}</p>
+                <p className="text-sm text-zinc-600 leading-relaxed pt-1">{insight}</p>
               </div>
             ))}
           </div>
 
           {/* QUICK WINS */}
           {result.quick_wins && result.quick_wins.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-5 pt-5 pb-3">
-                <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
-                  Add these to your listing — free boost
+            <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden">
+              <div className="px-6 pt-6 pb-1">
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-1">
+                  Add these to your listing — free
                 </h3>
-                <p className="text-xs text-gray-400 mt-1">
-                  Copy → paste into your Craigslist or Facebook listing
-                </p>
+                <p className="text-xs text-zinc-400">Copy → paste directly into Craigslist or Facebook</p>
               </div>
+
               {result.quick_wins.map((win, i) => {
                 const affiliate = SPOT_AFFILIATE[win.spot];
                 return (
-                  <div key={i} className="border-t border-gray-50 px-5 py-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">
+                  <div key={i} className="border-t border-zinc-50 px-6 py-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-bold text-orange-500 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full">
                         {win.boost}
                       </span>
-                      <span className="text-xs text-gray-400 uppercase tracking-wide">
+                      <span className="text-xs text-zinc-400">
                         {SPOT_META[win.spot].icon} {SPOT_META[win.spot].title}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-800 leading-relaxed bg-gray-50 rounded-xl px-4 py-3 mb-3">
+                    <div className="font-mono text-sm bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-zinc-700 leading-relaxed mb-3">
                       {win.text}
-                    </p>
+                    </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => copyText(win.text, i)}
-                        className="flex-1 text-xs font-bold py-2 rounded-lg border border-gray-200 hover:border-orange-300 hover:text-orange-500 transition-colors"
+                        className="flex-1 text-xs font-semibold py-2.5 rounded-xl border border-zinc-200 text-zinc-600 hover:border-orange-300 hover:text-orange-500 transition-all"
                       >
-                        {copiedIndex === i ? "✓ Copied!" : "Copy"}
+                        {copiedIndex === i ? "✓ Copied!" : "Copy text"}
                       </button>
                       {affiliate && (
                         <a
                           href={affiliate.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 text-xs font-bold py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-center transition-colors"
+                          className="flex-1 text-xs font-semibold py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-center transition-colors"
                         >
                           {affiliate.cta}
                         </a>
@@ -253,31 +257,32 @@ export default function Results({
                   </div>
                 );
               })}
-              <div className="border-t border-gray-50 px-5 py-3">
+
+              <div className="border-t border-zinc-50 px-6 py-4">
                 <button
                   onClick={() => setShowInstructions(!showInstructions)}
-                  className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors"
+                  className="text-xs text-zinc-400 hover:text-zinc-600 flex items-center gap-1.5 transition-colors"
                 >
-                  <span>{showInstructions ? "▲" : "▼"}</span>
+                  <span className="text-[10px]">{showInstructions ? "▲" : "▼"}</span>
                   How to edit my listing
                 </button>
                 {showInstructions && (
-                  <div className="mt-3 space-y-3 text-xs text-gray-600">
+                  <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
                     <div>
-                      <p className="font-bold mb-1">Craigslist</p>
-                      <ol className="list-decimal list-inside space-y-0.5 text-gray-500">
-                        <li>Go to craigslist.org → My Account → Active listings</li>
+                      <p className="font-semibold text-zinc-700 mb-2">Craigslist</p>
+                      <ol className="space-y-1 text-zinc-400 list-decimal list-inside">
+                        <li>My Account → Active listings</li>
                         <li>Click Edit on your listing</li>
-                        <li>Paste the lines at the end of your description</li>
+                        <li>Paste at end of description</li>
                         <li>Click Update</li>
                       </ol>
                     </div>
                     <div>
-                      <p className="font-bold mb-1">Facebook Marketplace</p>
-                      <ol className="list-decimal list-inside space-y-0.5 text-gray-500">
-                        <li>Open your listing → Edit listing</li>
+                      <p className="font-semibold text-zinc-700 mb-2">Facebook Marketplace</p>
+                      <ol className="space-y-1 text-zinc-400 list-decimal list-inside">
+                        <li>Open listing → Edit listing</li>
                         <li>Scroll to Description</li>
-                        <li>Paste the lines at the end</li>
+                        <li>Paste at the end</li>
                         <li>Click Save</li>
                       </ol>
                     </div>
@@ -288,26 +293,35 @@ export default function Results({
           )}
 
           {/* LOCKED */}
-          <div className="relative bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="space-y-3 p-5">
+          <div className="bg-slate-900 rounded-2xl overflow-hidden">
+            <div className="p-6 space-y-3 opacity-[0.15] blur-[3px] select-none pointer-events-none">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex gap-4 blur-[4px] select-none">
-                  <span className="text-xs font-black text-orange-200 shrink-0 w-5">0{i + 4}</span>
-                  <p className="text-sm text-gray-300">Your listing title is missing keywords that buyers actually search for — here is the exact rewrite.</p>
+                <div key={i} className="flex gap-4">
+                  <span className="text-2xl font-black text-zinc-400 shrink-0 leading-tight">0{i + 4}</span>
+                  <p className="text-sm text-zinc-300 leading-relaxed pt-1">
+                    Your listing title is missing the exact keywords buyers search for — here is the complete rewrite ready to paste.
+                  </p>
                 </div>
               ))}
             </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-white/70 to-white flex flex-col items-center justify-end pb-7 px-6 text-center">
-              <span className="text-2xl mb-2">🔒</span>
-              <p className="text-sm font-bold text-gray-900 mb-1">{result.locked_count} more insights + full rewrite</p>
-              <p className="text-xs text-gray-400 mb-4">Rewritten title, description & pricing recommendation</p>
-              <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-3 rounded-xl transition-colors w-full max-w-xs">
+            <div className="px-6 pb-7 text-center -mt-2">
+              <span className="text-3xl mb-3 block">🔒</span>
+              <p className="text-white font-bold text-base mb-1">
+                {result.locked_count} more insights + full rewrite
+              </p>
+              <p className="text-zinc-400 text-sm mb-5">
+                Rewritten title, description & pricing recommendation
+              </p>
+              <button className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-3.5 rounded-xl transition-colors text-sm">
                 Unlock Full Report — $29
               </button>
             </div>
           </div>
 
-          <button onClick={onReset} className="w-full text-sm text-gray-400 hover:text-gray-600 py-4 transition-colors">
+          <button
+            onClick={onReset}
+            className="w-full text-xs text-zinc-400 hover:text-zinc-600 py-4 transition-colors"
+          >
             ← Analyze another listing
           </button>
         </div>
