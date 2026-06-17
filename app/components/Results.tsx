@@ -52,17 +52,24 @@ function monthlyPayment(price: number, annualRate = 0.07, months = 60): number {
   return Math.round((price * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1));
 }
 
-function scoreColor(score: number) {
-  if (score >= 80) return "#16a34a";
-  if (score >= 60) return "#f97316";
-  return "#ef4444";
+function spotScoreColor(score: number) {
+  if (score >= 80) return "#10B981";
+  if (score >= 60) return "#F59E0B";
+  return "#EF4444";
 }
 
-function scoreLabel(score: number) {
-  if (score >= 90) return { text: "Sweet Deal! 🍬", color: "text-green-400" };
-  if (score >= 75) return { text: "Almost Sweet 🍭", color: "text-orange-400" };
-  if (score >= 55) return { text: "Needs Sugar 🫤", color: "text-orange-400" };
-  return { text: "Sour Deal 🍋", color: "text-red-400" };
+type CandyTheme = {
+  primary: string;
+  light: string;
+  label: string;
+  emoji: string;
+};
+
+function candyTheme(score: number): CandyTheme {
+  if (score >= 90) return { primary: "#10B981", light: "#D1FAE5", label: "Sweet Deal", emoji: "🍬" };
+  if (score >= 75) return { primary: "#A855F7", light: "#F3E8FF", label: "Almost Sweet", emoji: "🍭" };
+  if (score >= 55) return { primary: "#F59E0B", light: "#FEF3C7", label: "Needs Sugar", emoji: "🫤" };
+  return { primary: "#84CC16", light: "#ECFCCB", label: "Sour Deal", emoji: "🍋" };
 }
 
 export default function Results({
@@ -81,13 +88,19 @@ export default function Results({
     setTimeout(() => setCopiedIndex(null), 2000);
   }
 
-  const label = scoreLabel(result.overall_score);
-  const monthly = result.asking_price ? monthlyPayment(result.asking_price) : 0;
   const score = result.overall_score;
+  const theme = candyTheme(score);
+  const monthly = result.asking_price ? monthlyPayment(result.asking_price) : 0;
+
+  const potentialBoost = result.quick_wins?.reduce((sum, win) => {
+    const n = parseInt(win.boost.replace("+", ""));
+    return sum + (isNaN(n) ? 0 : n);
+  }, 0) ?? 0;
+  const potentialScore = Math.min(100, score + potentialBoost);
+
   const r = 58;
   const circumference = 2 * Math.PI * r;
   const strokeDash = (score / 100) * circumference;
-  const color = scoreColor(score);
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4">
@@ -97,17 +110,18 @@ export default function Results({
         <div className="space-y-3 lg:sticky lg:top-6">
 
           {/* SCORE CARD */}
-          <div className="bg-slate-900 rounded-2xl p-8 shadow-xl">
+          <div className="bg-[#0F172A] rounded-2xl p-8 shadow-xl">
             <p className="text-zinc-500 text-xs font-medium mb-6 tracking-widest uppercase text-center">
               {result.vehicle}
             </p>
-            <div className="flex items-center gap-6">
+
+            <div className="flex items-center gap-6 mb-5">
               <div className="relative shrink-0">
                 <svg width="140" height="140" className="-rotate-90">
                   <circle cx="70" cy="70" r={r} fill="none" stroke="#1e293b" strokeWidth="8" />
                   <circle
                     cx="70" cy="70" r={r} fill="none"
-                    stroke={color}
+                    stroke={theme.primary}
                     strokeWidth="8"
                     strokeDasharray={`${strokeDash} ${circumference}`}
                     strokeLinecap="round"
@@ -119,40 +133,51 @@ export default function Results({
                 </div>
               </div>
               <div>
-                <p className="text-zinc-400 text-xs uppercase tracking-widest mb-1">Sweet Spot Score</p>
-                <p className={`text-xl font-black ${label.color}`}>{label.text}</p>
-                <p className="text-zinc-500 text-xs mt-3 leading-relaxed">
-                  Based on pricing, listing quality, trust signals & financing
+                <p className="text-zinc-500 text-xs uppercase tracking-widest mb-2">Sweet Spot Score</p>
+                <p className="text-2xl font-black leading-tight" style={{ color: theme.primary }}>
+                  {theme.label}
                 </p>
+                <p className="text-3xl leading-none mt-1">{theme.emoji}</p>
               </div>
             </div>
+
+            {potentialBoost > 0 && (
+              <div
+                className="rounded-xl px-4 py-3"
+                style={{ backgroundColor: theme.primary + "18", border: `1px solid ${theme.primary}35` }}
+              >
+                <p className="text-sm leading-relaxed">
+                  <span className="text-zinc-400">Your listing is at </span>
+                  <span className="text-white font-bold">{score}</span>
+                  <span className="text-zinc-400">. You could reach </span>
+                  <span className="font-black" style={{ color: theme.primary }}>{potentialScore}</span>
+                  <span className="text-zinc-400"> with these fixes.</span>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* SPOT CARDS */}
           <div className="space-y-2">
             {(Object.entries(result.spots) as [keyof typeof SPOT_META, SpotScore][]).map(([key, spot]) => {
               const fix = spot.score < 75 ? SPOT_FIX[key] : undefined;
+              const color = spotScoreColor(spot.score);
               return (
                 <div key={key} className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden flex">
-                  <div className="w-1 shrink-0" style={{ backgroundColor: scoreColor(spot.score) }} />
+                  <div className="w-1 shrink-0" style={{ backgroundColor: color }} />
                   <div className="flex-1 p-4">
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <div>
-                        <span className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
-                          {SPOT_META[key].icon} {SPOT_META[key].title}
-                        </span>
-                      </div>
-                      <span
-                        className="text-3xl font-black leading-none shrink-0"
-                        style={{ color: scoreColor(spot.score) }}
-                      >
+                      <span className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+                        {SPOT_META[key].icon} {SPOT_META[key].title}
+                      </span>
+                      <span className="text-3xl font-black leading-none shrink-0" style={{ color }}>
                         {spot.score}
                       </span>
                     </div>
                     <div className="h-1.5 bg-zinc-100 rounded-full mb-3">
                       <div
                         className="h-full rounded-full"
-                        style={{ width: `${spot.score}%`, backgroundColor: scoreColor(spot.score) }}
+                        style={{ width: `${spot.score}%`, backgroundColor: color }}
                       />
                     </div>
                     <p className="text-xs text-zinc-500 leading-relaxed">{spot.summary}</p>
@@ -178,10 +203,10 @@ export default function Results({
                         href={fix.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-3 flex items-center justify-between w-full text-xs font-semibold px-3 py-2 rounded-xl border border-zinc-200 hover:border-orange-300 hover:bg-orange-50 transition-all group"
+                        className="mt-3 flex items-center justify-between w-full text-xs font-semibold px-3 py-2 rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-all"
                       >
-                        <span className="text-zinc-700 group-hover:text-orange-600">{fix.cta}</span>
-                        <span className="text-green-600 font-bold">{fix.boost} ↑</span>
+                        <span className="text-zinc-700">{fix.cta}</span>
+                        <span className="font-bold text-emerald-600">{fix.boost} ↑</span>
                       </a>
                     )}
                   </div>
@@ -198,7 +223,7 @@ export default function Results({
           <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden">
             <div className="px-6 pt-6 pb-1">
               <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
-                What&apos;s holding your listing back
+                Here&apos;s what&apos;s costing you buyers
               </h3>
             </div>
             {result.free_insights.map((insight, i) => (
@@ -216,7 +241,9 @@ export default function Results({
             <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden">
               <div className="px-6 pt-6 pb-1">
                 <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-1">
-                  Add these to your listing — free
+                  {potentialBoost > 0
+                    ? `Earn ${potentialBoost} more points — free`
+                    : "Add these to your listing — free"}
                 </h3>
                 <p className="text-xs text-zinc-400">Copy → paste directly into Craigslist or Facebook</p>
               </div>
@@ -226,8 +253,11 @@ export default function Results({
                 return (
                   <div key={i} className="border-t border-zinc-50 px-6 py-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs font-bold text-orange-500 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full">
-                        {win.boost}
+                      <span
+                        className="text-xs font-black px-2.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: theme.light, color: theme.primary }}
+                      >
+                        {win.boost} pts
                       </span>
                       <span className="text-xs text-zinc-400">
                         {SPOT_META[win.spot].icon} {SPOT_META[win.spot].title}
@@ -239,7 +269,7 @@ export default function Results({
                     <div className="flex gap-2">
                       <button
                         onClick={() => copyText(win.text, i)}
-                        className="flex-1 text-xs font-semibold py-2.5 rounded-xl border border-zinc-200 text-zinc-600 hover:border-orange-300 hover:text-orange-500 transition-all"
+                        className="flex-1 text-xs font-semibold py-2.5 rounded-xl border border-zinc-200 text-zinc-600 hover:border-zinc-400 transition-all"
                       >
                         {copiedIndex === i ? "✓ Copied!" : "Copy text"}
                       </button>
@@ -248,7 +278,8 @@ export default function Results({
                           href={affiliate.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 text-xs font-semibold py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-center transition-colors"
+                          className="flex-1 text-xs font-semibold py-2.5 rounded-xl text-white text-center transition-opacity hover:opacity-90"
+                          style={{ backgroundColor: theme.primary }}
                         >
                           {affiliate.cta}
                         </a>
@@ -293,7 +324,7 @@ export default function Results({
           )}
 
           {/* LOCKED */}
-          <div className="bg-slate-900 rounded-2xl overflow-hidden">
+          <div className="bg-[#0F172A] rounded-2xl overflow-hidden">
             <div className="p-6 space-y-3 opacity-[0.15] blur-[3px] select-none pointer-events-none">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex gap-4">
@@ -312,7 +343,10 @@ export default function Results({
               <p className="text-zinc-400 text-sm mb-5">
                 Rewritten title, description & pricing recommendation
               </p>
-              <button className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-3.5 rounded-xl transition-colors text-sm">
+              <button
+                className="w-full font-bold py-3.5 rounded-xl transition-opacity hover:opacity-90 text-sm text-white"
+                style={{ backgroundColor: theme.primary }}
+              >
                 Unlock Full Report — $29
               </button>
             </div>

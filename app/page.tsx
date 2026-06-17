@@ -12,7 +12,7 @@ export default function Home() {
       {/* NAV */}
       <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
         <span className="text-lg font-black text-slate-900">
-          🍬 <span className="text-orange-500">Car</span>SweetSpot
+          🍬 CarSweetSpot
         </span>
         {hasResults ? (
           <button onClick={() => setHasResults(false)} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
