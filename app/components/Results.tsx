@@ -8,6 +8,7 @@ type SpotScore = {
 
 type AnalysisResult = {
   vehicle: string;
+  asking_price: number;
   overall_score: number;
   spots: {
     pricing: SpotScore;
@@ -58,9 +59,9 @@ const AFFILIATES: Affiliate[] = [
   {
     icon: "💵",
     title: "Show Monthly Payments",
-    description: "Most buyers think in monthly payments, not sticker price. Add a financing option to remove the biggest mental blocker.",
+    description: "",
     boost: "+20 to your Financing Score",
-    cta: "Add Financing via LendingTree →",
+    cta: "Help Your Buyer Get Financing →",
     url: "https://www.lendingtree.com/auto",
     condition: (spots) => spots.financing.score < 70,
   },
@@ -83,6 +84,12 @@ const AFFILIATES: Affiliate[] = [
     condition: (spots) => spots.listing.score < 75,
   },
 ];
+
+function monthlyPayment(price: number, annualRate = 0.07, months = 60): number {
+  if (!price) return 0;
+  const r = annualRate / 12;
+  return Math.round((price * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1));
+}
 
 function scoreColor(score: number) {
   if (score >= 80) return "text-green-600";
@@ -112,6 +119,7 @@ export default function Results({
 }) {
   const label = scoreLabel(result.overall_score);
   const relevantAffiliates = AFFILIATES.filter((a) => a.condition(result.spots));
+  const monthly = result.asking_price ? monthlyPayment(result.asking_price) : 0;
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -182,7 +190,28 @@ export default function Results({
                       {a.boost}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 leading-relaxed mb-3">{a.description}</p>
+                  {a.title === "Show Monthly Payments" && monthly > 0 ? (
+                    <div className="bg-gray-50 rounded-xl p-3 mb-3">
+                      <p className="text-xs text-gray-500 mb-2">
+                        At ${result.asking_price.toLocaleString()}, your buyer is looking at:
+                      </p>
+                      <div className="flex gap-4">
+                        <div className="text-center">
+                          <div className="text-lg font-extrabold text-gray-900">${monthly}/mo</div>
+                          <div className="text-xs text-gray-400">60 months @ 7%</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-extrabold text-gray-900">${Math.round(monthlyPayment(result.asking_price, 0.07, 48))}/mo</div>
+                          <div className="text-xs text-gray-400">48 months @ 7%</div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Add this to your listing — buyers who see monthly payments are 2x more likely to reach out.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 leading-relaxed mb-3">{a.description}</p>
+                  )}
                   <a
                     href={a.url}
                     target="_blank"

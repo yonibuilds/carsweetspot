@@ -8,6 +8,7 @@ const SYSTEM_PROMPT = `You are CarSweetSpot AI — an expert at analyzing privat
 Analyze the listing provided and return ONLY a valid JSON object with this exact structure (no markdown, no extra text):
 {
   "vehicle": "<Year Make Model Trim>",
+  "asking_price": <number in USD, 0 if not found>,
   "overall_score": <0-100>,
   "spots": {
     "pricing": { "score": <0-100>, "label": "<Sweet|Good|OK|Needs Work|Missing>", "summary": "<one sentence honest assessment>" },
