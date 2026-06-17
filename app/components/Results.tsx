@@ -118,19 +118,35 @@ export default function Results({
   onReset: () => void;
 }) {
   const label = scoreLabel(result.overall_score);
-  const relevantAffiliates = AFFILIATES.filter((a) => a.condition(result.spots));
+  const relevantAffiliates = AFFILIATES.filter((a) => a.condition(result.spots)).slice(0, 3);
   const monthly = result.asking_price ? monthlyPayment(result.asking_price) : 0;
+  const score = result.overall_score;
+  const circumference = 2 * Math.PI * 54;
+  const strokeDash = (score / 100) * circumference;
 
   return (
     <div className="w-full max-w-2xl mx-auto">
       {/* OVERALL SCORE */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center mb-4">
-        <p className="text-sm text-gray-500 mb-1">{result.vehicle}</p>
-        <div className={`text-7xl font-extrabold mb-2 ${scoreColor(result.overall_score)}`}>
-          {result.overall_score}
+        <p className="text-sm text-gray-500 mb-4">{result.vehicle}</p>
+        <div className="relative inline-flex items-center justify-center mb-4">
+          <svg width="128" height="128" className="-rotate-90">
+            <circle cx="64" cy="64" r="54" fill="none" stroke="#f3f4f6" strokeWidth="10" />
+            <circle
+              cx="64" cy="64" r="54" fill="none"
+              stroke={score >= 80 ? "#16a34a" : score >= 60 ? "#f97316" : "#ef4444"}
+              strokeWidth="10"
+              strokeDasharray={`${strokeDash} ${circumference}`}
+              strokeLinecap="round"
+              style={{ transition: "stroke-dasharray 0.8s ease" }}
+            />
+          </svg>
+          <div className="absolute flex flex-col items-center">
+            <span className={`text-4xl font-extrabold ${scoreColor(score)}`}>{score}</span>
+          </div>
         </div>
-        <div className="text-2xl font-bold text-gray-800 mb-1">Sweet Spot Score</div>
-        <div className={`text-lg font-semibold ${label.color}`}>{label.text}</div>
+        <div className="text-xl font-bold text-gray-800 mb-1">Sweet Spot Score</div>
+        <div className={`text-base font-semibold ${label.color}`}>{label.text}</div>
       </div>
 
       {/* 4 SPOTS */}

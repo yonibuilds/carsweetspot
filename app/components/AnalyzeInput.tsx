@@ -5,7 +5,7 @@ import Results from "./Results";
 
 type Mode = "url" | "screenshots";
 
-export default function AnalyzeInput() {
+export default function AnalyzeInput({ onResultChange }: { onResultChange?: (hasResult: boolean) => void }) {
   const [mode, setMode] = useState<Mode>("url");
   const [url, setUrl] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -76,6 +76,7 @@ export default function AnalyzeInput() {
         setError(data.error || "Something went wrong. Please try again.");
       } else {
         setResult(data);
+        onResultChange?.(true);
       }
     } catch {
       setError("Network error. Please try again.");
@@ -92,6 +93,7 @@ export default function AnalyzeInput() {
           setResult(null);
           setUrl("");
           setImages([]);
+          onResultChange?.(false);
         }}
       />
     );
