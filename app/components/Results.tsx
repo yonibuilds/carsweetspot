@@ -137,7 +137,7 @@ export default function Results({
                       {SPOT_META[key].icon} {SPOT_META[key].title}
                     </span>
                     <div className="flex items-center gap-2">
-                      {isWeak && (
+                      {fix && (
                         <span className="text-xs font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
                           Fix this
                         </span>

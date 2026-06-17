@@ -152,6 +152,21 @@ export async function POST(req: NextRequest) {
     }
 
     const result = JSON.parse(jsonMatch[0]);
+
+    // Fix financing quick win — Claude's math drifts; recalculate from asking_price
+    if (result.asking_price && Array.isArray(result.quick_wins)) {
+      const p = result.asking_price;
+      const r = 0.07 / 12;
+      const n = 60;
+      const monthly = Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+      result.quick_wins = result.quick_wins.map((win: { text: string; boost: string; spot: string }) => {
+        if (win.spot === "financing") {
+          win.text = win.text.replace(/\$[\d,]+\/month/gi, `$${monthly}/month`);
+        }
+        return win;
+      });
+    }
+
     if (url) cache.set(url, result);
     return NextResponse.json(result);
   } catch (err) {
