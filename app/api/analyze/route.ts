@@ -23,6 +23,13 @@ Analyze the listing provided and return ONLY a valid JSON object with this exact
     "<specific, actionable insight>",
     "<specific, actionable insight>"
   ],
+  "quick_wins": [
+    {
+      "text": "<exact sentence or two ready to copy-paste into the listing, specific to this car>",
+      "boost": "<e.g. '+15 Trust'>",
+      "spot": "<trust|financing|listing|pricing>"
+    }
+  ],
   "locked_count": <number between 5 and 12 representing additional premium insights>
 }
 
@@ -32,6 +39,16 @@ Scoring rules:
 - trust: Maintenance history, CARFAX mention, response time hints, seller info.
 - financing: Does the listing mention monthly payments or make it easy for a buyer to understand affordability?
 - overall_score: weighted average (pricing 30%, listing 35%, trust 25%, financing 10%)
+
+quick_wins rules:
+- Generate 2-3 items, only for spots scoring below 75
+- Each text must mention specifics from this car (year/make/model/mileage/price — whatever is known)
+- trust spot: a sentence about vehicle history or inspection (e.g. "Maintenance records available — oil changes every 5,000 miles.")
+- financing spot: include the actual monthly payment number (e.g. "Financing-friendly price — roughly $285/month for 60 months.")
+- listing spot: one specific keyword-rich sentence missing from the description
+- pricing spot: one sentence that frames the price as fair vs. comparable listings
+- No brackets, no placeholders — text must be paste-ready
+- Max 2 sentences per item
 
 Be honest and specific. Vague feedback is useless. If something is missing, say what's missing.`;
 

@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
+
 type SpotScore = {
   score: number;
   label: string;
   summary: string;
+};
+
+type QuickWin = {
+  text: string;
+  boost: string;
+  spot: "pricing" | "listing" | "trust" | "financing";
 };
 
 type AnalysisResult = {
@@ -17,6 +25,7 @@ type AnalysisResult = {
     financing: SpotScore;
   };
   free_insights: string[];
+  quick_wins?: QuickWin[];
   locked_count: number;
 };
 
@@ -76,6 +85,11 @@ const AFFILIATES: Affiliate[] = [
   },
 ];
 
+const SPOT_AFFILIATE: Partial<Record<QuickWin["spot"], { cta: string; url: string }>> = {
+  trust: { cta: "Get CARFAX →", url: "https://www.carfax.com" },
+  financing: { cta: "See rates →", url: "https://www.lendingtree.com/auto" },
+};
+
 function monthlyPayment(price: number, annualRate = 0.07, months = 60): number {
   if (!price) return 0;
   const r = annualRate / 12;
@@ -108,6 +122,15 @@ export default function Results({
   result: AnalysisResult;
   onReset: () => void;
 }) {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  function copyText(text: string, index: number) {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  }
+
   const label = scoreLabel(result.overall_score);
   const relevantAffiliates = AFFILIATES.filter((a) => a.condition(result.spots)).slice(0, 3);
   const monthly = result.asking_price ? monthlyPayment(result.asking_price) : 0;
@@ -196,6 +219,87 @@ export default function Results({
           </div>
         ))}
       </div>
+
+      {/* QUICK WINS */}
+      {result.quick_wins && result.quick_wins.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 pt-5 pb-3">
+            <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
+              Add these to your listing — free boost
+            </h3>
+            <p className="text-xs text-gray-400 mt-1">
+              Copy each line and paste it into your Craigslist or Facebook listing
+            </p>
+          </div>
+          {result.quick_wins.map((win, i) => {
+            const affiliate = SPOT_AFFILIATE[win.spot];
+            return (
+              <div key={i} className="border-t border-gray-50 px-5 py-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">
+                    {win.boost}
+                  </span>
+                  <span className="text-xs text-gray-400 uppercase tracking-wide">
+                    {SPOT_META[win.spot].icon} {SPOT_META[win.spot].title}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-800 leading-relaxed bg-gray-50 rounded-xl px-4 py-3 mb-3">
+                  {win.text}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => copyText(win.text, i)}
+                    className="flex-1 text-xs font-bold py-2 rounded-lg border border-gray-200 hover:border-orange-300 hover:text-orange-500 transition-colors"
+                  >
+                    {copiedIndex === i ? "✓ Copied!" : "Copy"}
+                  </button>
+                  {affiliate && (
+                    <a
+                      href={affiliate.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 text-xs font-bold py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-center transition-colors"
+                    >
+                      {affiliate.cta}
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          <div className="border-t border-gray-50 px-5 py-3">
+            <button
+              onClick={() => setShowInstructions(!showInstructions)}
+              className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors"
+            >
+              <span>{showInstructions ? "▲" : "▼"}</span>
+              How to edit my listing
+            </button>
+            {showInstructions && (
+              <div className="mt-3 space-y-3 text-xs text-gray-600">
+                <div>
+                  <p className="font-bold mb-1">Craigslist</p>
+                  <ol className="list-decimal list-inside space-y-0.5 text-gray-500">
+                    <li>Go to craigslist.org → My Account → Active listings</li>
+                    <li>Click Edit on your listing</li>
+                    <li>Paste the lines at the end of your description</li>
+                    <li>Click Update</li>
+                  </ol>
+                </div>
+                <div>
+                  <p className="font-bold mb-1">Facebook Marketplace</p>
+                  <ol className="list-decimal list-inside space-y-0.5 text-gray-500">
+                    <li>Open your listing → Edit listing</li>
+                    <li>Scroll to Description</li>
+                    <li>Paste the lines at the end</li>
+                    <li>Click Save</li>
+                  </ol>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* AFFILIATES */}
       {relevantAffiliates.length > 0 && (
