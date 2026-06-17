@@ -147,6 +147,19 @@ export default function Results({
                 </span>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">{spot.summary}</p>
+              {key === "financing" && monthly > 0 && (
+                <div className="mt-3 bg-white/70 rounded-xl p-2 flex gap-3 text-center">
+                  <div className="flex-1">
+                    <div className="text-base font-extrabold text-gray-900">${monthly}/mo</div>
+                    <div className="text-xs text-gray-400">60 months @ 7%</div>
+                  </div>
+                  <div className="w-px bg-gray-200" />
+                  <div className="flex-1">
+                    <div className="text-base font-extrabold text-gray-900">${Math.round(monthlyPayment(result.asking_price, 0.07, 48))}/mo</div>
+                    <div className="text-xs text-gray-400">48 months @ 7%</div>
+                  </div>
+                </div>
+              )}
               <span className="inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-white/70 text-gray-600">
                 {spot.label}
               </span>
