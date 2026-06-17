@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const cache = new Map<string, unknown>();
+
 const SYSTEM_PROMPT = `You are CarSweetSpot AI — an expert at analyzing private car listings and telling sellers exactly why their car isn't selling and how to fix it.
 
 Analyze the listing provided and return ONLY a valid JSON object with this exact structure (no markdown, no extra text):
@@ -36,6 +38,10 @@ Be honest and specific. Vague feedback is useless. If something is missing, say 
 export async function POST(req: NextRequest) {
   try {
     const { url, images, text } = await req.json();
+
+    if (url && cache.has(url)) {
+      return NextResponse.json(cache.get(url));
+    }
 
     const messageContent: Anthropic.MessageParam["content"] = [];
 
@@ -129,6 +135,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = JSON.parse(jsonMatch[0]);
+    if (url) cache.set(url, result);
     return NextResponse.json(result);
   } catch (err) {
     console.error(err);
