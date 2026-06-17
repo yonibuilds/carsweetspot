@@ -26,6 +26,55 @@ const SPOT_META = {
   financing: { icon: "📅", title: "Financing Sweet Spot" },
 };
 
+type Affiliate = {
+  icon: string;
+  title: string;
+  description: string;
+  boost: string;
+  cta: string;
+  url: string;
+  condition: (spots: AnalysisResult["spots"]) => boolean;
+};
+
+const AFFILIATES: Affiliate[] = [
+  {
+    icon: "📋",
+    title: "Add a CARFAX Report",
+    description: "Buyers trust listings with vehicle history. A CARFAX report removes the #1 reason buyers walk away.",
+    boost: "+15 to your Trust Score",
+    cta: "Get CARFAX Report →",
+    url: "https://www.carfax.com",
+    condition: (spots) => spots.trust.score < 85,
+  },
+  {
+    icon: "💵",
+    title: "Show Monthly Payments",
+    description: "Most buyers think in monthly payments, not sticker price. Add a financing option to remove the biggest mental blocker.",
+    boost: "+20 to your Financing Score",
+    cta: "Add Financing via LendingTree →",
+    url: "https://www.lendingtree.com/auto",
+    condition: (spots) => spots.financing.score < 70,
+  },
+  {
+    icon: "🔧",
+    title: "Get a Pre-Sale Inspection",
+    description: "A clean inspection report signals confidence. Buyers who see it stop negotiating on price.",
+    boost: "+10 to your Trust Score",
+    cta: "Book Lemon Squad Inspection →",
+    url: "https://www.lemonsquad.com",
+    condition: (spots) => spots.trust.score < 80,
+  },
+  {
+    icon: "📸",
+    title: "Professional Photos",
+    description: "Listings with pro photos sell 2x faster. Better photos are the single highest-ROI upgrade for your listing.",
+    boost: "+15 to your Listing Score",
+    cta: "Find a Car Photographer →",
+    url: "https://www.snappr.com",
+    condition: (spots) => spots.listing.score < 75,
+  },
+];
+
 function scoreColor(score: number) {
   if (score >= 80) return "text-green-600";
   if (score >= 60) return "text-orange-500";
@@ -53,6 +102,7 @@ export default function Results({
   onReset: () => void;
 }) {
   const label = scoreLabel(result.overall_score);
+  const relevantAffiliates = AFFILIATES.filter((a) => a.condition(result.spots));
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -70,10 +120,7 @@ export default function Results({
       <div className="grid grid-cols-2 gap-3 mb-4">
         {(Object.entries(result.spots) as [keyof typeof SPOT_META, SpotScore][]).map(
           ([key, spot]) => (
-            <div
-              key={key}
-              className={`rounded-2xl border p-4 ${scoreBg(spot.score)}`}
-            >
+            <div key={key} className={`rounded-2xl border p-4 ${scoreBg(spot.score)}`}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold text-gray-700">
                   {SPOT_META[key].icon} {SPOT_META[key].title}
@@ -106,14 +153,47 @@ export default function Results({
         </ul>
       </div>
 
+      {/* AFFILIATES */}
+      {relevantAffiliates.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-1">
+            Boost your Sweet Spot Score
+          </p>
+          <div className="space-y-3">
+            {relevantAffiliates.map((a) => (
+              <div
+                key={a.title}
+                className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex gap-4 items-start"
+              >
+                <div className="text-2xl shrink-0">{a.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-bold text-gray-900 text-sm">{a.title}</span>
+                    <span className="text-xs font-semibold text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                      {a.boost}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 leading-relaxed mb-3">{a.description}</p>
+                  <a
+                    href={a.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-gray-900 hover:bg-gray-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+                  >
+                    {a.cta}
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* LOCKED */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-4 relative overflow-hidden">
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex gap-3 text-sm text-gray-300 blur-[3px] select-none"
-            >
+            <div key={i} className="flex gap-3 text-sm text-gray-300 blur-[3px] select-none">
               <span className="font-bold shrink-0">→</span>
               {"Your listing is missing a key trust signal that buyers look for before they pick up the phone to call you."}
             </div>
