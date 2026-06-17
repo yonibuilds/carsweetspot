@@ -127,7 +127,7 @@ export default function AnalyzeInput({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://craigslist.org/... or facebook.com/marketplace/..."
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
         </div>
       )}
@@ -145,14 +145,14 @@ export default function AnalyzeInput({
             onClick={() => fileInputRef.current?.click()}
             className={`relative border-2 border-dashed rounded-xl px-4 py-8 text-center cursor-pointer transition-colors ${
               dragging
-                ? "border-orange-400 bg-orange-50"
-                : "border-gray-300 hover:border-orange-400 hover:bg-orange-50"
+                ? "border-slate-400 bg-slate-50"
+                : "border-gray-300 hover:border-slate-400 hover:bg-slate-50"
             }`}
           >
             <div className="text-3xl mb-2">📸</div>
             <p className="text-sm font-semibold text-gray-700">Drag & drop screenshots here</p>
             <p className="text-xs text-gray-400 mt-1">
-              or <span className="text-orange-500 font-semibold">click to browse</span> · or press{" "}
+              or <span className="text-slate-700 font-semibold">click to browse</span> · or press{" "}
               <kbd className="bg-gray-100 border border-gray-300 rounded px-1 py-0.5 text-xs font-mono">
                 Ctrl+V
               </kbd>{" "}
@@ -184,7 +184,7 @@ export default function AnalyzeInput({
               ))}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors text-xl"
+                className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center text-gray-400 hover:border-slate-400 hover:text-slate-600 transition-colors text-xl"
               >
                 +
               </button>
@@ -202,7 +202,7 @@ export default function AnalyzeInput({
       <button
         onClick={handleSubmit}
         disabled={loading || (mode === "url" ? !url : images.length === 0)}
-        className="mt-5 w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3 rounded-xl transition-colors text-base flex items-center justify-center gap-2"
+        className="mt-5 w-full bg-slate-900 hover:bg-slate-700 disabled:bg-slate-300 text-white font-bold py-3 rounded-xl transition-colors text-base flex items-center justify-center gap-2"
       >
         {loading ? (
           <>

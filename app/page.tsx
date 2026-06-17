@@ -35,15 +35,15 @@ export default function Home() {
       {/* NAV */}
       <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
         <span className="text-lg font-black text-slate-900">🍬 CarSweetSpot</span>
-        <a href="#analyze" className="bg-orange-500 text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-orange-600 transition-colors">
+        <a href="#analyze" className="bg-slate-900 text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-slate-700 transition-colors">
           Analyze My Listing
         </a>
       </nav>
 
       {/* HERO */}
       <section className="flex flex-col items-center text-center px-4 pt-16 pb-12 bg-white">
-        <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-600 text-xs font-bold px-4 py-1.5 rounded-full mb-8 border border-orange-100">
-          <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+        <div className="inline-flex items-center gap-2 bg-slate-100 text-slate-600 text-xs font-bold px-4 py-1.5 rounded-full mb-8 border border-slate-200">
+          <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-pulse" />
           Free analysis — no signup needed
         </div>
         <h1 className="text-4xl sm:text-6xl font-black text-slate-900 max-w-2xl leading-[1.1] mb-6">
@@ -122,14 +122,14 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-orange-500 px-6 py-14 text-center">
+      <section className="bg-slate-900 px-6 py-14 text-center">
         <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
           Find your Sweet Spot — free
         </h2>
-        <p className="text-orange-100 mb-8 max-w-sm mx-auto text-sm leading-relaxed">
+        <p className="text-slate-400 mb-8 max-w-sm mx-auto text-sm leading-relaxed">
           Stop guessing why your car isn&apos;t selling. Get your score in 10 seconds.
         </p>
-        <a href="#analyze" className="inline-block bg-white text-orange-500 font-black px-8 py-3 rounded-full hover:bg-orange-50 transition-colors">
+        <a href="#analyze" className="inline-block bg-white text-slate-900 font-black px-8 py-3 rounded-full hover:bg-slate-100 transition-colors">
           Analyze My Listing →
         </a>
       </section>
