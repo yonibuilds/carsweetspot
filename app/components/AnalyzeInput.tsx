@@ -1,18 +1,24 @@
 "use client";
 
 import { useState, useRef, useCallback, DragEvent, ClipboardEvent, ChangeEvent } from "react";
-import Results from "./Results";
 
 type Mode = "url" | "screenshots";
 
-export default function AnalyzeInput({ onResultChange }: { onResultChange?: (hasResult: boolean) => void }) {
+type AnalysisResult = Record<string, unknown>;
+
+export default function AnalyzeInput({
+  onResult,
+  onResultChange,
+}: {
+  onResult?: (result: AnalysisResult) => void;
+  onResultChange?: (hasResult: boolean) => void;
+}) {
   const [mode, setMode] = useState<Mode>("url");
   const [url, setUrl] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<null | Record<string, unknown>>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = useCallback((files: FileList | File[]) => {
@@ -75,7 +81,7 @@ export default function AnalyzeInput({ onResultChange }: { onResultChange?: (has
       if (!res.ok) {
         setError(data.error || "Something went wrong. Please try again.");
       } else {
-        setResult(data);
+        onResult?.(data);
         onResultChange?.(true);
       }
     } catch {
@@ -84,20 +90,6 @@ export default function AnalyzeInput({ onResultChange }: { onResultChange?: (has
       setLoading(false);
     }
   };
-
-  if (result) {
-    return (
-      <Results
-        result={result as Parameters<typeof Results>[0]["result"]}
-        onReset={() => {
-          setResult(null);
-          setUrl("");
-          setImages([]);
-          onResultChange?.(false);
-        }}
-      />
-    );
-  }
 
   return (
     <div
