@@ -38,6 +38,15 @@ type Affiliate = {
 
 const AFFILIATES: Affiliate[] = [
   {
+    icon: "🛡️",
+    title: "Help Your Buyer Get Insured Instantly",
+    description: "Send your buyer a pre-filled insurance quote with your car's details. Removes the last barrier before they say yes.",
+    boost: "Speeds up your sale",
+    cta: "Get Insurance Quote for This Car →",
+    url: "#",
+    condition: () => true,
+  },
+  {
     icon: "📋",
     title: "Add a CARFAX Report",
     description: "Buyers trust listings with vehicle history. A CARFAX report removes the #1 reason buyers walk away.",
