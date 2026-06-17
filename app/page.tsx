@@ -26,7 +26,7 @@ export default function Home() {
       </nav>
 
       {/* HERO — always visible, layout changes when results shown */}
-      <section className={`flex flex-col items-center text-center px-4 bg-white ${hasResults ? "pt-8 pb-8" : "pt-16 pb-12"}`}>
+      <section className={`flex flex-col items-center px-4 bg-white ${!hasResults ? "text-center" : ""} ${hasResults ? "pt-8 pb-8" : "pt-16 pb-12"}`}>
         {!hasResults && (
           <>
             <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-600 text-xs font-bold px-4 py-1.5 rounded-full mb-8 border border-orange-100">

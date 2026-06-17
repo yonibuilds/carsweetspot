@@ -37,8 +37,8 @@ const SPOT_META = {
 };
 
 const SPOT_FIX: Partial<Record<keyof typeof SPOT_META, { cta: string; url: string; boost: string }>> = {
-  trust: { cta: "Get CARFAX Report", url: "https://www.carfax.com", boost: "+15 Trust" },
-  financing: { cta: "Add Financing Info", url: "https://www.lendingtree.com/auto", boost: "+20 Financing" },
+  trust: { cta: "Get CARFAX →", url: "https://www.carfax.com", boost: "+15" },
+  financing: { cta: "See financing →", url: "https://www.lendingtree.com/auto", boost: "+20" },
 };
 
 const SPOT_AFFILIATE: Partial<Record<QuickWin["spot"], { cta: string; url: string }>> = {
