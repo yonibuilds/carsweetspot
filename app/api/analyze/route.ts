@@ -41,14 +41,14 @@ Scoring rules:
 - overall_score: weighted average (pricing 30%, listing 35%, trust 25%, financing 10%)
 
 quick_wins rules:
-- Generate 2-3 items, only for spots scoring below 75
-- Each text must mention specifics from this car (year/make/model/mileage/price — whatever is known)
-- trust spot: a sentence about vehicle history or inspection (e.g. "Maintenance records available — oil changes every 5,000 miles.")
-- financing spot: include the actual monthly payment number (e.g. "Financing-friendly price — roughly $285/month for 60 months.")
-- listing spot: one specific keyword-rich sentence missing from the description
-- pricing spot: one sentence that frames the price as fair vs. comparable listings
-- No brackets, no placeholders — text must be paste-ready
-- Max 2 sentences per item
+- ABSOLUTE RULE: Every word in quick_wins text must be a fact the seller explicitly stated. Zero exceptions.
+- Never write "CARFAX available", "service records included", "well-maintained", "no accidents", or any feature/history the seller did not say in the listing.
+- financing: always generate — calculate from asking_price (e.g. "Financing-friendly — roughly $285/month for 60 months at standard rates.")
+- trust: ONLY generate if the seller explicitly mentioned CARFAX, inspection, service records, or maintenance history. If they didn't, skip trust entirely.
+- listing: ONLY reformat facts the seller already stated (year, make, model, miles, color, title status, location) into a keyword-rich sentence. Do not add anything not mentioned.
+- pricing: only if seller stated a price comparison or market justification. Otherwise skip.
+- Returning 1 item is fine. Do not invent content to fill 3 slots.
+- No brackets, no placeholders — text must be paste-ready as-is.
 
 Be honest and specific. Vague feedback is useless. If something is missing, say what's missing.`;
 
