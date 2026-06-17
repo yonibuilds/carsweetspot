@@ -220,22 +220,9 @@ export default function Results({
                     </span>
                   </div>
                   {a.title === "Show Monthly Payments" && monthly > 0 ? (
-                    <div className="bg-gray-50 rounded-xl p-3 mb-3">
-                      <p className="text-xs text-gray-500 mb-2">
-                        At ${result.asking_price.toLocaleString()}, your buyer is looking at:
-                      </p>
-                      <div className="flex gap-4">
-                        <div className="text-center">
-                          <div className="text-lg font-extrabold text-gray-900">${monthly}/mo</div>
-                          <div className="text-xs text-gray-400">60 months @ 7%</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-lg font-extrabold text-gray-900">${Math.round(monthlyPayment(result.asking_price, 0.07, 48))}/mo</div>
-                          <div className="text-xs text-gray-400">48 months @ 7%</div>
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Add this to your listing — buyers who see monthly payments are 2x more likely to reach out.
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-500">
+                        Help your buyer get financing — they already know it&apos;s ~${monthly}/mo. Make it easy for them to say yes.
                       </p>
                     </div>
                   ) : (
