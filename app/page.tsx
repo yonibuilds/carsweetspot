@@ -43,7 +43,7 @@ export default function Home() {
           </>
         )}
 
-        <div id="analyze" className="w-full max-w-xl">
+        <div id="analyze" className={`w-full ${hasResults ? "max-w-5xl" : "max-w-xl"}`}>
           <AnalyzeInput onResultChange={setHasResults} />
         </div>
 
