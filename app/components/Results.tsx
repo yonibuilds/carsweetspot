@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 type SpotScore = {
   score: number;
@@ -71,6 +71,7 @@ export default function Results({
 }) {
   const [completed, setCompleted] = useState<Set<number>>(new Set());
   const [showInstructions, setShowInstructions] = useState(false);
+  const [expandedSpot, setExpandedSpot] = useState<string | null>(null);
 
   function markComplete(text: string, index: number) {
     navigator.clipboard.writeText(text);
@@ -116,8 +117,13 @@ export default function Results({
                   cx="90" cy="90" r={r} fill="none"
                   stroke={theme.primary}
                   strokeWidth="12"
-                  strokeDasharray={`${strokeDash} ${circumference}`}
+                  strokeDasharray={`${circumference} ${circumference}`}
                   strokeLinecap="round"
+                  className="score-ring"
+                  style={{
+                    "--circumference": circumference,
+                    "--dash-offset": circumference - strokeDash,
+                  } as React.CSSProperties}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -180,32 +186,56 @@ export default function Results({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(Object.entries(result.spots) as [keyof typeof SPOT_META, SpotScore][]).map(([key, spot]) => {
               const style = spotStyle(spot.score);
+              const isOpen = expandedSpot === key;
               return (
-                <div
-                  key={key}
-                  className="rounded-2xl p-4 border"
-                  style={{ backgroundColor: style.bg, borderColor: style.border }}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                      {SPOT_META[key].icon}
-                    </span>
-                    <span className="text-xl font-black" style={{ color: style.color }}>
-                      {spot.score}
-                    </span>
-                  </div>
-                  <p className="text-xs font-bold text-zinc-500 mb-2">{SPOT_META[key].title}</p>
-                  <div className="h-1.5 rounded-full" style={{ backgroundColor: style.color + "25" }}>
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${spot.score}%`, backgroundColor: style.color }}
-                    />
-                  </div>
+                <div key={key}>
+                  <button
+                    onClick={() => setExpandedSpot(isOpen ? null : key)}
+                    className="w-full rounded-2xl p-4 border text-left transition-shadow hover:shadow-md"
+                    style={{ backgroundColor: style.bg, borderColor: isOpen ? style.color : style.border }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-base">{SPOT_META[key].icon}</span>
+                      <span className="text-xl font-black" style={{ color: style.color }}>
+                        {spot.score}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-zinc-500 mb-2">{SPOT_META[key].title}</p>
+                    <div className="h-1.5 rounded-full" style={{ backgroundColor: style.color + "25" }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${spot.score}%`, backgroundColor: style.color }}
+                      />
+                    </div>
+                    {key === "financing" && monthly > 0 && (
+                      <p className="text-xs font-bold mt-2" style={{ color: style.color }}>
+                        ${monthly}/mo
+                      </p>
+                    )}
+                  </button>
 
-                  {key === "financing" && monthly > 0 && (
-                    <p className="text-xs font-bold mt-2" style={{ color: style.color }}>
-                      ${monthly}/mo
-                    </p>
+                  {isOpen && (
+                    <div
+                      className="mt-2 rounded-2xl p-4 border text-xs leading-relaxed"
+                      style={{ backgroundColor: style.bg, borderColor: style.border, color: style.color + "CC" }}
+                    >
+                      {spot.summary}
+                      {key === "financing" && monthly > 0 && (
+                        <div className="mt-3 flex gap-3 bg-white/60 rounded-xl p-3 text-center">
+                          <div className="flex-1">
+                            <div className="text-sm font-black text-zinc-900">${monthly}/mo</div>
+                            <div className="text-xs text-zinc-400 mt-0.5">60 mo @ 7%</div>
+                          </div>
+                          <div className="w-px bg-zinc-200" />
+                          <div className="flex-1">
+                            <div className="text-sm font-black text-zinc-900">
+                              ${Math.round(monthlyPayment(result.asking_price, 0.07, 48))}/mo
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-0.5">48 mo @ 7%</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               );
