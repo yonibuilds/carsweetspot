@@ -63,8 +63,9 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
 
 Rules:
 - overall_score: weighted (pricing 30%, listing quality 35%, trust signals 25%, financing info 10%)
-- biggest_problem: the single most damaging issue hurting buyer contact rate
-- also_hurting: exactly 2 additional problems, different categories from biggest_problem
+- overall_score: NEVER penalize for salvage/rebuilt title — the seller cannot change the title status. Score as if the title were clean, and treat it as an opportunity instead.
+- biggest_problem: the single most damaging issue hurting buyer contact rate — must be something the seller can actually fix (copy, photos, price, missing info). Never use title status as a problem.
+- also_hurting: exactly 2 additional problems, different categories from biggest_problem — must be actionable by the seller
 - before/after: ONLY facts the seller stated. Never invent features not in the listing. "after" must be paste-ready.
 - whats_working: genuine strengths, not filler. If fewer than 3 exist, only return what's real.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
