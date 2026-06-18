@@ -67,7 +67,10 @@ export default function Results({
   const potentialScore = Math.min(100, score + totalBoost);
   const earnedPts = wins.filter((_, i) => completed.has(i)).reduce((s, w) => s + parseBoost(w.boost), 0);
   const currentScore = Math.min(100, score + earnedPts);
-  const carPct = totalBoost > 0 ? (earnedPts / totalBoost) * 100 : 0;
+  // Car position: starts at current score, moves toward potentialScore as fixes are completed
+  const carPct = potentialScore > score
+    ? ((score + earnedPts - score) / (potentialScore - score)) * 100
+    : 0;
 
   function copyText(text: string, index: number) {
     navigator.clipboard.writeText(text);
@@ -163,21 +166,39 @@ export default function Results({
     return (
       <div style={{ minHeight: "calc(100vh - 57px)", background: "#FFFDF8" }}>
 
+        {/* STEP INDICATOR */}
+        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: "12px 24px" }}>
+          <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              {[1, 2, 3, 4].map(s => (
+                <div key={s} style={{
+                  width: s === 2 ? 24 : 8,
+                  height: 8,
+                  borderRadius: 99,
+                  background: s === 2 ? theme.primary : s < 2 ? "#CBD5E1" : "#E2E8F0",
+                  transition: "all 0.3s",
+                }} />
+              ))}
+            </div>
+            <span style={{ fontSize: 12, color: "#94A3B8", fontFamily: "var(--font-inter)" }}>
+              Step 2 of 4 — Your fixes
+            </span>
+          </div>
+        </div>
+
         {/* CAR TRACKER */}
-        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: "20px 24px" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: "16px 24px" }}>
           <div style={{ maxWidth: 560, margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#94A3B8", marginBottom: 10, fontFamily: "var(--font-inter)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              <span>Listed</span>
+              <span>Listed · {score}</span>
               <span style={{ color: completed.size === wins.length ? "#2FBF71" : "#94A3B8", fontWeight: completed.size === wins.length ? 700 : 400 }}>
-                {completed.size === wins.length ? "Ready to sell! 🎉" : `${completed.size} of ${wins.length} fixes done`}
+                {completed.size === wins.length ? "All fixes done 🎉" : `${completed.size} of ${wins.length} fixed`}
               </span>
-              <span>Deal</span>
+              <span style={{ color: theme.primary }}>Deal · {potentialScore}</span>
             </div>
 
-            <div style={{ position: "relative", height: 28, display: "flex", alignItems: "center" }}>
-              {/* Track */}
+            <div style={{ position: "relative", height: 32, display: "flex", alignItems: "center" }}>
               <div style={{ position: "absolute", left: 0, right: 0, height: 3, background: "#E2E8F0", borderRadius: 99 }} />
-              {/* Fill */}
               <div style={{
                 position: "absolute",
                 left: 0,
@@ -187,31 +208,25 @@ export default function Results({
                 width: `${carPct}%`,
                 transition: "width 0.6s cubic-bezier(0.4,0,0.2,1)",
               }} />
-              {/* Car */}
               <div style={{
                 position: "absolute",
-                left: `calc(${carPct}% - 14px)`,
-                fontSize: 24,
+                left: `calc(${carPct}% - 12px)`,
+                fontSize: 22,
                 transition: "left 0.6s cubic-bezier(0.4,0,0.2,1)",
                 lineHeight: 1,
               }}>
                 🚗
               </div>
-              {/* Destination dot */}
               <div style={{
                 position: "absolute",
                 right: 0,
-                width: 12,
-                height: 12,
+                width: 14,
+                height: 14,
                 borderRadius: "50%",
                 border: `2px solid ${theme.primary}`,
-                background: "white",
+                background: completed.size === wins.length ? theme.primary : "white",
+                transition: "background 0.4s",
               }} />
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 12, fontFamily: "var(--font-manrope)", fontWeight: 700 }}>
-              <span style={{ color: "#1F2937" }}>{currentScore}</span>
-              <span style={{ color: theme.primary }}>{potentialScore}</span>
             </div>
           </div>
         </div>
@@ -219,10 +234,10 @@ export default function Results({
         {/* FIXES */}
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px" }}>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1F2937", marginBottom: 6, fontFamily: "var(--font-manrope)" }}>
-            {wins.length} thing{wins.length !== 1 ? "s" : ""} hurting your listing
+            {wins.length} quick fix{wins.length !== 1 ? "es" : ""} — copy & paste
           </h2>
           <p style={{ fontSize: 14, color: "#94A3B8", marginBottom: 20, fontFamily: "var(--font-inter)" }}>
-            Each fix moves your car closer to the deal.
+            Add each line to your listing description. Each one moves your score up.
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -320,7 +335,7 @@ export default function Results({
                         {win.text}
                       </div>
 
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                         <button
                           onClick={() => { copyText(win.text, i); setExpanded(null); }}
                           style={{
@@ -359,6 +374,27 @@ export default function Results({
                           </a>
                         )}
                       </div>
+
+                      {/* HOW TO ADD */}
+                      <div style={{ background: "#F1F5F9", borderRadius: 8, padding: "10px 12px" }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 6, fontFamily: "var(--font-manrope)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                          How to add this
+                        </p>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <div>
+                            <p style={{ fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 2, fontFamily: "var(--font-manrope)" }}>Craigslist</p>
+                            <p style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5, fontFamily: "var(--font-inter)", margin: 0 }}>
+                              My Account → Active listings → Edit → paste at end of description
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: 11, fontWeight: 700, color: "#475569", marginBottom: 2, fontFamily: "var(--font-manrope)" }}>Facebook</p>
+                            <p style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5, fontFamily: "var(--font-inter)", margin: 0 }}>
+                              Open listing → Edit → scroll to Description → paste at end
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -395,6 +431,14 @@ export default function Results({
     return (
       <div style={{ minHeight: "calc(100vh - 57px)", background: "#FFFDF8" }}>
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "40px 16px" }}>
+
+          {/* Step indicator */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 28 }}>
+            {[1,2,3,4].map(n => (
+              <div key={n} style={{ height: 4, flex: 1, borderRadius: 99, background: n <= 3 ? theme.primary : "#E2E8F0" }} />
+            ))}
+            <span style={{ fontSize: 11, color: "#94A3B8", marginLeft: 6, fontFamily: "var(--font-manrope)", fontWeight: 700, whiteSpace: "nowrap" }}>Step 3 of 4</span>
+          </div>
 
           <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: 12, fontFamily: "var(--font-manrope)", fontWeight: 700 }}>
             Why buyers are hesitating
@@ -454,6 +498,14 @@ export default function Results({
   return (
     <div style={{ minHeight: "calc(100vh - 57px)", background: "#0F172A", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+
+        {/* Step indicator */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 32 }}>
+          {[1,2,3,4].map(n => (
+            <div key={n} style={{ height: 4, flex: 1, borderRadius: 99, background: theme.primary }} />
+          ))}
+          <span style={{ fontSize: 11, color: "#64748B", marginLeft: 6, fontFamily: "var(--font-manrope)", fontWeight: 700, whiteSpace: "nowrap" }}>Step 4 of 4</span>
+        </div>
 
         <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
 
