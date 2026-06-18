@@ -4,20 +4,44 @@ import { useState, useRef, useCallback, useEffect, DragEvent, ClipboardEvent, Ch
 import Flow, { AnalysisResult } from "./components/Flow";
 
 // Speedometer that animates during loading
-function AnalyzingScreen({ vehicle }: { vehicle: string }) {
+function AnalyzingScreen({ vehicle, finalScore, onDone }: { vehicle: string; finalScore: number | null; onDone: () => void }) {
   const [displayScore, setDisplayScore] = useState(0);
+  const currentRef = useRef(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Slowly creep the needle up to ~65 while waiting
   useEffect(() => {
-    let current = 0;
-    const target = 65;
-    const interval = setInterval(() => {
-      current += 0.8;
-      if (current >= target) { clearInterval(interval); current = target; }
-      setDisplayScore(Math.round(current));
+    // Creep up to 65 while loading
+    intervalRef.current = setInterval(() => {
+      currentRef.current += 0.8;
+      if (currentRef.current >= 65) {
+        currentRef.current = 65;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+      }
+      setDisplayScore(Math.round(currentRef.current));
     }, 40);
-    return () => clearInterval(interval);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);
+
+  // When result arrives, animate to real score then hand off
+  useEffect(() => {
+    if (finalScore === null) return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const start = currentRef.current;
+    const target = finalScore;
+    const step = start < target ? 0.8 : -0.8;
+    intervalRef.current = setInterval(() => {
+      currentRef.current += step;
+      const done = step > 0 ? currentRef.current >= target : currentRef.current <= target;
+      if (done) {
+        currentRef.current = target;
+        setDisplayScore(target);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setTimeout(onDone, 400);
+      } else {
+        setDisplayScore(Math.round(currentRef.current));
+      }
+    }, 20);
+  }, [finalScore, onDone]);
 
   const R = 90, cx = 130, cy = 110;
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -100,6 +124,7 @@ type Mode = "url" | "screenshots";
 
 export default function Home() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [pendingResult, setPendingResult] = useState<AnalysisResult | null>(null);
   const [mode, setMode] = useState<Mode>("url");
   const [url, setUrl] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -128,7 +153,7 @@ export default function Home() {
   }, [addFiles]);
 
   const handleSubmit = async () => {
-    setError(""); setLoading(true);
+    setError(""); setLoading(true); setPendingResult(null);
     try {
       const body: Record<string, unknown> = {};
       if (mode === "url") body.url = url;
@@ -137,18 +162,23 @@ export default function Home() {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) setError(data.error || "Something went wrong.");
-      else setResult(data as AnalysisResult);
-    } catch { setError("Network error. Please try again."); }
-    finally { setLoading(false); }
+      if (!res.ok) { setError(data.error || "Something went wrong."); setLoading(false); }
+      else setPendingResult(data as AnalysisResult);
+    } catch { setError("Network error. Please try again."); setLoading(false); }
   };
 
   if (result) {
-    return <Flow result={result} onReset={() => { setResult(null); setUrl(""); setImages([]); }} />;
+    return <Flow result={result} onReset={() => { setResult(null); setUrl(""); setImages([]); setPendingResult(null); }} />;
   }
 
-  if (loading) {
-    return <AnalyzingScreen vehicle={url ? url.split("/").filter(Boolean).pop() ?? "your listing" : "your listing"} />;
+  if (loading || pendingResult) {
+    return (
+      <AnalyzingScreen
+        vehicle={url ? url.split("/").filter(Boolean).pop() ?? "your listing" : "your listing"}
+        finalScore={pendingResult ? pendingResult.overall_score : null}
+        onDone={() => { if (pendingResult) { setResult(pendingResult); setLoading(false); } }}
+      />
+    );
   }
 
   return (
