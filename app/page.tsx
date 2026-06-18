@@ -1,7 +1,88 @@
 "use client";
 
-import { useState, useRef, useCallback, DragEvent, ClipboardEvent, ChangeEvent } from "react";
+import { useState, useRef, useCallback, useEffect, DragEvent, ClipboardEvent, ChangeEvent } from "react";
 import Flow, { AnalysisResult } from "./components/Flow";
+
+// Speedometer that animates during loading
+function AnalyzingScreen({ vehicle }: { vehicle: string }) {
+  const [displayScore, setDisplayScore] = useState(0);
+
+  // Slowly creep the needle up to ~65 while waiting
+  useEffect(() => {
+    let current = 0;
+    const target = 65;
+    const interval = setInterval(() => {
+      current += 0.8;
+      if (current >= target) { clearInterval(interval); current = target; }
+      setDisplayScore(Math.round(current));
+    }, 40);
+    return () => clearInterval(interval);
+  }, []);
+
+  const R = 90, cx = 130, cy = 110;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const ax = (a: number) => cx + R * Math.cos(toRad(a));
+  const ay = (a: number) => cy + R * Math.sin(toRad(a));
+  const trackD = `M ${ax(-180)} ${ay(-180)} A ${R} ${R} 0 0 1 ${ax(0)} ${ay(0)}`;
+  const pct = displayScore / 100;
+  const needleAngle = -180 + pct * 180;
+  const nLen = 70;
+  const nx = cx + nLen * Math.cos(toRad(needleAngle));
+  const ny = cy + nLen * Math.sin(toRad(needleAngle));
+  const tickers = Array.from({ length: 9 }, (_, i) => {
+    const angle = -180 + i * (180 / 8);
+    return {
+      x1: cx + (R - 10) * Math.cos(toRad(angle)), y1: cy + (R - 10) * Math.sin(toRad(angle)),
+      x2: cx + (R - 2) * Math.cos(toRad(angle)), y2: cy + (R - 2) * Math.sin(toRad(angle)),
+    };
+  });
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <nav style={{ width: "100%", background: "white", borderBottom: "1px solid #E2E8F0", display: "flex", alignItems: "center", padding: "0 24px", height: 50 }}>
+        <span style={{ fontFamily: "var(--font-jakarta)", fontSize: 14, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>CarSweetSpot</span>
+      </nav>
+      <div style={{ display: "flex", justifyContent: "center", padding: "28px 16px" }}>
+        <div style={{ width: "100%", maxWidth: 440, background: "white", border: "1px solid #E2E8F0", borderRadius: 24, boxShadow: "0 8px 32px -4px rgba(0,0,0,0.06)", padding: "32px 24px", textAlign: "center" }}>
+          <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 20 }}>
+            Analyzing your listing
+          </p>
+          <svg width={260} height={130} viewBox="0 0 260 130" style={{ overflow: "visible" }}>
+            <defs>
+              <linearGradient id="ag" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#EF4444" />
+                <stop offset="40%" stopColor="#D97706" />
+                <stop offset="100%" stopColor="#22C55E" />
+              </linearGradient>
+            </defs>
+            <path d={trackD} fill="none" stroke="#F1F5F9" strokeWidth={18} strokeLinecap="round" />
+            <path d={trackD} fill="none" stroke="url(#ag)" strokeWidth={18} strokeLinecap="round"
+              strokeDasharray={`${pct * Math.PI * R} ${Math.PI * R}`} />
+            {tickers.map((t, i) => (
+              <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#CBD5E1" strokeWidth={1.5} strokeLinecap="round" />
+            ))}
+            <line x1={cx} y1={cy} x2={nx} y2={ny} stroke="#0F172A" strokeWidth={2.5} strokeLinecap="round" />
+            <circle cx={cx} cy={cy} r={6} fill="#0F172A" />
+            <circle cx={cx} cy={cy} r={3} fill="#fff" />
+          </svg>
+          <div style={{ marginTop: -8 }}>
+            <div style={{ fontFamily: "var(--font-jakarta)", fontSize: 80, fontWeight: 800, color: "#D97706", lineHeight: 1, letterSpacing: "-0.05em" }}>
+              {displayScore}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 24, fontFamily: "var(--font-inter)", fontSize: 13, color: "#64748B" }}>
+            <svg style={{ animation: "spin 1s linear infinite", width: 14, height: 14, flexShrink: 0 }} fill="none" viewBox="0 0 24 24">
+              <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+            Scoring your listing...
+          </div>
+        </div>
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
 
 const H = { fontFamily: "var(--font-jakarta)" };
 const B = { fontFamily: "var(--font-inter)" };
@@ -64,6 +145,10 @@ export default function Home() {
 
   if (result) {
     return <Flow result={result} onReset={() => { setResult(null); setUrl(""); setImages([]); }} />;
+  }
+
+  if (loading) {
+    return <AnalyzingScreen vehicle={url ? url.split("/").filter(Boolean).pop() ?? "your listing" : "your listing"} />;
   }
 
   return (
