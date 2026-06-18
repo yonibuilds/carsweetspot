@@ -228,18 +228,27 @@ function Screen2({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
 
         <Speedometer score={result.overall_score} />
 
-        {/* 2×2 category grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, margin: "20px 0 24px" }}>
-          {["Pricing", "Listing", "Trust", "Financing"].map(cat => (
-            <div key={cat} style={{
-              ...B, display: "flex", alignItems: "center", gap: 6,
-              background: "#F0FDF4", border: "1px solid #DCFCE7",
-              borderRadius: 10, padding: "8px 12px",
-              fontSize: 12, fontWeight: 600, color: "#15803D",
-            }}>
-              <span style={{ fontSize: 13 }}>✓</span> {cat} analyzed
+        {/* What's coming summary */}
+        <div style={{ margin: "20px 0 24px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, padding: "10px 14px" }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>🚨</span>
+            <div>
+              <div style={{ ...B, fontSize: 11, fontWeight: 700, color: "#991B1B", textTransform: "uppercase", letterSpacing: "0.06em" }}>Biggest Problem</div>
+              <div style={{ ...H, fontSize: 13, fontWeight: 700, color: T.text, marginTop: 2 }}>{result.biggest_problem.title}</div>
             </div>
-          ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 10, padding: "10px 14px" }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>⚠️</span>
+            <div style={{ ...B, fontSize: 13, color: "#92400E" }}>
+              <strong>{(result.also_hurting ?? []).length} more issues</strong> we&apos;ll walk you through
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 10, padding: "10px 14px" }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>💡</span>
+            <div style={{ ...B, fontSize: 13, color: "#5B21B6" }}>
+              <strong>{(result.opportunities ?? []).length} opportunities</strong> to attract more buyers
+            </div>
+          </div>
         </div>
 
         <PrimaryBtn onClick={onNext}>See Your Diagnosis →</PrimaryBtn>
