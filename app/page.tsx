@@ -11,131 +11,243 @@ export default function Home() {
 
   if (result) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
-          <span className="text-lg font-black text-slate-900">🍬 CarSweetSpot</span>
+      <main style={{ minHeight: "100vh", background: "#F9F9F7" }}>
+        <nav style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 32px",
+          height: 60,
+          background: "white",
+          borderBottom: "1px solid #E5E5E3",
+        }}>
+          <span style={{ fontSize: 16, fontWeight: 800, color: "#111", letterSpacing: "-0.02em", fontFamily: "var(--font-manrope)" }}>
+            CarSweetSpot
+          </span>
           <button
             onClick={() => setResult(null)}
-            className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
+            style={{ fontSize: 13, color: "#999", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-inter)" }}
           >
             ← New analysis
           </button>
         </nav>
         <Results result={result} onReset={() => setResult(null)} />
-        <footer className="text-center text-xs text-gray-400 py-5 border-t border-gray-100 bg-white mt-8">
-          © 2026 CarSweetSpot · carsweetspot.com
+        <footer style={{ textAlign: "center", fontSize: 12, color: "#BBB", padding: "24px 0", borderTop: "1px solid #E5E5E3", background: "white", marginTop: 80 }}>
+          © 2026 CarSweetSpot
         </footer>
       </main>
     );
   }
 
   return (
-    <main className="flex flex-col min-h-screen bg-gray-50">
+    <main style={{ minHeight: "100vh", background: "white", fontFamily: "var(--font-inter)" }}>
 
       {/* NAV */}
-      <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
-        <span className="text-lg font-black text-slate-900">🍬 CarSweetSpot</span>
-        <a href="#analyze" className="bg-slate-900 text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-slate-700 transition-colors">
-          Analyze My Listing
-        </a>
+      <nav style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 40px",
+        height: 64,
+        borderBottom: "1px solid #F0F0EE",
+        position: "sticky",
+        top: 0,
+        background: "white",
+        zIndex: 50,
+      }}>
+        <span style={{ fontSize: 17, fontWeight: 800, color: "#111", letterSpacing: "-0.03em", fontFamily: "var(--font-manrope)" }}>
+          CarSweetSpot
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+          <a href="#how" style={{ fontSize: 14, color: "#666", textDecoration: "none", fontWeight: 500 }}>How it works</a>
+          <a href="#analyze" style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: "white",
+            background: "#111",
+            padding: "9px 20px",
+            borderRadius: 8,
+            textDecoration: "none",
+            fontFamily: "var(--font-manrope)",
+          }}>
+            Get my score
+          </a>
+        </div>
       </nav>
 
       {/* HERO */}
-      <section className="flex flex-col items-center text-center px-4 pt-16 pb-12 bg-white">
-        <div className="inline-flex items-center gap-2 bg-slate-100 text-slate-600 text-xs font-bold px-4 py-1.5 rounded-full mb-8 border border-slate-200">
-          <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-pulse" />
-          Free analysis — no signup needed
+      <section style={{ maxWidth: 1100, margin: "0 auto", padding: "100px 40px 80px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+        <div>
+          <div style={{
+            display: "inline-block",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#888",
+            marginBottom: 24,
+          }}>
+            Free · No signup needed
+          </div>
+          <h1 style={{
+            fontSize: 52,
+            fontWeight: 800,
+            color: "#111",
+            lineHeight: 1.08,
+            letterSpacing: "-0.04em",
+            marginBottom: 24,
+            fontFamily: "var(--font-manrope)",
+          }}>
+            Find out why<br />your car isn&apos;t<br />selling.
+          </h1>
+          <p style={{ fontSize: 18, color: "#666", lineHeight: 1.6, marginBottom: 40, maxWidth: 400 }}>
+            Paste your listing URL. Get an instant Sweet Spot Score with specific fixes — in 10 seconds.
+          </p>
+          <a href="#analyze" style={{
+            display: "inline-block",
+            background: "#111",
+            color: "white",
+            fontSize: 15,
+            fontWeight: 700,
+            padding: "14px 28px",
+            borderRadius: 10,
+            textDecoration: "none",
+            fontFamily: "var(--font-manrope)",
+            letterSpacing: "-0.01em",
+          }}>
+            Analyze my listing →
+          </a>
+          <div style={{ display: "flex", gap: 24, marginTop: 32, fontSize: 13, color: "#AAA" }}>
+            <span>Works with Craigslist</span>
+            <span>Works with Facebook</span>
+          </div>
         </div>
-        <h1 className="text-4xl sm:text-6xl font-black text-slate-900 max-w-2xl leading-[1.1] mb-6">
-          Sell your car faster,{" "}
-          <span className="text-orange-500">for more money</span>
-        </h1>
-        <p className="text-gray-500 text-lg max-w-md mb-10 leading-relaxed">
-          Paste your listing URL. Our AI tells you exactly what&apos;s holding buyers back — in 10 seconds.
-        </p>
-        <div id="analyze" className="w-full max-w-xl">
-          <AnalyzeInput onResult={(r) => setResult(r as AnalysisResult)} />
-        </div>
-        <div className="flex items-center gap-6 mt-8 text-xs text-gray-400 flex-wrap justify-center">
-          <span>✓ Free forever</span>
-          <span>✓ No account needed</span>
-          <span>✓ Works with Craigslist & Facebook</span>
-        </div>
-      </section>
 
-      {/* HOW IT WORKS */}
-      <section className="bg-slate-900 px-6 py-10">
-        <div className="max-w-3xl mx-auto text-center mb-8">
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">How it works</p>
-          <h2 className="text-white text-2xl font-black">Your listing gets scored on 4 things</h2>
-        </div>
-        <div className="max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { icon: "💰", title: "Pricing", desc: "Is your price right for the market?" },
-            { icon: "📝", title: "Listing", desc: "Do your photos & description sell it?" },
-            { icon: "🤝", title: "Trust", desc: "Do buyers feel safe reaching out?" },
-            { icon: "📅", title: "Financing", desc: "Does your buyer know what it costs/month?" },
-          ].map((s) => (
-            <div key={s.title} className="bg-slate-800 rounded-2xl p-4 text-center">
-              <div className="text-2xl mb-2">{s.icon}</div>
-              <p className="text-white text-sm font-bold mb-1">{s.title}</p>
-              <p className="text-slate-400 text-xs leading-relaxed">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="px-6 py-14 max-w-3xl mx-auto w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            { num: "01", title: "Paste your URL", desc: "Craigslist, Facebook Marketplace, or any listing." },
-            { num: "02", title: "AI analyzes it", desc: "We read every word, photo, and price signal." },
-            { num: "03", title: "Fix what's hurting you", desc: "Get specific, actionable steps — not vague advice." },
-          ].map((s) => (
-            <div key={s.num} className="flex gap-4">
-              <span className="text-3xl font-black text-orange-200 shrink-0">{s.num}</span>
-              <div>
-                <p className="font-bold text-slate-900 mb-1">{s.title}</p>
-                <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-white px-6 py-14">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-xl font-black text-slate-900 text-center mb-8">What sellers are saying</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* SCORE CARD MOCKUP */}
+        <div style={{
+          background: "#111",
+          borderRadius: 20,
+          padding: "40px",
+          color: "white",
+        }}>
+          <p style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#555", marginBottom: 8, fontFamily: "var(--font-inter)" }}>
+            2019 Honda Accord Sport
+          </p>
+          <p style={{ fontSize: 12, color: "#555", marginBottom: 16, fontFamily: "var(--font-inter)" }}>Sweet Spot Score</p>
+          <div style={{ fontSize: 88, fontWeight: 800, color: "white", lineHeight: 1, marginBottom: 4, fontFamily: "var(--font-manrope)", letterSpacing: "-0.04em" }}>
+            62
+          </div>
+          <p style={{ fontSize: 15, color: "#888", marginBottom: 32, fontFamily: "var(--font-inter)" }}>
+            Could reach <span style={{ color: "#E8E8E8", fontWeight: 600 }}>84</span> with 3 fixes
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
-              { name: "Mike T.", loc: "Phoenix, AZ", quote: "Listed my truck for 3 weeks, zero calls. Changed my title and price after the score — sold in 4 days." },
-              { name: "Sara K.", loc: "Austin, TX", quote: "I had no idea my photos were killing my listing. The AI was honest in a way no friend would be." },
-              { name: "James R.", loc: "Denver, CO", quote: "Got 3 offers in one weekend after using the full report. Best $29 I've spent." },
-            ].map((r) => (
-              <div key={r.name} className="border border-gray-100 rounded-2xl p-5 shadow-sm">
-                <p className="text-sm text-gray-600 leading-relaxed mb-4">&quot;{r.quote}&quot;</p>
-                <p className="text-sm font-bold text-slate-900">{r.name}</p>
-                <p className="text-xs text-gray-400">{r.loc}</p>
+              { label: "Add monthly payment estimate", pts: "+12" },
+              { label: "Include maintenance history", pts: "+8" },
+              { label: "Rewrite title with keywords", pts: "+2" },
+            ].map((fix) => (
+              <div key={fix.label} style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: "#1A1A1A",
+                borderRadius: 10,
+                padding: "12px 16px",
+              }}>
+                <span style={{ fontSize: 13, color: "#CCC", fontFamily: "var(--font-inter)" }}>{fix.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#5DBBFF", fontFamily: "var(--font-manrope)" }}>{fix.pts}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-slate-900 px-6 py-14 text-center">
-        <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
-          Find your Sweet Spot — free
+      {/* DIVIDER */}
+      <div style={{ borderTop: "1px solid #F0F0EE", maxWidth: 1100, margin: "0 auto" }} />
+
+      {/* HOW IT WORKS */}
+      <section id="how" style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 40px" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#AAA", marginBottom: 16 }}>How it works</p>
+        <h2 style={{ fontSize: 36, fontWeight: 800, color: "#111", letterSpacing: "-0.03em", marginBottom: 60, fontFamily: "var(--font-manrope)" }}>
+          Your listing, scored on 4 things.
         </h2>
-        <p className="text-slate-400 mb-8 max-w-sm mx-auto text-sm leading-relaxed">
-          Stop guessing why your car isn&apos;t selling. Get your score in 10 seconds.
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
+          {[
+            { num: "01", title: "Pricing", desc: "Is your price right for today's market?" },
+            { num: "02", title: "Listing", desc: "Do your photos and description sell it?" },
+            { num: "03", title: "Trust", desc: "Do buyers feel confident reaching out?" },
+            { num: "04", title: "Financing", desc: "Does your buyer know what it costs per month?" },
+          ].map((s) => (
+            <div key={s.num}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#CCC", marginBottom: 12, fontFamily: "var(--font-manrope)" }}>{s.num}</p>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 8, fontFamily: "var(--font-manrope)" }}>{s.title}</p>
+              <p style={{ fontSize: 14, color: "#888", lineHeight: 1.6 }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* DIVIDER */}
+      <div style={{ borderTop: "1px solid #F0F0EE", maxWidth: 1100, margin: "0 auto" }} />
+
+      {/* INPUT */}
+      <section id="analyze" style={{ maxWidth: 680, margin: "0 auto", padding: "80px 40px" }}>
+        <h2 style={{ fontSize: 32, fontWeight: 800, color: "#111", letterSpacing: "-0.03em", marginBottom: 8, fontFamily: "var(--font-manrope)" }}>
+          Analyze your listing
+        </h2>
+        <p style={{ fontSize: 15, color: "#888", marginBottom: 32 }}>
+          Paste a Craigslist or Facebook Marketplace URL below.
         </p>
-        <a href="#analyze" className="inline-block bg-white text-slate-900 font-black px-8 py-3 rounded-full hover:bg-slate-100 transition-colors">
-          Analyze My Listing →
+        <AnalyzeInput onResult={(r) => setResult(r as AnalysisResult)} />
+      </section>
+
+      {/* DIVIDER */}
+      <div style={{ borderTop: "1px solid #F0F0EE", maxWidth: 1100, margin: "0 auto" }} />
+
+      {/* TESTIMONIALS */}
+      <section style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 40px" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#AAA", marginBottom: 40 }}>What sellers say</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
+          {[
+            { name: "Mike T.", loc: "Phoenix, AZ", quote: "Listed my truck for 3 weeks, zero calls. Changed the title and price after my score — sold in 4 days." },
+            { name: "Sara K.", loc: "Austin, TX", quote: "I had no idea my photos were killing my listing. The AI was honest in a way no friend would be." },
+            { name: "James R.", loc: "Denver, CO", quote: "Got 3 offers in one weekend after using the full report. Best $29 I've spent." },
+          ].map((r) => (
+            <div key={r.name} style={{ borderTop: "2px solid #111", paddingTop: 24 }}>
+              <p style={{ fontSize: 15, color: "#333", lineHeight: 1.7, marginBottom: 20 }}>&ldquo;{r.quote}&rdquo;</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#111", fontFamily: "var(--font-manrope)" }}>{r.name}</p>
+              <p style={{ fontSize: 12, color: "#AAA" }}>{r.loc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{ background: "#111", padding: "80px 40px", textAlign: "center" }}>
+        <h2 style={{ fontSize: 40, fontWeight: 800, color: "white", letterSpacing: "-0.04em", marginBottom: 16, fontFamily: "var(--font-manrope)" }}>
+          Find your Sweet Spot.
+        </h2>
+        <p style={{ fontSize: 16, color: "#666", marginBottom: 32, maxWidth: 400, margin: "0 auto 32px" }}>
+          Free analysis. No account. Takes 10 seconds.
+        </p>
+        <a href="#analyze" style={{
+          display: "inline-block",
+          background: "white",
+          color: "#111",
+          fontSize: 15,
+          fontWeight: 700,
+          padding: "14px 32px",
+          borderRadius: 10,
+          textDecoration: "none",
+          fontFamily: "var(--font-manrope)",
+          letterSpacing: "-0.01em",
+        }}>
+          Analyze my listing →
         </a>
       </section>
 
-      <footer className="text-center text-xs text-gray-400 py-5 border-t border-gray-100 bg-white">
-        © 2026 CarSweetSpot · carsweetspot.com
+      <footer style={{ textAlign: "center", fontSize: 12, color: "#BBB", padding: "24px 0", borderTop: "1px solid #222", background: "#111" }}>
+        © 2026 CarSweetSpot
       </footer>
     </main>
   );
