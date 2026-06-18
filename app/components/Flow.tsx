@@ -490,6 +490,12 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
   const [screen, setScreen] = useState(2);
   const also = result.also_hurting ?? [];
 
+  useEffect(() => {
+    const onPop = () => onReset();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [onReset]);
+
   const screens: Record<number, React.ReactNode> = {
     2: <Screen2 result={result} onNext={() => setScreen(3)} onReset={onReset} />,
     3: <Screen3 result={result} onNext={() => setScreen(4)} onReset={onReset} />,
