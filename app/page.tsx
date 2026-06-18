@@ -131,6 +131,12 @@ export default function Home() {
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const onPop = () => { setResult(null); setPendingResult(null); setLoading(false); };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = useCallback((files: FileList | File[]) => {
@@ -176,7 +182,7 @@ export default function Home() {
       <AnalyzingScreen
         vehicle={url ? url.split("/").filter(Boolean).pop() ?? "your listing" : "your listing"}
         finalScore={pendingResult ? pendingResult.overall_score : null}
-        onDone={() => { if (pendingResult) { setResult(pendingResult); setLoading(false); } }}
+        onDone={() => { if (pendingResult) { window.history.pushState({ results: true }, ""); setResult(pendingResult); setLoading(false); } }}
       />
     );
   }
