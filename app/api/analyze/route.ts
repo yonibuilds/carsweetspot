@@ -5,52 +5,70 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const cache = new Map<string, unknown>();
 
-const SYSTEM_PROMPT = `You are CarSweetSpot AI — an expert at analyzing private car listings and telling sellers exactly why their car isn't selling and how to fix it.
+const SYSTEM_PROMPT = `You are CarSweetSpot AI — an expert at analyzing private car listings and telling sellers exactly why buyers are not contacting them.
 
-Analyze the listing provided and return ONLY a valid JSON object with this exact structure (no markdown, no extra text):
+Analyze the listing and return ONLY a valid JSON object with this exact structure (no markdown, no extra text):
+
 {
   "vehicle": "<Year Make Model Trim>",
   "asking_price": <number in USD, 0 if not found>,
   "overall_score": <0-100>,
-  "spots": {
-    "pricing": { "score": <0-100>, "label": "<Sweet|Good|OK|Needs Work|Missing>", "summary": "<one sentence honest assessment>" },
-    "listing": { "score": <0-100>, "label": "<Sweet|Good|OK|Needs Work|Missing>", "summary": "<one sentence honest assessment>" },
-    "trust": { "score": <0-100>, "label": "<Sweet|Good|OK|Needs Work|Missing>", "summary": "<one sentence honest assessment>" },
-    "financing": { "score": <0-100>, "label": "<Sweet|Good|OK|Needs Work|Missing>", "summary": "<one sentence honest assessment>" }
+  "monthly_payment": <number, calculated from asking_price at 7% APR 60 months, 0 if no price>,
+  "biggest_problem": {
+    "title": "<short problem title, max 8 words>",
+    "why_buyers_care": "<1-2 sentences explaining why this kills buyer interest>",
+    "seller_insight": "<1 sentence practical tip>",
+    "before": "<exact quote or description of the flaw as it appears now — be specific>",
+    "after": "<exact improved version ready to copy-paste>"
   },
-  "free_insights": [
-    "<specific, actionable insight — what exactly is wrong and what to do>",
-    "<specific, actionable insight>",
-    "<specific, actionable insight>"
-  ],
-  "quick_wins": [
+  "also_hurting": [
     {
-      "text": "<exact sentence or two ready to copy-paste into the listing, specific to this car>",
-      "boost": "<e.g. '+15 Trust'>",
-      "spot": "<trust|financing|listing|pricing>"
+      "title": "<short problem title, max 8 words>",
+      "why_buyers_care": "<1-2 sentences>",
+      "seller_insight": "<1 sentence>",
+      "before": "<specific flaw>",
+      "after": "<improved version>"
+    },
+    {
+      "title": "<short problem title, max 8 words>",
+      "why_buyers_care": "<1-2 sentences>",
+      "seller_insight": "<1 sentence>",
+      "before": "<specific flaw>",
+      "after": "<improved version>"
     }
   ],
-  "locked_count": <number between 5 and 12 representing additional premium insights>
+  "opportunities": [
+    {
+      "title": "Financing",
+      "insight": "<buyer-conversion insight about monthly payment — use the monthly_payment number>",
+      "type": "financing"
+    },
+    {
+      "title": "Vehicle Inspection",
+      "insight": "<why a pre-sale inspection builds trust and converts buyers>",
+      "type": "inspection"
+    },
+    {
+      "title": "CARFAX Report",
+      "insight": "<why linking a CARFAX report increases serious inquiries>",
+      "type": "carfax"
+    }
+  ],
+  "whats_working": [
+    "<specific strength from the listing>",
+    "<specific strength>",
+    "<specific strength>"
+  ]
 }
 
-Scoring rules:
-- pricing: Is the asking price competitive for the market? Consider mileage, year, condition.
-- listing: Title quality, description detail, photo count/quality, keywords used.
-- trust: Maintenance history, CARFAX mention, response time hints, seller info.
-- financing: Does the listing mention monthly payments or make it easy for a buyer to understand affordability?
-- overall_score: weighted average (pricing 30%, listing 35%, trust 25%, financing 10%)
-
-quick_wins rules:
-- ABSOLUTE RULE: Every word in quick_wins text must be a fact the seller explicitly stated. Zero exceptions.
-- Never write "CARFAX available", "service records included", "well-maintained", "no accidents", or any feature/history the seller did not say in the listing.
-- financing: always generate — calculate from asking_price (e.g. "Financing-friendly — roughly $285/month for 60 months at standard rates.")
-- trust: ONLY generate if the seller explicitly mentioned CARFAX, inspection, service records, or maintenance history. If they didn't, skip trust entirely.
-- listing: ONLY reformat facts the seller already stated (year, make, model, miles, color, title status, location) into a keyword-rich sentence. Do not add anything not mentioned.
-- pricing: only if seller stated a price comparison or market justification. Otherwise skip.
-- Returning 1 item is fine. Do not invent content to fill 3 slots.
-- No brackets, no placeholders — text must be paste-ready as-is.
-
-Be honest and specific. Vague feedback is useless. If something is missing, say what's missing.`;
+Rules:
+- overall_score: weighted (pricing 30%, listing quality 35%, trust signals 25%, financing info 10%)
+- biggest_problem: the single most damaging issue hurting buyer contact rate
+- also_hurting: exactly 2 additional problems, different categories from biggest_problem
+- before/after: ONLY facts the seller stated. Never invent features not in the listing. "after" must be paste-ready.
+- whats_working: genuine strengths, not filler. If fewer than 3 exist, only return what's real.
+- monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
+- Be specific and honest. Vague feedback is useless.`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,7 +80,6 @@ export async function POST(req: NextRequest) {
 
     const messageContent: Anthropic.MessageParam["content"] = [];
 
-    // Add images if provided
     if (images && images.length > 0) {
       for (const img of images as string[]) {
         const mediaTypeMatch = img.match(/^data:(image\/\w+);base64,/);
@@ -79,13 +96,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Fetch URL content if provided
     if (url) {
       try {
         const res = await fetch(url, {
           headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             Accept: "text/html",
           },
           signal: AbortSignal.timeout(8000),
@@ -104,21 +119,14 @@ export async function POST(req: NextRequest) {
         });
       } catch {
         return NextResponse.json(
-          {
-            error:
-              "Could not fetch this URL. Facebook listings require login — try the Screenshots tab instead.",
-          },
+          { error: "Could not fetch this URL. Facebook listings require login — try the Screenshots tab instead." },
           { status: 400 }
         );
       }
     }
 
-    // Free text fallback
     if (text) {
-      messageContent.push({
-        type: "text",
-        text: `Listing text:\n${text}`,
-      });
+      messageContent.push({ type: "text", text: `Listing text:\n${text}` });
     }
 
     if (messageContent.length === 0) {
@@ -135,49 +143,31 @@ export async function POST(req: NextRequest) {
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
+      max_tokens: 2048,
       temperature: 0,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: messageContent }],
     });
 
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const rawText = response.content[0].type === "text" ? response.content[0].text : "";
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return NextResponse.json(
-        { error: "Analysis failed. Please try again." },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Analysis failed. Please try again." }, { status: 500 });
     }
 
     const result = JSON.parse(jsonMatch[0]);
 
-    // Fix financing amounts — Claude's math drifts; recalculate from asking_price
     if (result.asking_price) {
       const p = result.asking_price;
       const r = 0.07 / 12;
       const n = 60;
-      const monthly = Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
-      const fix = (text: string) => text.replace(/\$[\d,]+\/month/gi, `$${monthly}/month`);
-
-      if (result.spots?.financing?.summary) {
-        result.spots.financing.summary = fix(result.spots.financing.summary);
-      }
-      if (Array.isArray(result.quick_wins)) {
-        result.quick_wins = result.quick_wins.map((win: { text: string; boost: string; spot: string }) =>
-          win.spot === "financing" ? { ...win, text: fix(win.text) } : win
-        );
-      }
+      result.monthly_payment = Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
     }
 
     if (url) cache.set(url, result);
     return NextResponse.json(result);
   } catch (err) {
     console.error(err);
-    return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
