@@ -380,7 +380,11 @@ function ProblemScreen({ problem, label, labelColor, current, total, onNext, nex
 
 // ── Screen 7 — Opportunities ─────────────────────────────────────
 function Screen7({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
-  const icons: Record<string, string> = { financing: "💰", inspection: "🔧", carfax: "📋" };
+  const icons: Record<string, string> = {
+    financing: "💰", inspection: "🔧", carfax: "📋",
+    title: "📄", photos: "📸", description: "✏️",
+    garage: "🏠", warranty: "🛡️", price: "💲", payment: "💳",
+  };
   return (
     <Shell onReset={onReset} maxW={500}>
       <AnimatedScreen id={7}>
@@ -389,24 +393,6 @@ function Screen7({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
         <h2 style={{ ...H, fontSize: 19, fontWeight: 800, color: T.text, margin: "8px 0 18px", letterSpacing: "-0.03em", lineHeight: 1.25 }}>
           More buyers can reach this car than you think.
         </h2>
-
-        {result.asking_price > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
-            <div style={{ padding: "14px 16px", borderRight: `1px solid ${T.border}` }}>
-              <div style={{ ...B, fontSize: 11, color: T.muted, marginBottom: 4 }}>Vehicle Price</div>
-              <div style={{ ...H, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.03em" }}>
-                ${result.asking_price.toLocaleString()}
-              </div>
-            </div>
-            <div style={{ padding: "14px 16px", background: "#EFFDF5" }}>
-              <div style={{ ...B, fontSize: 11, color: "#15803D", marginBottom: 4 }}>Est. Monthly</div>
-              <div style={{ ...H, fontSize: 22, fontWeight: 800, color: "#15803D", letterSpacing: "-0.03em" }}>
-                ${result.monthly_payment}/mo
-              </div>
-              <div style={{ ...B, fontSize: 10, color: "#86EFAC" }}>60 mo · 7% APR</div>
-            </div>
-          </div>
-        )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
           {result.opportunities.map(op => (

@@ -41,19 +41,9 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
   ],
   "opportunities": [
     {
-      "title": "Financing",
-      "insight": "<buyer-conversion insight about monthly payment — use the monthly_payment number>",
-      "type": "financing"
-    },
-    {
-      "title": "Vehicle Inspection",
-      "insight": "<why a pre-sale inspection builds trust and converts buyers>",
-      "type": "inspection"
-    },
-    {
-      "title": "CARFAX Report",
-      "insight": "<why linking a CARFAX report increases serious inquiries>",
-      "type": "carfax"
+      "title": "<short opportunity title, max 6 words>",
+      "insight": "<1-2 sentences: specific, actionable insight for this listing>",
+      "type": "<one of: financing | carfax | inspection | title | photos | description | garage | warranty | price | payment>"
     }
   ],
   "whats_working": [
@@ -83,6 +73,17 @@ overall_score weights:
 - If the listing omits how long the seller has owned it: flag this. "I've owned this since 2019" is one sentence that eliminates the #1 buyer suspicion ("what's wrong with it?").
 - If reason for selling is missing: flag this. Silence triggers suspicion. "Upgrading to a truck" takes 4 words and converts skeptics.
 - If CARFAX is not mentioned: suggest it in opportunities. A CARFAX costs ~$40 and can be the difference between 5 inquiries and 50.
+- opportunities: return 2–4 items. Choose ONLY what is relevant to THIS specific listing. Do not include generic opportunities that don't apply.
+  - "financing": include if asking_price > 0 and monthly payment would be meaningful to mention
+  - "carfax": include if no CARFAX was mentioned in the listing
+  - "inspection": include if there are mechanical unknowns, high mileage, or trust gaps
+  - "title": include if salvage/rebuilt — explain the 60-70% value rule and how to frame it
+  - "photos": include if listing has few or no photos described
+  - "description": include if description is very short or missing key facts
+  - "garage": include if garage-kept is not mentioned but would be relevant (newer or lower-mile car)
+  - "warranty": include if vehicle is recent enough (under 5 years) that manufacturer warranty may still apply
+  - "price": include if price appears high relative to mileage/condition but only suggest a KBB check — never state a specific market value
+  - "payment": include if cash-only was stated (restricts buyer pool) or payment method not mentioned
 - whats_working: genuine strengths only. If fewer than 3 exist, return only what's real.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
 - Be specific and brutally honest. "Description is thin" is useless. "Your description is 12 words — buyers need at least 8 facts to feel safe contacting you" is useful.`;
