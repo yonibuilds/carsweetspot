@@ -124,8 +124,16 @@ export default function Home() {
   }, []);
 
   const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
-    const files = e.clipboardData?.files;
-    if (files && files.length > 0) { e.preventDefault(); setMode("screenshots"); addFiles(files); }
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const imageFiles: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith("image/")) {
+        const file = items[i].getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+    if (imageFiles.length > 0) { e.preventDefault(); setMode("screenshots"); addFiles(imageFiles); }
   }, [addFiles]);
 
   const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
