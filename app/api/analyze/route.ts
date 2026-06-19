@@ -88,6 +88,7 @@ overall_score weights:
   - "warranty": include if vehicle is recent enough (under 5 years) that manufacturer warranty may still apply
   - "price": include if price appears high relative to mileage/condition but only suggest a KBB check — never state a specific market value
   - "payment": include if cash-only was stated (restricts buyer pool) or payment method not mentioned
+  - "formatting": include ONLY if the FORMATTING signal says wall of text. Suggest breaking the listing into short lines or bullet points. Show a before/after example.
 - whats_working: genuine strengths only. If fewer than 3 exist, return only what's real.
 - Language: NEVER flag language as a problem under any circumstances. This rule overrides everything else.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
@@ -150,6 +151,12 @@ export async function POST(req: NextRequest) {
         );
         const photoCount = listingImgs.length;
 
+        // Detect paragraph formatting before stripping tags
+        const hasFormatting = /<br\s*\/?>|<\/p>|<\/li>/i.test(html);
+        const formattingNote = hasFormatting
+          ? `\n\n[FORMATTING: listing uses paragraph breaks or line breaks — do NOT flag formatting as a problem.]`
+          : `\n\n[FORMATTING: wall of text detected — no paragraph breaks found. Flag this under opportunities with type "formatting". Also deduct up to 5 points from Description Quality score — a wall of text is harder to read and signals less effort.]`;
+
         const cleaned = html
           .replace(/<script[\s\S]*?<\/script>/gi, "")
           .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -162,7 +169,7 @@ export async function POST(req: NextRequest) {
           : `\n\n[PHOTO COUNT: Could not detect photos from HTML — evaluate based on description only.]`;
         messageContent.push({
           type: "text",
-          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}`,
+          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}${formattingNote}`,
         });
       } catch {
         return NextResponse.json(

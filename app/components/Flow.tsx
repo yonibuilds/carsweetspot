@@ -228,6 +228,7 @@ function opIcon(type: string): string {
     financing: "💰", inspection: "🔧", carfax: "📋",
     title: "📄", photos: "📸", description: "✏️",
     garage: "🏠", warranty: "🛡️", price: "💲", payment: "💳",
+    formatting: "📝",
   };
   return icons[type] ?? "💡";
 }
