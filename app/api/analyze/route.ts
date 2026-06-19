@@ -124,6 +124,16 @@ export async function POST(req: NextRequest) {
           signal: AbortSignal.timeout(8000),
         });
         const html = await res.text();
+
+        // Count photos before stripping HTML (Craigslist stores them in <img> tags)
+        const imgMatches = html.match(/<img[^>]+src="[^"]*\.(jpg|jpeg|png|webp)[^"]*"/gi) || [];
+        // Filter out icons/logos — real listing photos are usually >5KB hint or in /images/ path
+        const listingImgs = imgMatches.filter(tag =>
+          /\/images\/|craigslist\.org.*\.(jpg|jpeg|png|webp)/i.test(tag) ||
+          (/src="[^"]*\.(jpg|jpeg|png|webp)/i.test(tag) && !/logo|icon|avatar|sprite/i.test(tag))
+        );
+        const photoCount = listingImgs.length;
+
         const cleaned = html
           .replace(/<script[\s\S]*?<\/script>/gi, "")
           .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -131,9 +141,12 @@ export async function POST(req: NextRequest) {
           .replace(/\s+/g, " ")
           .trim()
           .slice(0, 12000);
+        const photoNote = photoCount > 0
+          ? `\n\n[PHOTO COUNT DETECTED FROM HTML: ${photoCount} listing photos found. Do NOT flag photos as missing or low-count.]`
+          : `\n\n[PHOTO COUNT: Could not detect photos from HTML — evaluate based on description only.]`;
         messageContent.push({
           type: "text",
-          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}`,
+          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}`,
         });
       } catch {
         return NextResponse.json(
