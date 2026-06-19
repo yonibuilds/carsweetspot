@@ -152,7 +152,10 @@ export async function POST(req: NextRequest) {
         const photoCount = listingImgs.length;
 
         // Detect paragraph formatting before stripping tags
-        const hasFormatting = /<br\s*\/?>|<\/p>|<\/li>/i.test(html);
+        // Wall of text = fewer than 3 <br> tags AND fewer than 3 <p> blocks
+        const brCount = (html.match(/<br\s*\/?>/gi) || []).length;
+        const pCount = (html.match(/<\/p>/gi) || []).length;
+        const hasFormatting = brCount >= 3 || pCount >= 3;
         const formattingNote = hasFormatting
           ? `\n\n[FORMATTING: listing uses paragraph breaks or line breaks — do NOT flag formatting as a problem.]`
           : `\n\n[FORMATTING: wall of text detected — no paragraph breaks found. Flag this under opportunities with type "formatting". Also deduct up to 5 points from Description Quality score — a wall of text is harder to read and signals less effort.]`;
