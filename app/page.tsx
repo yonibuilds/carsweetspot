@@ -130,7 +130,7 @@ export default function Home() {
     });
   }, []);
 
-  const MAX_IMAGES = 2;
+  const MAX_IMAGES = 5;
 
   const addFiles = useCallback((files: FileList | File[]) => {
     Array.from(files).filter(f => f.type.startsWith("image/")).forEach(async (file) => {
@@ -258,7 +258,7 @@ export default function Home() {
           >
             {images.length === 0 ? (
               <p style={{ ...B, fontSize: 13, color: COLORS.muted, margin: 0 }}>
-                📸 Or drag & drop / <span style={{ color: COLORS.accent, fontWeight: 600 }}>browse</span> / <span style={{ color: COLORS.accent, fontWeight: 600 }}>Ctrl+V</span> screenshots <span style={{ color: COLORS.muted }}>(up to 2)</span>
+                📸 Or drag & drop / <span style={{ color: COLORS.accent, fontWeight: 600 }}>browse</span> / <span style={{ color: COLORS.accent, fontWeight: 600 }}>Ctrl+V</span> screenshots
               </p>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
