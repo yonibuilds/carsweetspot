@@ -171,7 +171,7 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Something went wrong."); setLoading(false); }
       else { window.history.pushState({ results: true }, ""); setResult(data as AnalysisResult); setLoading(false); }
-    } catch { setError("Network error. Please try again."); setLoading(false); }
+    } catch (err) { setError(`Network error: ${err instanceof Error ? err.message : String(err)}`); setLoading(false); }
   };
 
   if (result) {
