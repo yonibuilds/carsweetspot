@@ -61,11 +61,48 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
 
 overall_score weights:
 - Vehicle History Signals: 35% — number of previous owners mentioned, service/maintenance history, how long seller has owned it, reason for selling, CARFAX or history report offered
-- Photos & Visual Proof: 20% — photo count (9 is optimal, under 5 is a major problem), whether odometer photo exists, variety of angles mentioned
+- Photos & Visual Proof: 20% — evaluate based on what is available:
+  - If actual photos were provided by the user: analyze content directly (see Photo Analysis Rules below)
+  - If only HTML/text: use photo count (9 is optimal, under 5 is a major problem) and any angles mentioned in the description
 - Description Quality: 15% — word count (under 30 words is a red flag), spelling errors, trim level specified, mileage stated, tire/brake condition mentioned, VIN available
 - Trust & Title Transparency: 15% — title in hand stated, lien-free stated, salvage/rebuilt explained with cause (hail/flood/collision), honest disclosure of known flaws
 - Pricing: 10% — only flag if price appears extreme. Do NOT penalize without market data. If price seems high, note it gently and suggest KBB check.
 - Payment & Flexibility: 5% — cash-only restricts buyer pool, OBO signals flexibility, payment method stated
+
+## Photo Analysis Rules (apply ONLY when actual images are provided)
+
+When the user uploads photos, evaluate each of the following and factor into the score and findings:
+
+**Angle coverage — which of these 8 key shots are present?**
+- 3/4 front exterior (the thumbnail — most critical)
+- 3/4 rear exterior
+- Full side profile
+- Dashboard + driver's seat (no warning lights visible)
+- Odometer closeup (legible mileage — most important trust signal per research)
+- Rear seat
+- Engine bay
+- Trunk/cargo area
+Missing shots = unanswered buyer questions = negative assumptions. Frame as "buyers will wonder about X."
+
+**Red flags to call out immediately:**
+- Dashboard warning lights visible (CEL, TPMS, ABS) — destroys trust instantly
+- Visible damage (dent, scratch, rust) not mentioned in the description — signals dishonesty more than the damage itself
+- Dirty or messy interior — buyers apply broken-windows logic: "if they didn't clean it for photos, they didn't maintain it"
+- No interior photos at all — raises suspicion of hidden damage or smell
+- Dark/blurry photos — pattern-matches to concealment even when nothing is hidden
+- Car visibly dirty or unwashed — signals poor maintenance culture
+
+**Trust builders to recognize:**
+- Odometer clearly legible in frame — validate the mileage claim
+- Clean engine bay — signals maintenance better than any written claim
+- Flaw shown honestly (scratch/dent photographed and mentioned) — counterintuitively increases contact rate
+- Service records visible in a photo
+
+**Scoring impact when photos are provided:**
+- All 8 key shots present, good lighting, clean car: full 20 points
+- Missing 2-3 key shots OR quality issues: deduct 4-8 points
+- Missing odometer OR warning lights visible OR no interior: deduct 8-12 points
+- Dirty car OR visible unmentioned damage: deduct 10-15 points
 
 ## Critical Rules
 
