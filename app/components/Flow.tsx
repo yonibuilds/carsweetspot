@@ -116,7 +116,7 @@ function Btn({ onClick, children, secondary }: { onClick?: () => void; children:
 }
 
 // ── Shell ─────────────────────────────────────────────────────────
-function Shell({ children, onReset, maxW = 560 }: { children: React.ReactNode; onReset: () => void; maxW?: number }) {
+function Shell({ children, onReset, maxW = 680 }: { children: React.ReactNode; onReset: () => void; maxW?: number }) {
   return (
     <div style={{ minHeight: "100vh", background: T.bg }}>
       <nav style={{
@@ -124,15 +124,15 @@ function Shell({ children, onReset, maxW = 560 }: { children: React.ReactNode; o
         background: "rgba(248,250,252,0.92)", backdropFilter: "blur(12px)",
         borderBottom: `1px solid ${T.border}`,
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 24px", height: 50,
+        padding: "0 32px", height: 52,
       }}>
-        <span style={{ ...H, fontSize: 14, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>CarSweetSpot</span>
-        <button onClick={onReset} style={{ ...B, fontSize: 12, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>
+        <span style={{ ...H, fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>CarSweetSpot</span>
+        <button onClick={onReset} style={{ ...B, fontSize: 13, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>
           ← New analysis
         </button>
       </nav>
-      <div style={{ display: "flex", justifyContent: "center", padding: "32px 16px 80px" }}>
-        <div style={{ width: "100%", maxWidth: maxW }}>
+      <div style={{ display: "flex", justifyContent: "center", padding: "40px 24px 80px" }}>
+        <div style={{ width: "100%", maxWidth: maxW, background: T.card, border: `1px solid ${T.border}`, borderRadius: 20, padding: "32px 28px", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
           {children}
         </div>
       </div>
