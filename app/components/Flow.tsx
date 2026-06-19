@@ -131,10 +131,8 @@ function Shell({ children, onReset, maxW = 680 }: { children: React.ReactNode; o
           ← New analysis
         </button>
       </nav>
-      <div style={{ display: "flex", justifyContent: "center", padding: "40px 24px 80px" }}>
-        <div style={{ width: "100%", maxWidth: maxW, background: T.card, border: `1px solid ${T.border}`, borderRadius: 20, padding: "32px 28px", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-          {children}
-        </div>
+      <div style={{ maxWidth: maxW, margin: "0 auto", padding: "40px 32px 80px" }}>
+        {children}
       </div>
     </div>
   );
