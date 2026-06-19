@@ -112,7 +112,7 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 - NEVER penalize for salvage/rebuilt title in the score — the seller cannot change title status. If salvage/rebuilt, treat as opportunity: "Rebuilt titles typically sell at 60–70% of clean-title value. If your price reflects this, say so explicitly: 'Rebuilt after hail damage — priced accordingly at $X below market.'"
 - biggest_problem: the single most damaging issue hurting buyer contact rate — must be something the seller CAN fix (copy, photos, missing info). Never use title status as a problem.
 - also_hurting: exactly 2 additional problems, different categories — must be actionable
-- before/after: ONLY use facts the seller actually stated. Never invent features. "after" must be paste-ready copy the seller can use immediately.
+- before/after: ONLY use facts the seller actually stated. Never invent features. "after" must be paste-ready copy the seller can use immediately. Target 30–80 words for "after" — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
 - Spelling errors in the listing: always flag this — 42% of listings have them and buyers notice. It signals carelessness about the car, not just the ad.
 - If the listing omits how long the seller has owned it: flag this. "I've owned this since 2019" is one sentence that eliminates the #1 buyer suspicion ("what's wrong with it?").
 - If reason for selling is missing: flag this. Silence triggers suspicion. "Upgrading to a truck" takes 4 words and converts skeptics.
