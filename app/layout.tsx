@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   title: "CarSweetSpot — Find out why your car isn't getting calls",
   description:
     "Paste your car listing URL and get an instant Sweet Spot Score. Find out exactly why buyers aren't contacting you — and how to fix it.",
+  other: { google: "notranslate" },
 };
 
 export default function RootLayout({
@@ -26,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${inter.variable} h-full`}>
+    <html lang="en" translate="no" className={`${jakarta.variable} ${inter.variable} h-full`}>
       <body
         className="min-h-full flex flex-col antialiased"
         style={{ fontFamily: "var(--font-inter)", background: "#FAFAFA", color: "#0F172A" }}
