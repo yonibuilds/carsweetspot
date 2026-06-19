@@ -269,7 +269,7 @@ function Screen2({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
 function Screen3({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <Shell onReset={onReset} maxW={600}>
+    <Shell onReset={onReset}>
       <Fade id={3}>
         <ProgressBar current={2} total={7} />
 
@@ -345,7 +345,7 @@ function ProblemScreen({ problem, label, labelColor, labelBg, current, total, on
   current: number; total: number; onNext: () => void; nextLabel: string; onReset: () => void;
 }) {
   return (
-    <Shell onReset={onReset} maxW={560}>
+    <Shell onReset={onReset}>
       <Fade id={current}>
         <ProgressBar current={current} total={total} />
         <div style={{ display: "inline-block", background: labelBg, borderRadius: 6, padding: "3px 8px", marginBottom: 12 }}>
@@ -376,7 +376,7 @@ function ProblemScreen({ problem, label, labelColor, labelBg, current, total, on
 // ── Screen 7 — Opportunities ──────────────────────────────────────
 function Screen7({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
   return (
-    <Shell onReset={onReset} maxW={560}>
+    <Shell onReset={onReset}>
       <Fade id={7}>
         <ProgressBar current={6} total={7} />
         <div style={{ display: "inline-block", background: T.purpleBg, borderRadius: 6, padding: "3px 8px", marginBottom: 12 }}>
@@ -410,7 +410,7 @@ function Screen7({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
 function Screen8({ result, onReset }: { result: AnalysisResult; onReset: () => void }) {
   const [p, setP] = useState(false);
   return (
-    <Shell onReset={onReset} maxW={560}>
+    <Shell onReset={onReset}>
       <Fade id={8}>
         <ProgressBar current={7} total={7} />
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
