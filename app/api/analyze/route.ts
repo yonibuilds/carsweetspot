@@ -151,14 +151,17 @@ export async function POST(req: NextRequest) {
         );
         const photoCount = listingImgs.length;
 
-        // Detect paragraph formatting before stripping tags
-        // Wall of text = fewer than 3 <br> tags AND fewer than 3 <p> blocks
-        const brCount = (html.match(/<br\s*\/?>/gi) || []).length;
-        const pCount = (html.match(/<\/p>/gi) || []).length;
-        const hasFormatting = brCount >= 3 || pCount >= 3;
+        // Detect wall-of-text by converting br/p to newlines, then checking longest paragraph
+        const withBreaks = html
+          .replace(/<br\s*\/?>/gi, "\n")
+          .replace(/<\/p>/gi, "\n")
+          .replace(/<[^>]+>/g, " ");
+        const paragraphs = withBreaks.split("\n").map(s => s.trim()).filter(Boolean);
+        const longestPara = Math.max(...paragraphs.map(p => p.length));
+        const hasFormatting = longestPara < 300;
         const formattingNote = hasFormatting
-          ? `\n\n[FORMATTING: listing uses paragraph breaks or line breaks — do NOT flag formatting as a problem.]`
-          : `\n\n[FORMATTING: wall of text detected — no paragraph breaks found. Flag this under opportunities with type "formatting". Also deduct up to 5 points from Description Quality score — a wall of text is harder to read and signals less effort.]`;
+          ? `\n\n[FORMATTING: listing uses paragraph breaks — do NOT flag formatting as a problem.]`
+          : `\n\n[FORMATTING: wall of text detected — longest paragraph is ${longestPara} characters with no breaks. Flag this under opportunities with type "formatting". Also deduct up to 5 points from Description Quality score.]`;
 
         const cleaned = html
           .replace(/<script[\s\S]*?<\/script>/gi, "")
