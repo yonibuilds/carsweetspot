@@ -110,15 +110,32 @@ export default function Home() {
   }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const addFiles = useCallback((files: FileList | File[]) => {
-    Array.from(files).filter(f => f.type.startsWith("image/")).forEach(file => {
+  const compressImage = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        if (e.target?.result) setImages(prev => [...prev, e.target!.result as string]);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX = 1200;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.75));
+        };
+        img.src = e.target!.result as string;
       };
       reader.readAsDataURL(file);
     });
   }, []);
+
+  const addFiles = useCallback((files: FileList | File[]) => {
+    Array.from(files).filter(f => f.type.startsWith("image/")).forEach(async (file) => {
+      const compressed = await compressImage(file);
+      setImages(prev => [...prev, compressed]);
+    });
+  }, [compressImage]);
 
   const handlePaste = useCallback((e: globalThis.ClipboardEvent) => {
     const items = e.clipboardData?.items;

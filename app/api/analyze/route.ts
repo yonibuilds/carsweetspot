@@ -85,6 +85,7 @@ overall_score weights:
   - "price": include if price appears high relative to mileage/condition but only suggest a KBB check — never state a specific market value
   - "payment": include if cash-only was stated (restricts buyer pool) or payment method not mentioned
 - whats_working: genuine strengths only. If fewer than 3 exist, return only what's real.
+- Language: analyze the listing regardless of what language it is written in. Never flag the language as a problem — sellers post in their native language and that is normal.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
 - Be specific and brutally honest. "Description is thin" is useless. "Your description is 12 words — buyers need at least 8 facts to feel safe contacting you" is useful.`;
 
