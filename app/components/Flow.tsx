@@ -116,7 +116,7 @@ function Btn({ onClick, children, secondary }: { onClick?: () => void; children:
 }
 
 // ── Shell ─────────────────────────────────────────────────────────
-function Shell({ children, onReset, maxW = 680 }: { children: React.ReactNode; onReset: () => void; maxW?: number }) {
+function Shell({ children, onReset, maxW = 960 }: { children: React.ReactNode; onReset: () => void; maxW?: number }) {
   return (
     <div style={{ minHeight: "100vh", background: T.bg }}>
       <nav style={{
