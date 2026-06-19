@@ -53,9 +53,9 @@ const B: React.CSSProperties = { fontFamily: "var(--font-inter)" };
 
 // ── Category config ───────────────────────────────────────────────
 const CAT: Record<string, { label: string; icon: string }> = {
-  trust:  { label: "אמון", icon: "🤝" },
-  text:   { label: "טקסט", icon: "✍️" },
-  photos: { label: "תמונות", icon: "📸" },
+  trust:  { label: "Trust", icon: "🤝" },
+  text:   { label: "Text", icon: "✍️" },
+  photos: { label: "Photos", icon: "📸" },
 };
 
 // ── Fade ──────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ function Shell({ children, onReset, counter }: { children: React.ReactNode; onRe
         {counter && <span style={{ ...B, fontSize: 12, color: T.muted }}>{counter}</span>}
         {!counter && (
           <button onClick={onReset} style={{ ...B, fontSize: 12, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>
-            ← ניתוח חדש
+            ← New analysis
           </button>
         )}
       </nav>
@@ -199,7 +199,7 @@ function Screen2({ result, problems, onNext, onReset }: {
 
         <div style={{ marginTop: 24, marginBottom: 20 }}>
           <p style={{ ...H, fontSize: 16, fontWeight: 700, color: T.text, textAlign: "center", marginBottom: 16, letterSpacing: "-0.02em" }}>
-            המודעה שלך מפספסת ~{lost}% מהקונים
+            Your listing is missing ~{lost}% of potential buyers
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -226,7 +226,7 @@ function Screen2({ result, problems, onNext, onReset }: {
                       {CAT[cat].icon} {CAT[cat].label}
                     </div>
                     <div style={{ ...H, fontSize: 14, fontWeight: 700, color: pass ? T.greenText : T.redText, lineHeight: 1.3 }}>
-                      {pass ? "טוב — לא לגעת" : problem!.title}
+                      {pass ? "Good — don't touch" : problem!.title}
                     </div>
                   </div>
                 </div>
@@ -235,7 +235,7 @@ function Screen2({ result, problems, onNext, onReset }: {
           </div>
         </div>
 
-        <Btn onClick={onNext}>תקן את זה →</Btn>
+        <Btn onClick={onNext}>Fix these →</Btn>
       </Fade>
     </Shell>
   );
@@ -265,7 +265,7 @@ function FixScreen({ problem, index, total, onNext, isLast, onReset }: {
         </h2>
 
         <p style={{ ...B, fontSize: 12, fontWeight: 700, color: T.green, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>
-          הוסף את זה למודעה
+          Add this to your listing
         </p>
         <CopyBox text={problem.after} />
 
@@ -273,7 +273,7 @@ function FixScreen({ problem, index, total, onNext, isLast, onReset }: {
           ...B, fontSize: 13, color: T.muted, background: "none", border: "none",
           cursor: "pointer", padding: "12px 0", display: "flex", alignItems: "center", gap: 6,
         }}>
-          למה זה חשוב?
+          Why does this matter?
           <span style={{ transform: showWhy ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
         </button>
 
@@ -284,7 +284,7 @@ function FixScreen({ problem, index, total, onNext, isLast, onReset }: {
         )}
 
         <div style={{ marginTop: showWhy ? 16 : 0 }}>
-          <Btn onClick={onNext}>{isLast ? "סיום →" : "הבא →"}</Btn>
+          <Btn onClick={onNext}>{isLast ? "Done →" : "Next →"}</Btn>
         </div>
       </Fade>
     </Shell>
@@ -300,7 +300,7 @@ function SummaryScreen({ result, onReset }: { result: AnalysisResult; onReset: (
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>✅</div>
           <h2 style={{ ...H, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.03em", margin: "0 0 8px" }}>
-            סיימת את התיקונים
+            You&apos;re done with the fixes
           </h2>
           <p style={{ ...B, fontSize: 14, color: T.body, lineHeight: 1.6 }}>
             {result.vehicle} · ציון {result.overall_score}/100
@@ -310,7 +310,7 @@ function SummaryScreen({ result, onReset }: { result: AnalysisResult; onReset: (
         {result.opportunities.length > 0 && (
           <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px 18px", marginBottom: 20 }}>
             <p style={{ ...B, fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 }}>
-              עוד הזדמנויות
+              More opportunities
             </p>
             {result.opportunities.map(o => (
               <div key={o.type} style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 10 }}>
@@ -326,7 +326,7 @@ function SummaryScreen({ result, onReset }: { result: AnalysisResult; onReset: (
 
         <div style={{ background: T.text, borderRadius: 16, padding: "22px 20px", marginBottom: 12, textAlign: "center" }}>
           <p style={{ ...H, fontSize: 16, fontWeight: 800, color: "#fff", margin: "0 0 6px", letterSpacing: "-0.02em" }}>רוצה את התיקון המלא?</p>
-          <p style={{ ...B, fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>שכתוב מלא, ניתוח מחיר, ניסוח מחדש של כל המודעה.</p>
+          <p style={{ ...B, fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>Word-for-word rewrites, pricing analysis, full listing overhaul.</p>
           <button
             onMouseDown={() => setP(true)} onMouseUp={() => setP(false)} onMouseLeave={() => setP(false)}
             style={{
@@ -337,7 +337,7 @@ function SummaryScreen({ result, onReset }: { result: AnalysisResult; onReset: (
             }}>
             Unlock Full Report — $29
           </button>
-          <p style={{ ...B, fontSize: 11, color: "#64748B", margin: "8px 0 0" }}>חד פעמי · גישה מיידית</p>
+          <p style={{ ...B, fontSize: 11, color: "#64748B", margin: "8px 0 0" }}>One-time · Instant access</p>
         </div>
 
         <button onClick={onReset} style={{
@@ -345,7 +345,7 @@ function SummaryScreen({ result, onReset }: { result: AnalysisResult; onReset: (
           color: T.muted, border: `1px solid ${T.border}`, borderRadius: 12,
           fontSize: 14, cursor: "pointer",
         }}>
-          ← נתח מודעה אחרת
+          ← Analyze another listing
         </button>
       </Fade>
     </Shell>
