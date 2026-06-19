@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, DragEvent, ClipboardEvent, ChangeEvent } from "react";
+import { useState, useRef, useCallback, useEffect, DragEvent, ChangeEvent } from "react";
 import Flow, { AnalysisResult } from "./components/Flow";
 
 // Speedometer that animates during loading
@@ -94,11 +94,8 @@ const COLORS = {
   white: "#FFFFFF",
 };
 
-type Mode = "url" | "screenshots";
-
 export default function Home() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [mode, setMode] = useState<Mode>("url");
   const [url, setUrl] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -123,7 +120,7 @@ export default function Home() {
     });
   }, []);
 
-  const handlePaste = useCallback((e: ClipboardEvent | globalThis.ClipboardEvent) => {
+  const handlePaste = useCallback((e: globalThis.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
     const imageFiles: File[] = [];
@@ -133,7 +130,7 @@ export default function Home() {
         if (file) imageFiles.push(file);
       }
     }
-    if (imageFiles.length > 0) { e.preventDefault(); setMode("screenshots"); addFiles(imageFiles); }
+    if (imageFiles.length > 0) { e.preventDefault(); addFiles(imageFiles); }
   }, [addFiles]);
 
   useEffect(() => {
@@ -149,8 +146,8 @@ export default function Home() {
     setError(""); setLoading(true);
     try {
       const body: Record<string, unknown> = {};
-      if (mode === "url") body.url = url;
-      if (mode === "screenshots") body.images = images;
+      if (url) body.url = url;
+      if (images.length > 0) body.images = images;
       const res = await fetch("/api/analyze", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
@@ -165,11 +162,11 @@ export default function Home() {
   }
 
   if (loading) {
-    return <AnalyzingScreen vehicle={url ? url.split("/").filter(Boolean).pop() ?? "your listing" : "your listing"} />;
+    return <AnalyzingScreen vehicle={url ? (url.split("/").filter(Boolean).pop() ?? "your listing") : "your listing"} />;
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.bg }} onPaste={handlePaste}>
+    <div style={{ minHeight: "100vh", background: COLORS.bg }}>
 
       {/* NAV */}
       <nav style={{
@@ -213,75 +210,55 @@ export default function Home() {
           padding: "28px",
           boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
         }}>
-          {/* TABS */}
-          <div style={{ display: "flex", background: "#F1F5F9", borderRadius: 10, padding: 4, marginBottom: 20 }}>
-            {(["url", "screenshots"] as Mode[]).map(m => (
-              <button key={m} onClick={() => setMode(m)} style={{
-                ...B, flex: 1, padding: "9px", borderRadius: 8, border: "none", cursor: "pointer",
-                fontSize: 13, fontWeight: 600, transition: "all 0.2s",
-                background: mode === m ? COLORS.white : "transparent",
-                color: mode === m ? COLORS.text : COLORS.muted,
-                boxShadow: mode === m ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-              }}>
-                {m === "url" ? "Listing URL" : "Screenshots"}
-              </button>
-            ))}
-          </div>
+          {/* URL INPUT */}
+          <input
+            type="text" value={url} onChange={e => setUrl(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && (url || images.length > 0) && handleSubmit()}
+            placeholder="Paste a listing URL — Craigslist, Facebook..."
+            style={{
+              ...B, width: "100%", boxSizing: "border-box",
+              border: `1px solid ${COLORS.border}`, borderRadius: 10,
+              padding: "13px 16px", fontSize: 14, color: COLORS.text,
+              background: COLORS.bg, outline: "none", marginBottom: 12,
+            }}
+          />
 
-          {mode === "url" && (
-            <div>
-              <input
-                type="url" value={url} onChange={e => setUrl(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && url && handleSubmit()}
-                placeholder="https://craigslist.org/... or facebook.com/marketplace/..."
-                style={{
-                  ...B, width: "100%", boxSizing: "border-box",
-                  border: `1px solid ${COLORS.border}`, borderRadius: 10,
-                  padding: "13px 16px", fontSize: 14, color: COLORS.text,
-                  background: COLORS.bg, outline: "none",
-                  marginBottom: 14,
-                }}
-              />
-            </div>
-          )}
-
-          {mode === "screenshots" && (
-            <div style={{ marginBottom: 14 }}>
-              <div
-                onDragOver={e => { e.preventDefault(); setDragging(true); }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  border: `2px dashed ${dragging ? COLORS.accent : COLORS.border}`,
-                  borderRadius: 10, padding: "32px 16px", textAlign: "center",
-                  cursor: "pointer", background: dragging ? "#EFF6FF" : COLORS.bg,
-                  transition: "all 0.2s",
-                }}
-              >
-                <div style={{ fontSize: 28, marginBottom: 8 }}>📸</div>
-                <p style={{ ...B, fontSize: 13, color: COLORS.muted, margin: 0 }}>
-                  Drag & drop or <span style={{ color: COLORS.accent, fontWeight: 600 }}>click to browse</span>
-                </p>
+          {/* DROP ZONE */}
+          <div
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              border: `2px dashed ${dragging ? COLORS.accent : COLORS.border}`,
+              borderRadius: 10, padding: images.length > 0 ? "12px 16px" : "20px 16px",
+              textAlign: "center", cursor: "pointer",
+              background: dragging ? "#EFF6FF" : COLORS.bg,
+              transition: "all 0.2s", marginBottom: 14,
+            }}
+          >
+            {images.length === 0 ? (
+              <p style={{ ...B, fontSize: 13, color: COLORS.muted, margin: 0 }}>
+                📸 Or drag & drop / <span style={{ color: COLORS.accent, fontWeight: 600 }}>browse</span> / <span style={{ color: COLORS.accent, fontWeight: 600 }}>Ctrl+V</span> screenshots
+              </p>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {images.map((src, i) => (
+                  <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${COLORS.border}` }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <button onClick={e => { e.stopPropagation(); setImages(p => p.filter((_, j) => j !== i)); }} style={{
+                      position: "absolute", top: 4, right: 4, width: 20, height: 20,
+                      background: "rgba(0,0,0,0.6)", color: "white", border: "none",
+                      borderRadius: "50%", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>×</button>
+                  </div>
+                ))}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: `2px dashed ${COLORS.border}`, aspectRatio: "16/9", color: COLORS.muted, fontSize: 22 }}>+</div>
               </div>
-              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && addFiles(e.target.files)} style={{ display: "none" }} />
-              {images.length > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 12 }}>
-                  {images.map((src, i) => (
-                    <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${COLORS.border}` }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      <button onClick={() => setImages(p => p.filter((_, j) => j !== i))} style={{
-                        position: "absolute", top: 4, right: 4, width: 20, height: 20,
-                        background: "rgba(0,0,0,0.6)", color: "white", border: "none",
-                        borderRadius: "50%", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                      }}>×</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && addFiles(e.target.files)} style={{ display: "none" }} />
 
           {error && (
             <div style={{ ...B, fontSize: 13, color: "#DC2626", background: "#FFF5F5", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 14 }}>
@@ -291,10 +268,10 @@ export default function Home() {
 
           <button
             onClick={handleSubmit}
-            disabled={loading || (mode === "url" ? !url : images.length === 0)}
+            disabled={loading || (!url && images.length === 0)}
             style={{
               ...H, width: "100%", padding: "14px",
-              background: loading || (mode === "url" ? !url : images.length === 0) ? "#CBD5E1" : COLORS.text,
+              background: loading || (!url && images.length === 0) ? "#CBD5E1" : COLORS.text,
               color: COLORS.white, border: "none", borderRadius: 10,
               fontSize: 15, fontWeight: 700, cursor: loading ? "wait" : "pointer",
               letterSpacing: "-0.01em", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
