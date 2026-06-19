@@ -296,8 +296,7 @@ function Screen3({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
           {result.also_hurting.map((p, i) => (
             <div key={i} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: "12px 14px" }}>
               <Label color={T.amber}>Also hurting</Label>
-              <p style={{ ...H, fontSize: 13, fontWeight: 700, color: T.text, margin: "5px 0 4px" }}>{p.title}</p>
-              <p style={{ ...B, fontSize: 12, color: T.body, margin: 0, lineHeight: 1.5 }}>{p.why_buyers_care}</p>
+              <p style={{ ...H, fontSize: 13, fontWeight: 700, color: T.text, margin: "5px 0 0" }}>{p.title}</p>
             </div>
           ))}
         </div>
