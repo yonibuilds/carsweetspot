@@ -8,6 +8,7 @@ type Problem = {
   seller_insight: string;
   before: string;
   after: string;
+  category?: "trust" | "text" | "photos";
 };
 
 type Opportunity = {
@@ -40,72 +41,72 @@ const T = {
   redBg: "#FAECE7",
   redBorder: "#F5C4B3",
   redText: "#4A1B0C",
-  redLabel: "#993C1D",
-  amber: "#B45309",
-  amberBg: "#FFFBEB",
-  amberBorder: "#FDE68A",
-  amberText: "#78350F",
-  purple: "#534AB7",
-  purpleBg: "#EEEDFE",
-  purpleBorder: "#AFA9EC",
-  purpleText: "#26215C",
   green: "#15803D",
   greenBg: "#F0FDF4",
   greenBorder: "#BBF7D0",
   greenText: "#14532D",
+  amber: "#B45309",
 };
 
 const H: React.CSSProperties = { fontFamily: "var(--font-jakarta)" };
 const B: React.CSSProperties = { fontFamily: "var(--font-inter)" };
 
-// ── Fade-in wrapper ───────────────────────────────────────────────
+// ── Category config ───────────────────────────────────────────────
+const CAT: Record<string, { label: string; icon: string }> = {
+  trust:  { label: "אמון", icon: "🤝" },
+  text:   { label: "טקסט", icon: "✍️" },
+  photos: { label: "תמונות", icon: "📸" },
+};
+
+// ── Fade ──────────────────────────────────────────────────────────
 function Fade({ children, id }: { children: React.ReactNode; id: number }) {
   const [v, setV] = useState(false);
   useEffect(() => { const t = setTimeout(() => setV(true), 20); return () => clearTimeout(t); }, [id]);
   return (
-    <div style={{ opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(10px)", transition: "opacity 0.3s ease, transform 0.3s ease" }}>
+    <div style={{ opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(8px)", transition: "opacity 0.3s ease, transform 0.3s ease" }}>
       {children}
     </div>
   );
 }
 
-// ── Progress bar ──────────────────────────────────────────────────
-function ProgressBar({ current, total }: { current: number; total: number }) {
+// ── Shell ─────────────────────────────────────────────────────────
+function Shell({ children, onReset, counter }: { children: React.ReactNode; onReset: () => void; counter?: string }) {
   return (
-    <div style={{ display: "flex", gap: 3, marginBottom: 28 }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{
-          flex: 1, height: 2, borderRadius: 99,
-          background: i < current ? T.text : T.border,
-          transition: "background 0.4s ease",
-        }} />
-      ))}
+    <div style={{ minHeight: "100vh", background: T.bg }}>
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 100,
+        background: "rgba(248,250,252,0.92)", backdropFilter: "blur(12px)",
+        borderBottom: `1px solid ${T.border}`,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 28px", height: 50,
+      }}>
+        <button onClick={onReset} style={{ ...H, fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: "-0.02em", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          CarSweetSpot
+        </button>
+        {counter && <span style={{ ...B, fontSize: 12, color: T.muted }}>{counter}</span>}
+        {!counter && (
+          <button onClick={onReset} style={{ ...B, fontSize: 12, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>
+            ← ניתוח חדש
+          </button>
+        )}
+      </nav>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "36px 24px 80px" }}>
+        {children}
+      </div>
     </div>
-  );
-}
-
-// ── Label pill ────────────────────────────────────────────────────
-function Label({ color, children }: { color: string; children: React.ReactNode }) {
-  return (
-    <span style={{ ...B, fontSize: 11, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.07em" }}>
-      {children}
-    </span>
   );
 }
 
 // ── Primary button ────────────────────────────────────────────────
-function Btn({ onClick, children, secondary }: { onClick?: () => void; children: React.ReactNode; secondary?: boolean }) {
+function Btn({ onClick, children }: { onClick?: () => void; children: React.ReactNode }) {
   const [p, setP] = useState(false);
   return (
-    <button
-      onClick={onClick}
+    <button onClick={onClick}
       onMouseDown={() => setP(true)} onMouseUp={() => setP(false)} onMouseLeave={() => setP(false)}
       style={{
-        ...H, width: "100%", padding: "14px",
-        background: secondary ? "transparent" : T.text,
-        color: secondary ? T.muted : "#fff",
-        border: secondary ? `1px solid ${T.border}` : "none",
-        borderRadius: 12, fontSize: 14, fontWeight: 700,
+        ...H, width: "100%", padding: "15px",
+        background: T.text, color: "#fff", border: "none",
+        borderRadius: 12, fontSize: 15, fontWeight: 700,
         cursor: "pointer", letterSpacing: "-0.01em",
         transform: p ? "scale(0.98)" : "scale(1)", transition: "transform 0.12s",
       }}>
@@ -114,358 +115,218 @@ function Btn({ onClick, children, secondary }: { onClick?: () => void; children:
   );
 }
 
-// ── Shell ─────────────────────────────────────────────────────────
-function Shell({ children, onReset, maxW = 960 }: { children: React.ReactNode; onReset: () => void; maxW?: number }) {
+// ── Copy box ──────────────────────────────────────────────────────
+function CopyBox({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   return (
-    <div style={{ minHeight: "100vh", background: T.bg }}>
-      <nav style={{
-        position: "sticky", top: 0, zIndex: 100,
-        background: "rgba(248,250,252,0.92)", backdropFilter: "blur(12px)",
-        borderBottom: `1px solid ${T.border}`,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 32px", height: 52,
+    <div style={{ position: "relative", background: T.greenBg, borderLeft: `3px solid ${T.green}`, borderRadius: "0 10px 10px 0", padding: "16px 56px 16px 18px", ...B, fontSize: 14, color: T.greenText, lineHeight: 1.7 }}>
+      {text}
+      <button onClick={copy} style={{
+        position: "absolute", top: 10, right: 10,
+        ...B, fontSize: 11, fontWeight: 700,
+        color: copied ? T.green : T.muted,
+        background: copied ? T.greenBg : "#fff",
+        border: `1px solid ${copied ? T.greenBorder : T.border}`,
+        borderRadius: 6, padding: "5px 10px",
+        cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
       }}>
-        <button onClick={onReset} style={{ ...H, fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: "-0.02em", cursor: "pointer", background: "none", border: "none", padding: 0 }}>CarSweetSpot</button>
-        <button onClick={onReset} style={{ ...B, fontSize: 13, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>
-          ← New analysis
-        </button>
-      </nav>
-      <div style={{ maxWidth: maxW, margin: "0 auto", padding: "40px 32px 80px" }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// ── Score badge ───────────────────────────────────────────────────
-function ScoreBadge({ score }: { score: number }) {
-  const color = score >= 75 ? T.green : score >= 55 ? T.amber : T.red;
-  return (
-    <div style={{ textAlign: "right" }}>
-      <div style={{ ...H, fontSize: 40, fontWeight: 800, color, lineHeight: 1, letterSpacing: "-0.04em" }}>{score}</div>
-      <div style={{ ...B, fontSize: 11, color: T.muted, marginTop: 2 }}>Sweet Spot Score</div>
+        {copied ? "✓ הועתק" : "העתק"}
+      </button>
     </div>
   );
 }
 
 // ── Speedometer ───────────────────────────────────────────────────
 function Speedometer({ score }: { score: number }) {
-  const R = 90, cx = 130, cy = 110;
+  const R = 80, cx = 110, cy = 95;
   const toRad = (d: number) => (d * Math.PI) / 180;
   const ax = (a: number) => cx + R * Math.cos(toRad(a));
   const ay = (a: number) => cy + R * Math.sin(toRad(a));
   const trackD = `M ${ax(-180)} ${ay(-180)} A ${R} ${R} 0 0 1 ${ax(0)} ${ay(0)}`;
   const pct = score / 100;
   const needleAngle = -180 + pct * 180;
-  const nLen = 70;
-  const nx = cx + nLen * Math.cos(toRad(needleAngle));
-  const ny = cy + nLen * Math.sin(toRad(needleAngle));
-  const scoreColor = score >= 75 ? T.green : score >= 55 ? T.amber : T.red;
-  const tickers = Array.from({ length: 9 }, (_, i) => {
-    const angle = -180 + i * (180 / 8);
-    return {
-      x1: cx + (R - 10) * Math.cos(toRad(angle)), y1: cy + (R - 10) * Math.sin(toRad(angle)),
-      x2: cx + (R - 2) * Math.cos(toRad(angle)), y2: cy + (R - 2) * Math.sin(toRad(angle)),
-    };
-  });
+  const nx = cx + 60 * Math.cos(toRad(needleAngle));
+  const ny = cy + 60 * Math.sin(toRad(needleAngle));
+  const color = score >= 75 ? T.green : score >= 55 ? T.amber : T.red;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <svg width={260} height={130} viewBox="0 0 260 130" style={{ overflow: "visible" }}>
+      <svg width={220} height={110} viewBox="0 0 220 110" style={{ overflow: "visible" }}>
         <defs>
-          <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id="ag" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={T.red} />
-            <stop offset="40%" stopColor="#F59E0B" />
+            <stop offset="45%" stopColor="#F59E0B" />
             <stop offset="100%" stopColor={T.green} />
           </linearGradient>
         </defs>
-        <path d={trackD} fill="none" stroke="#F1F5F9" strokeWidth={18} strokeLinecap="round" />
-        <path d={trackD} fill="none" stroke="url(#arcGrad)" strokeWidth={18} strokeLinecap="round"
+        <path d={trackD} fill="none" stroke="#F1F5F9" strokeWidth={14} strokeLinecap="round" />
+        <path d={trackD} fill="none" stroke="url(#ag)" strokeWidth={14} strokeLinecap="round"
           strokeDasharray={`${pct * Math.PI * R} ${Math.PI * R}`}
-          style={{ transition: "stroke-dasharray 1.4s cubic-bezier(0.4,0,0.2,1)" }}
-        />
-        {tickers.map((t, i) => (
-          <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#CBD5E1" strokeWidth={1.5} strokeLinecap="round" />
-        ))}
+          style={{ transition: "stroke-dasharray 1.4s cubic-bezier(0.4,0,0.2,1)" }} />
         <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={T.text} strokeWidth={2.5} strokeLinecap="round"
-          style={{ transition: "all 1.4s cubic-bezier(0.4,0,0.2,1)" }}
-        />
-        <circle cx={cx} cy={cy} r={6} fill={T.text} />
-        <circle cx={cx} cy={cy} r={3} fill="#fff" />
+          style={{ transition: "all 1.4s cubic-bezier(0.4,0,0.2,1)" }} />
+        <circle cx={cx} cy={cy} r={5} fill={T.text} />
+        <circle cx={cx} cy={cy} r={2.5} fill="#fff" />
       </svg>
-      <div style={{ marginTop: -8, textAlign: "center" }}>
-        <div style={{ ...H, fontSize: 88, fontWeight: 800, color: scoreColor, lineHeight: 1, letterSpacing: "-0.05em" }}>{score}</div>
-        <div style={{ ...B, fontSize: 12, color: T.muted, marginTop: 2 }}>Sweet Spot Score</div>
+      <div style={{ marginTop: -4, textAlign: "center" }}>
+        <div style={{ ...H, fontSize: 72, fontWeight: 800, color, lineHeight: 1, letterSpacing: "-0.05em" }}>{score}</div>
+        <div style={{ ...B, fontSize: 11, color: T.muted, marginTop: 2 }}>Sweet Spot Score</div>
       </div>
     </div>
   );
 }
 
-// ── Copy-ready fix ────────────────────────────────────────────────
-function FixCopy({ after }: { after: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => { navigator.clipboard.writeText(after); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  return (
-    <div style={{ position: "relative", background: T.greenBg, borderLeft: `3px solid ${T.green}`, borderRadius: "0 8px 8px 0", padding: "12px 52px 12px 14px", ...B, fontSize: 13, color: T.greenText, lineHeight: 1.6 }}>
-      {after}
-      <button onClick={copy} style={{
-        position: "absolute", top: 8, right: 8,
-        ...B, fontSize: 10, fontWeight: 700,
-        color: copied ? T.green : T.muted,
-        background: copied ? T.greenBg : "#fff",
-        border: `1px solid ${copied ? T.greenBorder : T.border}`,
-        borderRadius: 6, padding: "4px 8px",
-        cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
-      }}>
-        {copied ? "✓ Copied" : "Copy"}
-      </button>
-    </div>
-  );
-}
+// ── Screen 2 — Score + 3 categories ──────────────────────────────
+function Screen2({ result, problems, onNext, onReset }: {
+  result: AnalysisResult;
+  problems: Problem[];
+  onNext: () => void;
+  onReset: () => void;
+}) {
+  // Build category map: which problems fall in which category
+  const catMap: Record<string, Problem | null> = { trust: null, text: null, photos: null };
+  problems.forEach(p => { if (p.category && catMap[p.category] === null) catMap[p.category] = p; });
 
-// ── Icon map ──────────────────────────────────────────────────────
-function opIcon(type: string): string {
-  const icons: Record<string, string> = {
-    financing: "💰", inspection: "🔧", carfax: "📋",
-    title: "📄", photos: "📸", description: "✏️",
-    garage: "🏠", warranty: "🛡️", price: "💲", payment: "💳",
-    formatting: "📝",
-  };
-  return icons[type] ?? "💡";
-}
+  const lost = 100 - result.overall_score;
 
-// ── Screen 2 — Score reveal ───────────────────────────────────────
-function Screen2({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
   return (
-    <Shell onReset={onReset} maxW={480}>
+    <Shell onReset={onReset}>
       <Fade id={2}>
-        <p style={{ ...B, fontSize: 11, color: T.muted, textAlign: "center", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>
+        <p style={{ ...B, fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: "0.08em", textAlign: "center", marginBottom: 12 }}>
           {result.vehicle}
         </p>
         <Speedometer score={result.overall_score} />
-        <div style={{ margin: "24px 0", display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ background: T.redBg, border: `1px solid ${T.redBorder}`, borderRadius: 10, padding: "12px 16px" }}>
-            <Label color={T.redLabel}>🚨 Biggest Problem</Label>
-            <p style={{ ...H, fontSize: 14, fontWeight: 700, color: T.redText, margin: "5px 0 0", lineHeight: 1.3 }}>{result.biggest_problem.title}</p>
-          </div>
-          <div style={{ background: T.amberBg, border: `1px solid ${T.amberBorder}`, borderRadius: 10, padding: "12px 16px" }}>
-            <p style={{ ...B, fontSize: 13, color: T.amberText, margin: 0 }}>
-              <strong>{(result.also_hurting ?? []).length} more issues</strong> we&apos;ll walk you through
-            </p>
-          </div>
-          <div style={{ background: T.purpleBg, border: `1px solid ${T.purpleBorder}`, borderRadius: 10, padding: "12px 16px" }}>
-            <p style={{ ...B, fontSize: 13, color: T.purpleText, margin: 0 }}>
-              <strong>{(result.opportunities ?? []).length} opportunities</strong> to attract more buyers
-            </p>
-          </div>
-        </div>
-        <Btn onClick={onNext}>See Your Diagnosis →</Btn>
-      </Fade>
-    </Shell>
-  );
-}
 
-// ── Screen 3 — Diagnosis overview ────────────────────────────────
-function Screen3({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Shell onReset={onReset}>
-      <Fade id={3}>
-        <ProgressBar current={1} total={4} />
+        <div style={{ marginTop: 24, marginBottom: 20 }}>
+          <p style={{ ...H, fontSize: 16, fontWeight: 700, color: T.text, textAlign: "center", marginBottom: 16, letterSpacing: "-0.02em" }}>
+            המודעה שלך מפספסת ~{lost}% מהקונים
+          </p>
 
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
-          <div>
-            <p style={{ ...B, fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 4px" }}>{result.vehicle}</p>
-            <h2 style={{ ...H, fontSize: 22, fontWeight: 800, color: T.text, margin: 0, letterSpacing: "-0.03em" }}>Here&apos;s what&apos;s happening.</h2>
-          </div>
-          <ScoreBadge score={result.overall_score} />
-        </div>
-
-        <div style={{ background: T.redBg, borderLeft: `3px solid ${T.red}`, borderRadius: "0 12px 12px 0", padding: "14px 18px", marginBottom: 10 }}>
-          <Label color={T.redLabel}>Biggest problem</Label>
-          <p style={{ ...H, fontSize: 15, fontWeight: 700, color: T.redText, margin: "5px 0 6px" }}>{result.biggest_problem.title}</p>
-          <p style={{ ...B, fontSize: 13, color: T.redLabel, margin: 0, lineHeight: 1.5 }}>{result.biggest_problem.why_buyers_care}</p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-          {result.also_hurting.map((p, i) => (
-            <div key={i} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: "12px 14px" }}>
-              <Label color={T.amber}>Also hurting</Label>
-              <p style={{ ...H, fontSize: 13, fontWeight: 700, color: T.text, margin: "5px 0 0" }}>{p.title}</p>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 10 }}>
-          <Label color={T.purple}>Missed opportunities</Label>
-          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-            {result.opportunities.map(o => (
-              <div key={o.type} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 15, flexShrink: 0 }}>{opIcon(o.type)}</span>
-                <span style={{ ...B, fontSize: 13, color: T.body }}>{o.title}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ border: `1px solid ${T.border}`, borderRadius: 12, marginBottom: 20, overflow: "hidden" }}>
-          <button onClick={() => setOpen(o => !o)} style={{
-            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "12px 16px", background: "transparent", border: "none", cursor: "pointer",
-          }}>
-            <Label color={T.green}>✓ What&apos;s working</Label>
-            <span style={{ fontSize: 14, color: T.muted, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
-          </button>
-          {open && (
-            <div style={{ padding: "0 16px 14px", borderTop: `1px solid ${T.border}` }}>
-              {result.whats_working.map((w, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, paddingTop: 8 }}>
-                  <span style={{ color: T.green, fontSize: 13, flexShrink: 0 }}>✓</span>
-                  <span style={{ ...B, fontSize: 13, color: T.body, lineHeight: 1.5 }}>{w}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {(["trust", "text", "photos"] as const).map(cat => {
+              const problem = catMap[cat];
+              const pass = !problem;
+              return (
+                <div key={cat} style={{
+                  display: "flex", alignItems: "flex-start", gap: 14,
+                  background: pass ? T.greenBg : T.redBg,
+                  border: `1px solid ${pass ? T.greenBorder : T.redBorder}`,
+                  borderRadius: 12, padding: "12px 16px",
+                }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                    background: pass ? T.green : T.red,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#fff", fontSize: 13, fontWeight: 700, marginTop: 1,
+                  }}>
+                    {pass ? "✓" : "✕"}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ ...B, fontSize: 11, fontWeight: 700, color: pass ? T.green : T.red, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>
+                      {CAT[cat].icon} {CAT[cat].label}
+                    </div>
+                    <div style={{ ...H, fontSize: 14, fontWeight: 700, color: pass ? T.greenText : T.redText, lineHeight: 1.3 }}>
+                      {pass ? "טוב — לא לגעת" : problem!.title}
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
 
-        <Btn onClick={onNext}>Show Me How To Fix It →</Btn>
+        <Btn onClick={onNext}>תקן את זה →</Btn>
       </Fade>
     </Shell>
   );
 }
 
-// ── Fix card — one problem with expandable Why ────────────────────
-function FixCard({ problem, rank }: { problem: Problem; rank: number }) {
-  const [open, setOpen] = useState(false);
-  const isTop = rank === 0;
-  const labelColor = isTop ? T.redLabel : T.amber;
-  const labelBg = isTop ? T.redBg : T.amberBg;
-  const labelBorder = isTop ? T.redBorder : T.amberBorder;
-  const labelText = isTop ? "🚨 Biggest Problem" : "⚠️ Also Hurting";
-
+// ── Fix screen — one problem at a time ────────────────────────────
+function FixScreen({ problem, index, total, onNext, isLast, onReset }: {
+  problem: Problem;
+  index: number;
+  total: number;
+  onNext: () => void;
+  isLast: boolean;
+  onReset: () => void;
+}) {
+  const [showWhy, setShowWhy] = useState(false);
+  const cat = problem.category ? CAT[problem.category] : { label: "בעיה", icon: "⚠️" };
   return (
-    <div style={{ border: `1px solid ${isTop ? T.redBorder : T.border}`, borderRadius: 14, overflow: "hidden", marginBottom: 12 }}>
-      {/* Header */}
-      <div style={{ background: labelBg, padding: "14px 16px", borderBottom: `1px solid ${isTop ? T.redBorder : T.border}` }}>
-        <div style={{ display: "inline-block", background: isTop ? T.red : T.amberBg, border: `1px solid ${labelBorder}`, borderRadius: 6, padding: "2px 8px", marginBottom: 6 }}>
-          <Label color={isTop ? "#fff" : labelColor}>{labelText}</Label>
+    <Shell onReset={onReset} counter={`${index + 1} / ${total}`}>
+      <Fade id={10 + index}>
+        <div style={{ marginBottom: 8 }}>
+          <span style={{ ...B, fontSize: 11, fontWeight: 700, color: T.red, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+            {cat.icon} {cat.label}
+          </span>
         </div>
-        <h3 style={{ ...H, fontSize: 16, fontWeight: 800, color: isTop ? T.redText : T.text, margin: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
+        <h2 style={{ ...H, fontSize: 24, fontWeight: 800, color: T.text, margin: "0 0 24px", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
           {problem.title}
-        </h3>
-      </div>
+        </h2>
 
-      {/* Fix + expandable Why */}
-      <div style={{ padding: "14px 16px", background: T.card }}>
-        <div style={{ ...B, fontSize: 10, fontWeight: 700, color: T.green, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Use this instead</div>
-        <FixCopy after={problem.after} />
-        <button onClick={() => setOpen(o => !o)} style={{
-          marginTop: 10, display: "flex", alignItems: "center", gap: 6,
-          background: "none", border: "none", cursor: "pointer", padding: 0,
+        <p style={{ ...B, fontSize: 12, fontWeight: 700, color: T.green, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>
+          הוסף את זה למודעה
+        </p>
+        <CopyBox text={problem.after} />
+
+        <button onClick={() => setShowWhy(w => !w)} style={{
+          ...B, fontSize: 13, color: T.muted, background: "none", border: "none",
+          cursor: "pointer", padding: "12px 0", display: "flex", alignItems: "center", gap: 6,
         }}>
-          <span style={{ ...B, fontSize: 12, fontWeight: 600, color: T.muted }}>Why does this matter?</span>
-          <span style={{ fontSize: 12, color: T.muted, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
+          למה זה חשוב?
+          <span style={{ transform: showWhy ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
         </button>
-        {open && (
-          <div style={{ marginTop: 8, background: T.surface, borderRadius: 8, padding: "10px 14px" }}>
+
+        {showWhy && (
+          <div style={{ background: T.surface, borderRadius: 10, padding: "12px 16px", marginBottom: 8 }}>
             <p style={{ ...B, fontSize: 13, color: T.body, margin: 0, lineHeight: 1.6 }}>{problem.why_buyers_care}</p>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
 
-// ── Screen 4 — Fix list ───────────────────────────────────────────
-function Screen4({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
-  const also = result.also_hurting ?? [];
-  const problems = [result.biggest_problem, ...also];
-
-  return (
-    <Shell onReset={onReset}>
-      <Fade id={4}>
-        <ProgressBar current={2} total={4} />
-
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
-          <h2 style={{ ...H, fontSize: 22, fontWeight: 800, color: T.text, margin: 0, letterSpacing: "-0.03em" }}>Your fix list.</h2>
-          <ScoreBadge score={result.overall_score} />
+        <div style={{ marginTop: showWhy ? 16 : 0 }}>
+          <Btn onClick={onNext}>{isLast ? "סיום →" : "הבא →"}</Btn>
         </div>
-
-        {/* Problem fix cards */}
-        {problems.map((p, i) => (
-          <FixCard key={i} problem={p} rank={i} />
-        ))}
-
-        {/* Opportunities */}
-        {result.opportunities.length > 0 && (
-          <div style={{ border: `1px solid ${T.purpleBorder}`, borderRadius: 14, overflow: "hidden", marginBottom: 20 }}>
-            <div style={{ background: T.purpleBg, padding: "14px 16px", borderBottom: `1px solid ${T.purpleBorder}` }}>
-              <Label color={T.purple}>💡 Missed Opportunities</Label>
-            </div>
-            <div style={{ padding: "14px 16px", background: T.card, display: "flex", flexDirection: "column", gap: 14 }}>
-              {result.opportunities.map(op => (
-                <div key={op.type} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{opIcon(op.type)}</span>
-                  <div>
-                    <p style={{ ...H, fontSize: 14, fontWeight: 700, color: T.text, margin: "0 0 3px" }}>{op.title}</p>
-                    <p style={{ ...B, fontSize: 13, color: T.body, margin: 0, lineHeight: 1.5 }}>{op.insight}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <Btn onClick={onNext}>See Summary →</Btn>
       </Fade>
     </Shell>
   );
 }
 
-// ── Screen 5 — Summary + Upsell ───────────────────────────────────
-function Screen5({ result, onReset }: { result: AnalysisResult; onReset: () => void }) {
+// ── Summary screen ────────────────────────────────────────────────
+function SummaryScreen({ result, onReset }: { result: AnalysisResult; onReset: () => void }) {
   const [p, setP] = useState(false);
-  const also = result.also_hurting ?? [];
   return (
     <Shell onReset={onReset}>
-      <Fade id={5}>
-        <ProgressBar current={4} total={4} />
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
-          <div>
-            <Label color={T.green}>✓ Analysis complete</Label>
-            <h2 style={{ ...H, fontSize: 20, fontWeight: 800, color: T.text, margin: "6px 0 0", letterSpacing: "-0.03em" }}>{result.vehicle}</h2>
-          </div>
-          <ScoreBadge score={result.overall_score} />
+      <Fade id={99}>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{ fontSize: 48, marginBottom: 8 }}>✅</div>
+          <h2 style={{ ...H, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: "-0.03em", margin: "0 0 8px" }}>
+            סיימת את התיקונים
+          </h2>
+          <p style={{ ...B, fontSize: 14, color: T.body, lineHeight: 1.6 }}>
+            {result.vehicle} · ציון {result.overall_score}/100
+          </p>
         </div>
 
-        <div style={{ background: T.redBg, borderLeft: `3px solid ${T.red}`, borderRadius: "0 12px 12px 0", padding: "12px 16px", marginBottom: 8 }}>
-          <Label color={T.redLabel}>Biggest problem</Label>
-          <p style={{ ...H, fontSize: 14, fontWeight: 700, color: T.redText, margin: "4px 0 0" }}>{result.biggest_problem.title}</p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-          {also.map((p, i) => (
-            <div key={i} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: "12px 14px" }}>
-              <Label color={T.amber}>Also hurting</Label>
-              <p style={{ ...H, fontSize: 13, fontWeight: 700, color: T.text, margin: "4px 0 0" }}>{p.title}</p>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: "12px 16px", marginBottom: 20 }}>
-          <Label color={T.purple}>Opportunities</Label>
-          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+        {result.opportunities.length > 0 && (
+          <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "16px 18px", marginBottom: 20 }}>
+            <p style={{ ...B, fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 }}>
+              עוד הזדמנויות
+            </p>
             {result.opportunities.map(o => (
-              <div key={o.type} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ fontSize: 14 }}>{opIcon(o.type)}</span>
-                <span style={{ ...B, fontSize: 13, color: T.body }}>{o.title}</span>
+              <div key={o.type} style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 10 }}>
+                <span style={{ fontSize: 15, flexShrink: 0 }}>{opIcon(o.type)}</span>
+                <div>
+                  <p style={{ ...H, fontSize: 13, fontWeight: 700, color: T.text, margin: "0 0 2px" }}>{o.title}</p>
+                  <p style={{ ...B, fontSize: 12, color: T.body, margin: 0, lineHeight: 1.5 }}>{o.insight}</p>
+                </div>
               </div>
             ))}
           </div>
-        </div>
+        )}
 
-        <div style={{ background: T.text, borderRadius: 16, padding: "22px 20px", marginBottom: 10, textAlign: "center" }}>
-          <p style={{ ...H, fontSize: 16, fontWeight: 800, color: "#fff", margin: "0 0 6px", letterSpacing: "-0.02em" }}>Want the complete fix?</p>
-          <p style={{ ...B, fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>Word-for-word rewrites, pricing analysis, full listing overhaul.</p>
+        <div style={{ background: T.text, borderRadius: 16, padding: "22px 20px", marginBottom: 12, textAlign: "center" }}>
+          <p style={{ ...H, fontSize: 16, fontWeight: 800, color: "#fff", margin: "0 0 6px", letterSpacing: "-0.02em" }}>רוצה את התיקון המלא?</p>
+          <p style={{ ...B, fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>שכתוב מלא, ניתוח מחיר, ניסוח מחדש של כל המודעה.</p>
           <button
             onMouseDown={() => setP(true)} onMouseUp={() => setP(false)} onMouseLeave={() => setP(false)}
             style={{
@@ -476,18 +337,34 @@ function Screen5({ result, onReset }: { result: AnalysisResult; onReset: () => v
             }}>
             Unlock Full Report — $29
           </button>
-          <p style={{ ...B, fontSize: 11, color: "#64748B", margin: "8px 0 0" }}>One-time · Instant access</p>
+          <p style={{ ...B, fontSize: 11, color: "#64748B", margin: "8px 0 0" }}>חד פעמי · גישה מיידית</p>
         </div>
 
-        <Btn onClick={onReset} secondary>← Analyze another listing</Btn>
+        <button onClick={onReset} style={{
+          ...B, width: "100%", padding: "13px", background: "transparent",
+          color: T.muted, border: `1px solid ${T.border}`, borderRadius: 12,
+          fontSize: 14, cursor: "pointer",
+        }}>
+          ← נתח מודעה אחרת
+        </button>
       </Fade>
     </Shell>
   );
 }
 
+// ── Icon map ──────────────────────────────────────────────────────
+function opIcon(type: string): string {
+  const icons: Record<string, string> = {
+    financing: "💰", inspection: "🔧", carfax: "📋",
+    title: "📄", photos: "📸", description: "✏️",
+    garage: "🏠", warranty: "🛡️", price: "💲", payment: "💳", formatting: "📝",
+  };
+  return icons[type] ?? "💡";
+}
+
 // ── Root ──────────────────────────────────────────────────────────
 export default function Flow({ result, onReset }: { result: AnalysisResult; onReset: () => void }) {
-  const [screen, setScreen] = useState(2);
+  const [screen, setScreen] = useState(0);
 
   useEffect(() => {
     const onPop = () => onReset();
@@ -495,12 +372,29 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
     return () => window.removeEventListener("popstate", onPop);
   }, [onReset]);
 
-  const screens: Record<number, React.ReactNode> = {
-    2: <Screen2 result={result} onNext={() => setScreen(3)} onReset={onReset} />,
-    3: <Screen3 result={result} onNext={() => setScreen(4)} onReset={onReset} />,
-    4: <Screen4 result={result} onNext={() => setScreen(5)} onReset={onReset} />,
-    5: <Screen5 result={result} onReset={onReset} />,
-  };
+  const also = result.also_hurting ?? [];
+  const allProblems = [result.biggest_problem, ...also];
 
-  return <>{screens[screen]}</>;
+  // Only show fix screens for problems that have content
+  const fixProblems = allProblems.filter(p => p && p.title && p.after);
+
+  if (screen === 0) {
+    return <Screen2 result={result} problems={allProblems} onNext={() => setScreen(1)} onReset={onReset} />;
+  }
+
+  const fixIndex = screen - 1;
+  if (fixIndex < fixProblems.length) {
+    return (
+      <FixScreen
+        problem={fixProblems[fixIndex]}
+        index={fixIndex}
+        total={fixProblems.length}
+        onNext={() => setScreen(screen + 1)}
+        isLast={fixIndex === fixProblems.length - 1}
+        onReset={onReset}
+      />
+    );
+  }
+
+  return <SummaryScreen result={result} onReset={onReset} />;
 }

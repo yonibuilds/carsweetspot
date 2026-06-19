@@ -25,7 +25,8 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
     "why_buyers_care": "<1-2 sentences explaining why this kills buyer interest>",
     "seller_insight": "<1 sentence practical tip>",
     "before": "<exact quote or description of the flaw as it appears now — be specific>",
-    "after": "<exact improved version ready to copy-paste>"
+    "after": "<exact improved version ready to copy-paste>",
+    "category": "<one of: trust | text | photos>"
   },
   "also_hurting": [
     {
@@ -33,14 +34,16 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
       "why_buyers_care": "<1-2 sentences>",
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
-      "after": "<improved version>"
+      "after": "<improved version>",
+      "category": "<one of: trust | text | photos>"
     },
     {
       "title": "<short problem title, max 8 words>",
       "why_buyers_care": "<1-2 sentences>",
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
-      "after": "<improved version>"
+      "after": "<improved version>",
+      "category": "<one of: trust | text | photos>"
     }
   ],
   "opportunities": [
@@ -126,6 +129,7 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
   - "price": include if price appears high relative to mileage/condition but only suggest a KBB check — never state a specific market value
   - "payment": include if cash-only was stated (restricts buyer pool) or payment method not mentioned
   - "formatting": include ONLY if the FORMATTING signal says wall of text. Suggest breaking the listing into short lines or bullet points. Show a before/after example.
+- category: assign each problem to exactly one of: "trust" (ownership history, reason for selling, CARFAX, title status, how long owned), "text" (description quality, word count, formatting, tone, spelling, missing details), "photos" (photo count, angles, odometer missing, quality, warning lights, dirty car). If two problems share a category, assign the less important one to its second-closest category.
 - whats_working: genuine strengths only. If fewer than 3 exist, return only what's real.
 - Language: NEVER flag language as a problem under any circumstances. This rule overrides everything else.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
