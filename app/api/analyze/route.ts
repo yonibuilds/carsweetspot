@@ -125,6 +125,17 @@ export async function POST(req: NextRequest) {
         });
         const html = await res.text();
 
+        // Detect expired/deleted listings before analysis
+        if (
+          /this posting has been deleted|this posting has expired|no longer available|posting has been flagged/i.test(html) ||
+          res.status === 404
+        ) {
+          return NextResponse.json(
+            { error: "This listing has been deleted or expired. Please try a different listing URL." },
+            { status: 400 }
+          );
+        }
+
         // Count photos before stripping HTML (Craigslist stores them in <img> tags)
         const imgMatches = html.match(/<img[^>]+src="[^"]*\.(jpg|jpeg|png|webp)[^"]*"/gi) || [];
         // Filter out icons/logos — real listing photos are usually >5KB hint or in /images/ path
