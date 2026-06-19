@@ -200,35 +200,24 @@ function Speedometer({ score }: { score: number }) {
   );
 }
 
-// ── Before / After ────────────────────────────────────────────────
-function BeforeAfter({ before, after }: { before: string; after: string }) {
+// ── Copy-ready fix ────────────────────────────────────────────────
+function FixCopy({ after }: { after: string }) {
   const [copied, setCopied] = useState(false);
   const copy = () => { navigator.clipboard.writeText(after); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div>
-        <div style={{ ...B, fontSize: 10, fontWeight: 700, color: T.red, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>Before</div>
-        <div style={{ background: T.redBg, borderLeft: `3px solid ${T.red}`, borderRadius: "0 8px 8px 0", padding: "12px 14px", ...B, fontSize: 13, color: T.redText, lineHeight: 1.6 }}>
-          {before}
-        </div>
-      </div>
-      <div>
-        <div style={{ ...B, fontSize: 10, fontWeight: 700, color: T.green, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>After</div>
-        <div style={{ position: "relative", background: T.greenBg, borderLeft: `3px solid ${T.green}`, borderRadius: "0 8px 8px 0", padding: "12px 48px 12px 14px", ...B, fontSize: 13, color: T.greenText, lineHeight: 1.6 }}>
-          {after}
-          <button onClick={copy} style={{
-            position: "absolute", top: 8, right: 8,
-            ...B, fontSize: 10, fontWeight: 700,
-            color: copied ? T.green : T.muted,
-            background: copied ? T.greenBg : "#fff",
-            border: `1px solid ${copied ? T.greenBorder : T.border}`,
-            borderRadius: 6, padding: "4px 8px",
-            cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
-          }}>
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
-        </div>
-      </div>
+    <div style={{ position: "relative", background: T.greenBg, borderLeft: `3px solid ${T.green}`, borderRadius: "0 8px 8px 0", padding: "12px 52px 12px 14px", ...B, fontSize: 13, color: T.greenText, lineHeight: 1.6 }}>
+      {after}
+      <button onClick={copy} style={{
+        position: "absolute", top: 8, right: 8,
+        ...B, fontSize: 10, fontWeight: 700,
+        color: copied ? T.green : T.muted,
+        background: copied ? T.greenBg : "#fff",
+        border: `1px solid ${copied ? T.greenBorder : T.border}`,
+        borderRadius: 6, padding: "4px 8px",
+        cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
+      }}>
+        {copied ? "✓ Copied" : "Copy"}
+      </button>
     </div>
   );
 }
@@ -364,13 +353,12 @@ function FixCard({ problem, rank }: { problem: Problem; rank: number }) {
         </h3>
       </div>
 
-      {/* Before / After */}
+      {/* Fix + expandable Why */}
       <div style={{ padding: "14px 16px", background: T.card }}>
-        <BeforeAfter before={problem.before} after={problem.after} />
-
-        {/* Expandable Why */}
+        <div style={{ ...B, fontSize: 10, fontWeight: 700, color: T.green, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Use this instead</div>
+        <FixCopy after={problem.after} />
         <button onClick={() => setOpen(o => !o)} style={{
-          marginTop: 12, display: "flex", alignItems: "center", gap: 6,
+          marginTop: 10, display: "flex", alignItems: "center", gap: 6,
           background: "none", border: "none", cursor: "pointer", padding: 0,
         }}>
           <span style={{ ...B, fontSize: 12, fontWeight: 600, color: T.muted }}>Why does this matter?</span>
