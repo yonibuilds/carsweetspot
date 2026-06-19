@@ -271,27 +271,13 @@ function FixScreen({ problem, index, total, onNext, isLast, onReset }: {
 
         <button onClick={() => setShowWhy(w => !w)} style={{
           background: "none", border: "none", cursor: "pointer", padding: "12px 0",
-          display: "flex", alignItems: "center", gap: 0,
+          display: "flex", alignItems: "center", gap: 6,
         }}>
-          <span style={{
-            display: "inline-flex", alignItems: "center", gap: 7,
-            background: showWhy ? "#FEF3C7" : "#FFFBEB",
-            border: `1px solid ${showWhy ? "#F59E0B" : "#FDE68A"}`,
-            borderRadius: 99, padding: "5px 12px 5px 8px",
-            transition: "all 0.2s",
-          }}>
-            <span style={{
-              width: 18, height: 18, borderRadius: "50%",
-              background: showWhy ? "#F59E0B" : "#FCD34D",
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              fontSize: 11, fontWeight: 800, color: "#fff",
-              transition: "background 0.2s", flexShrink: 0,
-            }}>!</span>
-            <span style={{ ...B, fontSize: 12, fontWeight: 600, color: "#92400E" }}>
-              Why does this matter?
-            </span>
-            <span style={{ fontSize: 10, color: "#B45309", transform: showWhy ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
+          <span style={{ fontSize: 13, color: T.muted }}>ⓘ</span>
+          <span style={{ ...B, fontSize: 12, color: T.muted, borderBottom: `1px dashed ${T.border}` }}>
+            Why does this matter?
           </span>
+          <span style={{ fontSize: 10, color: T.muted, transform: showWhy ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
         </button>
 
         {showWhy && (
