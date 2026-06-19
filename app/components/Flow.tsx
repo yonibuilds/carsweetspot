@@ -125,7 +125,7 @@ function Shell({ children, onReset, maxW = 960 }: { children: React.ReactNode; o
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 32px", height: 52,
       }}>
-        <span style={{ ...H, fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: "-0.02em" }}>CarSweetSpot</span>
+        <span onClick={onReset} style={{ ...H, fontSize: 15, fontWeight: 800, color: T.text, letterSpacing: "-0.02em", cursor: "pointer" }}>CarSweetSpot</span>
         <button onClick={onReset} style={{ ...B, fontSize: 13, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>
           ← New analysis
         </button>
