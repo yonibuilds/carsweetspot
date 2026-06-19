@@ -117,12 +117,12 @@ export default function Home() {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX = 1200;
+          const MAX = 800;
           const scale = Math.min(1, MAX / Math.max(img.width, img.height));
           canvas.width = Math.round(img.width * scale);
           canvas.height = Math.round(img.height * scale);
           canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL("image/jpeg", 0.75));
+          resolve(canvas.toDataURL("image/jpeg", 0.6));
         };
         img.src = e.target!.result as string;
       };
