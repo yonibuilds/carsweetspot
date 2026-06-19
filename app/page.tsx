@@ -130,10 +130,12 @@ export default function Home() {
     });
   }, []);
 
+  const MAX_IMAGES = 2;
+
   const addFiles = useCallback((files: FileList | File[]) => {
     Array.from(files).filter(f => f.type.startsWith("image/")).forEach(async (file) => {
       const compressed = await compressImage(file);
-      setImages(prev => [...prev, compressed]);
+      setImages(prev => prev.length < MAX_IMAGES ? [...prev, compressed] : prev);
     });
   }, [compressImage]);
 
@@ -256,7 +258,7 @@ export default function Home() {
           >
             {images.length === 0 ? (
               <p style={{ ...B, fontSize: 13, color: COLORS.muted, margin: 0 }}>
-                📸 Or drag & drop / <span style={{ color: COLORS.accent, fontWeight: 600 }}>browse</span> / <span style={{ color: COLORS.accent, fontWeight: 600 }}>Ctrl+V</span> screenshots
+                📸 Or drag & drop / <span style={{ color: COLORS.accent, fontWeight: 600 }}>browse</span> / <span style={{ color: COLORS.accent, fontWeight: 600 }}>Ctrl+V</span> screenshots <span style={{ color: COLORS.muted }}>(up to 2)</span>
               </p>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
@@ -271,7 +273,9 @@ export default function Home() {
                     }}>×</button>
                   </div>
                 ))}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: `2px dashed ${COLORS.border}`, aspectRatio: "16/9", color: COLORS.muted, fontSize: 22 }}>+</div>
+                {images.length < MAX_IMAGES && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: `2px dashed ${COLORS.border}`, aspectRatio: "16/9", color: COLORS.muted, fontSize: 22 }}>+</div>
+                )}
               </div>
             )}
           </div>
