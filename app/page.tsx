@@ -217,7 +217,7 @@ export default function Home() {
         </h1>
 
         <p style={{ ...B, fontSize: 17, color: COLORS.muted, lineHeight: 1.6, marginBottom: 48, maxWidth: 420 }}>
-          Paste your listing URL. Get an instant Sweet Spot Score and a step-by-step fix plan in 10 seconds.
+          Paste your listing URL — or upload photos for a deeper analysis. Get your Sweet Spot Score in 10 seconds.
         </p>
 
         {/* INPUT CARD */}
@@ -249,18 +249,27 @@ export default function Home() {
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             style={{
-              border: `2px dashed ${dragging ? COLORS.accent : COLORS.border}`,
-              borderRadius: 10, padding: images.length > 0 ? "12px 16px" : "20px 16px",
+              border: `2px dashed ${dragging ? COLORS.accent : images.length > 0 ? "#86EFAC" : COLORS.border}`,
+              borderRadius: 10, padding: images.length > 0 ? "12px 16px" : "24px 16px",
               textAlign: "center", cursor: "pointer",
-              background: dragging ? "#EFF6FF" : COLORS.bg,
+              background: dragging ? "#EFF6FF" : images.length > 0 ? "#F0FDF4" : COLORS.bg,
               transition: "all 0.2s", marginBottom: 14,
             }}
           >
             {images.length === 0 ? (
-              <p style={{ ...B, fontSize: 13, color: COLORS.muted, margin: 0 }}>
-                📸 Or drag & drop / <span style={{ color: COLORS.accent, fontWeight: 600 }}>browse</span> / <span style={{ color: COLORS.accent, fontWeight: 600 }}>Ctrl+V</span> screenshots
-              </p>
+              <div>
+                <p style={{ ...B, fontSize: 14, fontWeight: 600, color: COLORS.text, margin: "0 0 4px" }}>
+                  📸 Add listing photos
+                </p>
+                <p style={{ ...B, fontSize: 12, color: COLORS.muted, margin: 0 }}>
+                  Drag & drop · <span style={{ color: COLORS.accent, fontWeight: 600 }}>browse</span> · Ctrl+V — photos get a deeper analysis
+                </p>
+              </div>
             ) : (
+              <div>
+              <p style={{ ...B, fontSize: 12, fontWeight: 700, color: "#15803D", margin: "0 0 8px" }}>
+                ✓ Photo analysis included — {images.length} photo{images.length > 1 ? "s" : ""}
+              </p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {images.map((src, i) => (
                   <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${COLORS.border}` }}>
@@ -276,6 +285,7 @@ export default function Home() {
                 {images.length < MAX_IMAGES && (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: `2px dashed ${COLORS.border}`, aspectRatio: "16/9", color: COLORS.muted, fontSize: 22 }}>+</div>
                 )}
+              </div>
               </div>
             )}
           </div>
