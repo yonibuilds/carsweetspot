@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 type Problem = {
   title: string;
@@ -33,7 +33,6 @@ const T = {
   card: "#FFFFFF",
   surface: "#F1F5F9",
   border: "#E2E8F0",
-  borderSoft: "#F1F5F9",
   text: "#0F172A",
   body: "#475569",
   muted: "#94A3B8",
@@ -234,6 +233,16 @@ function BeforeAfter({ before, after }: { before: string; after: string }) {
   );
 }
 
+// ── Icon map ──────────────────────────────────────────────────────
+function opIcon(type: string): string {
+  const icons: Record<string, string> = {
+    financing: "💰", inspection: "🔧", carfax: "📋",
+    title: "📄", photos: "📸", description: "✏️",
+    garage: "🏠", warranty: "🛡️", price: "💲", payment: "💳",
+  };
+  return icons[type] ?? "💡";
+}
+
 // ── Screen 2 — Score reveal ───────────────────────────────────────
 function Screen2({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
   return (
@@ -271,9 +280,8 @@ function Screen3({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
   return (
     <Shell onReset={onReset}>
       <Fade id={3}>
-        <ProgressBar current={2} total={7} />
+        <ProgressBar current={1} total={4} />
 
-        {/* Header row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
             <p style={{ ...B, fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 4px" }}>{result.vehicle}</p>
@@ -282,14 +290,12 @@ function Screen3({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
           <ScoreBadge score={result.overall_score} />
         </div>
 
-        {/* Biggest problem */}
         <div style={{ background: T.redBg, borderLeft: `3px solid ${T.red}`, borderRadius: "0 12px 12px 0", padding: "14px 18px", marginBottom: 10 }}>
           <Label color={T.redLabel}>Biggest problem</Label>
           <p style={{ ...H, fontSize: 15, fontWeight: 700, color: T.redText, margin: "5px 0 6px" }}>{result.biggest_problem.title}</p>
           <p style={{ ...B, fontSize: 13, color: T.redLabel, margin: 0, lineHeight: 1.5 }}>{result.biggest_problem.why_buyers_care}</p>
         </div>
 
-        {/* Also hurting — 2 columns */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
           {result.also_hurting.map((p, i) => (
             <div key={i} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: "12px 14px" }}>
@@ -299,7 +305,6 @@ function Screen3({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
           ))}
         </div>
 
-        {/* Opportunities */}
         <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 10 }}>
           <Label color={T.purple}>Missed opportunities</Label>
           <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -312,7 +317,6 @@ function Screen3({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
           </div>
         </div>
 
-        {/* What's working — accordion */}
         <div style={{ border: `1px solid ${T.border}`, borderRadius: 12, marginBottom: 20, overflow: "hidden" }}>
           <button onClick={() => setOpen(o => !o)} style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -333,72 +337,94 @@ function Screen3({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
           )}
         </div>
 
-        <Btn onClick={onNext}>Show Me How To Improve →</Btn>
+        <Btn onClick={onNext}>Show Me How To Fix It →</Btn>
       </Fade>
     </Shell>
   );
 }
 
-// ── Problem detail screens (4-6) ──────────────────────────────────
-function ProblemScreen({ problem, label, labelColor, labelBg, current, total, onNext, nextLabel, onReset }: {
-  problem: Problem; label: string; labelColor: string; labelBg: string;
-  current: number; total: number; onNext: () => void; nextLabel: string; onReset: () => void;
-}) {
+// ── Fix card — one problem with expandable Why ────────────────────
+function FixCard({ problem, rank }: { problem: Problem; rank: number }) {
+  const [open, setOpen] = useState(false);
+  const isTop = rank === 0;
+  const labelColor = isTop ? T.redLabel : T.amber;
+  const labelBg = isTop ? T.redBg : T.amberBg;
+  const labelBorder = isTop ? T.redBorder : T.amberBorder;
+  const labelText = isTop ? "🚨 Biggest Problem" : "⚠️ Also Hurting";
+
   return (
-    <Shell onReset={onReset}>
-      <Fade id={current}>
-        <ProgressBar current={current} total={total} />
-        <div style={{ display: "inline-block", background: labelBg, borderRadius: 6, padding: "3px 8px", marginBottom: 12 }}>
-          <Label color={labelColor}>{label}</Label>
+    <div style={{ border: `1px solid ${isTop ? T.redBorder : T.border}`, borderRadius: 14, overflow: "hidden", marginBottom: 12 }}>
+      {/* Header */}
+      <div style={{ background: labelBg, padding: "14px 16px", borderBottom: `1px solid ${isTop ? T.redBorder : T.border}` }}>
+        <div style={{ display: "inline-block", background: isTop ? T.red : T.amberBg, border: `1px solid ${labelBorder}`, borderRadius: 6, padding: "2px 8px", marginBottom: 6 }}>
+          <Label color={isTop ? "#fff" : labelColor}>{labelText}</Label>
         </div>
-        <h2 style={{ ...H, fontSize: 20, fontWeight: 800, color: T.text, margin: "0 0 12px", letterSpacing: "-0.03em", lineHeight: 1.25 }}>
+        <h3 style={{ ...H, fontSize: 16, fontWeight: 800, color: isTop ? T.redText : T.text, margin: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
           {problem.title}
-        </h2>
-        <p style={{ ...B, fontSize: 14, color: T.body, lineHeight: 1.7, marginBottom: 16 }}>
-          {problem.why_buyers_care}
-        </p>
+        </h3>
+      </div>
 
-        <div style={{ background: T.surface, borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
-          <Label color={T.muted}>💡 Seller insight</Label>
-          <p style={{ ...B, fontSize: 13, color: T.body, marginTop: 6, marginBottom: 0, lineHeight: 1.6 }}>{problem.seller_insight}</p>
-        </div>
+      {/* Before / After */}
+      <div style={{ padding: "14px 16px", background: T.card }}>
+        <BeforeAfter before={problem.before} after={problem.after} />
 
-        <div style={{ marginBottom: 24 }}>
-          <BeforeAfter before={problem.before} after={problem.after} />
-        </div>
-
-        <Btn onClick={onNext}>{nextLabel}</Btn>
-      </Fade>
-    </Shell>
+        {/* Expandable Why */}
+        <button onClick={() => setOpen(o => !o)} style={{
+          marginTop: 12, display: "flex", alignItems: "center", gap: 6,
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+        }}>
+          <span style={{ ...B, fontSize: 12, fontWeight: 600, color: T.muted }}>Why does this matter?</span>
+          <span style={{ fontSize: 12, color: T.muted, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
+        </button>
+        {open && (
+          <div style={{ marginTop: 8, background: T.surface, borderRadius: 8, padding: "10px 14px" }}>
+            <p style={{ ...B, fontSize: 13, color: T.body, margin: 0, lineHeight: 1.6 }}>{problem.why_buyers_care}</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
-// ── Screen 7 — Opportunities ──────────────────────────────────────
-function Screen7({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
+// ── Screen 4 — Fix list ───────────────────────────────────────────
+function Screen4({ result, onNext, onReset }: { result: AnalysisResult; onNext: () => void; onReset: () => void }) {
+  const also = result.also_hurting ?? [];
+  const problems = [result.biggest_problem, ...also];
+
   return (
     <Shell onReset={onReset}>
-      <Fade id={7}>
-        <ProgressBar current={6} total={7} />
-        <div style={{ display: "inline-block", background: T.purpleBg, borderRadius: 6, padding: "3px 8px", marginBottom: 12 }}>
-          <Label color={T.purple}>Missed opportunities</Label>
-        </div>
-        <h2 style={{ ...H, fontSize: 20, fontWeight: 800, color: T.text, margin: "0 0 20px", letterSpacing: "-0.03em", lineHeight: 1.25 }}>
-          More buyers can reach this car than you think.
-        </h2>
+      <Fade id={4}>
+        <ProgressBar current={2} total={4} />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-          {result.opportunities.map(op => (
-            <div key={op.type} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px" }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{opIcon(op.type)}</span>
-                <div>
-                  <p style={{ ...H, fontSize: 14, fontWeight: 700, color: T.text, margin: "0 0 4px" }}>{op.title}</p>
-                  <p style={{ ...B, fontSize: 13, color: T.body, margin: 0, lineHeight: 1.6 }}>{op.insight}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+          <h2 style={{ ...H, fontSize: 22, fontWeight: 800, color: T.text, margin: 0, letterSpacing: "-0.03em" }}>Your fix list.</h2>
+          <ScoreBadge score={result.overall_score} />
         </div>
+
+        {/* Problem fix cards */}
+        {problems.map((p, i) => (
+          <FixCard key={i} problem={p} rank={i} />
+        ))}
+
+        {/* Opportunities */}
+        {result.opportunities.length > 0 && (
+          <div style={{ border: `1px solid ${T.purpleBorder}`, borderRadius: 14, overflow: "hidden", marginBottom: 20 }}>
+            <div style={{ background: T.purpleBg, padding: "14px 16px", borderBottom: `1px solid ${T.purpleBorder}` }}>
+              <Label color={T.purple}>💡 Missed Opportunities</Label>
+            </div>
+            <div style={{ padding: "14px 16px", background: T.card, display: "flex", flexDirection: "column", gap: 14 }}>
+              {result.opportunities.map(op => (
+                <div key={op.type} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{opIcon(op.type)}</span>
+                  <div>
+                    <p style={{ ...H, fontSize: 14, fontWeight: 700, color: T.text, margin: "0 0 3px" }}>{op.title}</p>
+                    <p style={{ ...B, fontSize: 13, color: T.body, margin: 0, lineHeight: 1.5 }}>{op.insight}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Btn onClick={onNext}>See Summary →</Btn>
       </Fade>
@@ -406,13 +432,14 @@ function Screen7({ result, onNext, onReset }: { result: AnalysisResult; onNext: 
   );
 }
 
-// ── Screen 8 — Summary ────────────────────────────────────────────
-function Screen8({ result, onReset }: { result: AnalysisResult; onReset: () => void }) {
+// ── Screen 5 — Summary + Upsell ───────────────────────────────────
+function Screen5({ result, onReset }: { result: AnalysisResult; onReset: () => void }) {
   const [p, setP] = useState(false);
+  const also = result.also_hurting ?? [];
   return (
     <Shell onReset={onReset}>
-      <Fade id={8}>
-        <ProgressBar current={7} total={7} />
+      <Fade id={5}>
+        <ProgressBar current={4} total={4} />
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
             <Label color={T.green}>✓ Analysis complete</Label>
@@ -427,7 +454,7 @@ function Screen8({ result, onReset }: { result: AnalysisResult; onReset: () => v
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-          {result.also_hurting.map((p, i) => (
+          {also.map((p, i) => (
             <div key={i} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: "12px 14px" }}>
               <Label color={T.amber}>Also hurting</Label>
               <p style={{ ...H, fontSize: 13, fontWeight: 700, color: T.text, margin: "4px 0 0" }}>{p.title}</p>
@@ -447,7 +474,6 @@ function Screen8({ result, onReset }: { result: AnalysisResult; onReset: () => v
           </div>
         </div>
 
-        {/* Upsell */}
         <div style={{ background: T.text, borderRadius: 16, padding: "22px 20px", marginBottom: 10, textAlign: "center" }}>
           <p style={{ ...H, fontSize: 16, fontWeight: 800, color: "#fff", margin: "0 0 6px", letterSpacing: "-0.02em" }}>Want the complete fix?</p>
           <p style={{ ...B, fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>Word-for-word rewrites, pricing analysis, full listing overhaul.</p>
@@ -470,20 +496,9 @@ function Screen8({ result, onReset }: { result: AnalysisResult; onReset: () => v
   );
 }
 
-// ── Icon map ──────────────────────────────────────────────────────
-function opIcon(type: string): string {
-  const icons: Record<string, string> = {
-    financing: "💰", inspection: "🔧", carfax: "📋",
-    title: "📄", photos: "📸", description: "✏️",
-    garage: "🏠", warranty: "🛡️", price: "💲", payment: "💳",
-  };
-  return icons[type] ?? "💡";
-}
-
 // ── Root ──────────────────────────────────────────────────────────
 export default function Flow({ result, onReset }: { result: AnalysisResult; onReset: () => void }) {
   const [screen, setScreen] = useState(2);
-  const also = result.also_hurting ?? [];
 
   useEffect(() => {
     const onPop = () => onReset();
@@ -494,11 +509,8 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
   const screens: Record<number, React.ReactNode> = {
     2: <Screen2 result={result} onNext={() => setScreen(3)} onReset={onReset} />,
     3: <Screen3 result={result} onNext={() => setScreen(4)} onReset={onReset} />,
-    4: <ProblemScreen problem={result.biggest_problem} label="🚨 Biggest Problem" labelColor={T.red} labelBg={T.redBg} current={3} total={7} onNext={() => setScreen(5)} nextLabel="Next Issue →" onReset={onReset} />,
-    5: <ProblemScreen problem={also[0]} label="⚠️ Also Hurting" labelColor={T.amber} labelBg={T.amberBg} current={4} total={7} onNext={() => setScreen(also[1] ? 6 : 7)} nextLabel={also[1] ? "Next Issue →" : "See Opportunities →"} onReset={onReset} />,
-    6: <ProblemScreen problem={also[1]} label="⚠️ Also Hurting" labelColor={T.amber} labelBg={T.amberBg} current={5} total={7} onNext={() => setScreen(7)} nextLabel="See Opportunities →" onReset={onReset} />,
-    7: <Screen7 result={result} onNext={() => setScreen(8)} onReset={onReset} />,
-    8: <Screen8 result={result} onReset={onReset} />,
+    4: <Screen4 result={result} onNext={() => setScreen(5)} onReset={onReset} />,
+    5: <Screen5 result={result} onReset={onReset} />,
   };
 
   return <>{screens[screen]}</>;
