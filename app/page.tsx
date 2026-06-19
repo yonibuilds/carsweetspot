@@ -123,7 +123,7 @@ export default function Home() {
     });
   }, []);
 
-  const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
+  const handlePaste = useCallback((e: ClipboardEvent | globalThis.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
     const imageFiles: File[] = [];
@@ -135,6 +135,11 @@ export default function Home() {
     }
     if (imageFiles.length > 0) { e.preventDefault(); setMode("screenshots"); addFiles(imageFiles); }
   }, [addFiles]);
+
+  useEffect(() => {
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
 
   const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files);
