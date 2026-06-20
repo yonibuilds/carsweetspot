@@ -385,9 +385,16 @@ function ScoreScreen({ result, fixProblems, onNext }: {
         <p style={{ ...B, fontSize: 11, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 20px" }}>
           Analysis complete
         </p>
-        <h1 style={{ ...H, fontSize: 30, fontWeight: 800, color: NAVY, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 10px" }}>
-          {result.vehicle}
-        </h1>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
+          <h1 style={{ ...H, fontSize: 30, fontWeight: 800, color: NAVY, letterSpacing: "-0.03em", lineHeight: 1.15, margin: 0 }}>
+            {result.vehicle}
+          </h1>
+          {result.asking_price > 0 && (
+            <span style={{ ...H, fontSize: 20, fontWeight: 700, color: BRAND }}>
+              ${result.asking_price.toLocaleString()}
+            </span>
+          )}
+        </div>
         <p style={{ ...B, fontSize: 15, color: "#6B7280", margin: "0 0 36px", lineHeight: 1.6 }}>
           We found {fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} hurting your contact rate. Fix them one by one below.
         </p>
