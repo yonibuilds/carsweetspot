@@ -404,9 +404,22 @@ function ScoreScreen({ result, fixProblems, onNext }: {
             </span>
           )}
         </div>
-        <p style={{ ...B, fontSize: 15, color: "#6B7280", margin: "0 0 36px", lineHeight: 1.6 }}>
+        <p style={{ ...B, fontSize: 15, color: "#6B7280", margin: "0 0 24px", lineHeight: 1.6 }}>
           We found {fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} hurting your contact rate. Click each to fix it.
         </p>
+
+        {result.whats_working?.length > 0 && (
+          <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCCESS}22`, borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
+            <p style={{ ...B, fontSize: 11, fontWeight: 700, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" }}>
+              ✓ What&apos;s working
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {result.whats_working.map((w, i) => (
+                <p key={i} style={{ ...B, fontSize: 13, color: SUCC_FG, margin: 0, lineHeight: 1.5 }}>• {w}</p>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 36 }}>
           {/* Problems in priority order, then passing categories */}
