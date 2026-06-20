@@ -416,11 +416,7 @@ function ScoreScreen({ result, fixProblems, onNext }: {
             const isOpen = expandedIdx === idx && !pass;
 
             return (
-              <div key={cat} style={{
-                borderRadius: 10, overflow: "hidden",
-                border: `1px solid ${isOpen ? BRAND : BORDER}`,
-                transition: "border-color 0.2s",
-              }}>
+              <div key={cat} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
                 {/* Header row */}
                 <div
                   onClick={pass ? undefined : () => toggle(idx)}
