@@ -191,62 +191,61 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        // Extract all listing image URLs from HTML using multiple strategies
+        // Strategy 0: Open Graph meta tag — most reliable, works on CL and FB
+        const ogImg = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1]
+          ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1]
+          ?? null;
+
         const isListingImage = (src: string) =>
           /^https?:\/\//i.test(src) &&
           /\.(jpg|jpeg|png|webp)/i.test(src) &&
           !/logo|icon|avatar|sprite|pixel|tracking|blank/i.test(src) &&
           !/1x1|spacer/i.test(src);
 
-        const listingImgs: string[] = [];
+        const listingImgs: string[] = ogImg && isListingImage(ogImg) ? [ogImg] : [];
 
-        // Strategy 1: JSON blob in <script> tags — Craigslist uses var imgList=[...] or similar
-        const scriptBlobs = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
-        for (const blob of scriptBlobs) {
-          const jsonMatches = blob.match(/"(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || [];
-          for (const m of jsonMatches) {
-            const src = m.replace(/^"|"$/g, "");
-            if (isListingImage(src) && !listingImgs.includes(src)) {
-              listingImgs.push(src);
+        // Strategy 1: JSON blob in <script> tags
+        if (listingImgs.length === 0) {
+          const scriptBlobs = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
+          for (const blob of scriptBlobs) {
+            const jsonMatches = blob.match(/"(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || [];
+            for (const m of jsonMatches) {
+              const src = m.replace(/^"|"$/g, "");
+              if (isListingImage(src) && !listingImgs.includes(src)) listingImgs.push(src);
             }
           }
         }
 
         // Strategy 2: <img> tags — src, data-src, srcset
-        const allImgTags = html.match(/<img[^>]+>/gi) || [];
-        const extractImgSrc = (tag: string): string | null => {
-          const src = tag.match(/\bsrc="([^"]+)"/i)?.[1] ?? null;
-          if (src) return src;
-          const dataSrc = tag.match(/\bdata-src="([^"]+)"/i)?.[1] ?? null;
-          if (dataSrc) return dataSrc;
-          const srcset = tag.match(/\bsrcset="([^"]+)"/i)?.[1] ?? null;
-          if (srcset) return srcset.split(/[\s,]+/)[0] ?? null;
-          return null;
-        };
-        for (const tag of allImgTags) {
-          const src = extractImgSrc(tag);
-          if (src && isListingImage(src) && !listingImgs.includes(src)) {
-            listingImgs.push(src);
+        if (listingImgs.length === 0) {
+          const allImgTags = html.match(/<img[^>]+>/gi) || [];
+          const extractImgSrc = (tag: string): string | null => {
+            return tag.match(/\bsrc="([^"]+)"/i)?.[1]
+              ?? tag.match(/\bdata-src="([^"]+)"/i)?.[1]
+              ?? tag.match(/\bsrcset="([^"]+)"/i)?.[1]?.split(/[\s,]+/)[0]
+              ?? null;
+          };
+          for (const tag of allImgTags) {
+            const src = extractImgSrc(tag);
+            if (src && isListingImage(src) && !listingImgs.includes(src)) listingImgs.push(src);
           }
         }
 
-        // Strategy 3: <a href> links pointing directly to image files (Craigslist wraps thumbnails in <a>)
-        const allAnchorHrefs = html.match(/\bhref="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || [];
-        for (const m of allAnchorHrefs) {
-          const src = m.match(/href="([^"]+)"/i)?.[1] ?? null;
-          if (src && isListingImage(src) && !listingImgs.includes(src)) {
-            listingImgs.push(src);
+        // Strategy 3: <a href> pointing to image files
+        if (listingImgs.length === 0) {
+          const anchors = html.match(/\bhref="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || [];
+          for (const m of anchors) {
+            const src = m.match(/href="([^"]+)"/i)?.[1] ?? null;
+            if (src && isListingImage(src) && !listingImgs.includes(src)) listingImgs.push(src);
           }
         }
 
-        // Upgrade Craigslist thumbnail URLs (_NNxNNc.jpg) to full-size (_600x450.jpg)
+        // Upgrade Craigslist thumbnail URLs to full-size
         const upgradedImgs = listingImgs.map(src =>
           src.replace(/_\d+x\d+c(\.\w+)$/, "_600x450$1")
         );
 
         const photoCount = upgradedImgs.length;
-
-        // Extract first listing image URL for sidebar display
         firstImgSrc = upgradedImgs[0] ?? null;
 
 
