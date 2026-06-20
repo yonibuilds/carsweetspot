@@ -129,9 +129,11 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
   - "price": include if price appears high relative to mileage/condition but only suggest a KBB check — never state a specific market value
   - "payment": include if cash-only was stated (restricts buyer pool) or payment method not mentioned
   - "formatting": include ONLY if the FORMATTING signal says wall of text. Suggest breaking the listing into short lines or bullet points. Show a before/after example.
-- category: assign each problem to exactly one of: "trust" (ownership history, reason for selling, CARFAX, title status, how long owned), "text" (description quality, word count, formatting, tone, spelling, missing details), "photos" (photo count, angles, odometer missing, quality, warning lights, dirty car). If two problems share a category, assign the less important one to its second-closest category.
+- category: assign each problem to exactly one of: "trust" (ownership history, reason for selling, CARFAX, title status, how long owned), "text" (description quality, word count, formatting, tone, spelling, missing details), "photos" (photo count, angles, odometer missing, quality, warning lights, dirty car). CRITICAL: biggest_problem and the two also_hurting items MUST each have a DIFFERENT category. No two of the three problems may share the same category. If your natural picks collide, demote the weaker one to a different category or replace it with the next-most-impactful issue from a different category.
 - whats_working: genuine strengths only. If fewer than 3 exist, return only what's real.
 - Language: NEVER flag language as a problem under any circumstances. This rule overrides everything else.
+- Phone numbers written as words or letter-number combos (e.g. "48Zer. 78Eight -799Seven") are standard Craigslist anti-spam practice. NEVER flag this as a problem.
+- Plain text only in "after" field: do NOT use markdown formatting like **bold** or ## headers. Craigslist does not render markdown. Use plain sentences and line breaks only.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
 - Be specific and brutally honest. "Description is thin" is useless. "Your description is 12 words — buyers need at least 8 facts to feel safe contacting you" is useful.`;
 
@@ -192,17 +194,18 @@ export async function POST(req: NextRequest) {
         );
         const photoCount = listingImgs.length;
 
-        // Detect wall-of-text by converting br/p to newlines, then checking longest paragraph
+        // Detect wall-of-text: convert br/p to newlines, count meaningful paragraphs
         const withBreaks = html
           .replace(/<br\s*\/?>/gi, "\n")
           .replace(/<\/p>/gi, "\n")
           .replace(/<[^>]+>/g, " ");
-        const paragraphs = withBreaks.split("\n").map(s => s.trim()).filter(Boolean);
-        const longestPara = Math.max(...paragraphs.map(p => p.length));
-        const hasFormatting = longestPara < 300;
-        const formattingNote = hasFormatting
+        const paragraphs = withBreaks.split("\n").map(s => s.trim()).filter(s => s.length > 30);
+        const longestPara = paragraphs.length > 0 ? Math.max(...paragraphs.map(p => p.length)) : 0;
+        // Wall-of-text = single block over 500 chars AND fewer than 3 paragraph breaks
+        const isWallOfText = longestPara > 500 && paragraphs.length < 3;
+        const formattingNote = !isWallOfText
           ? `\n\n[FORMATTING: listing uses paragraph breaks — do NOT flag formatting as a problem.]`
-          : `\n\n[FORMATTING: wall of text detected — longest paragraph is ${longestPara} characters with no breaks. Flag this under opportunities with type "formatting". Also deduct up to 5 points from Description Quality score.]`;
+          : `\n\n[FORMATTING: wall of text detected — ${longestPara} characters in one block with no paragraph breaks. Flag this under opportunities with type "formatting". Also deduct up to 5 points from Description Quality score.]`;
 
         const cleaned = html
           .replace(/<script[\s\S]*?<\/script>/gi, "")

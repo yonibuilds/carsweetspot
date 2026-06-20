@@ -158,7 +158,7 @@ function Sidebar({ result }: { result: AnalysisResult }) {
             What&apos;s working
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {result.whats_working.map((w, i) => (
+            {result.whats_working.slice(0, 3).map((w, i) => (
               <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                 <span style={{ color: T.greenDark, fontSize: 13, flexShrink: 0, marginTop: 1 }}>✓</span>
                 <p style={{ ...B, fontSize: 13, color: T.body, lineHeight: 1.5, margin: 0 }}>{w}</p>
@@ -253,6 +253,11 @@ function Btn({ onClick, children }: { onClick?: () => void; children: React.Reac
       {children}
     </button>
   );
+}
+
+// ── Strip markdown formatting ─────────────────────────────────────
+function stripMd(text: string): string {
+  return text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
 }
 
 // ── Speedometer ───────────────────────────────────────────────────
@@ -355,7 +360,7 @@ function ScoreScreen({ result, problems, onNext }: {
 function BeforeAfterCard({ problem }: { problem: Problem }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
-    navigator.clipboard.writeText(problem.after);
+    navigator.clipboard.writeText(stripMd(problem.after));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -382,7 +387,7 @@ function BeforeAfterCard({ problem }: { problem: Problem }) {
         <p style={{ ...B, fontSize: 10, fontWeight: 700, color: T.greenDark, textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 6px" }}>
           After
         </p>
-        <p style={{ ...B, fontSize: 13, color: T.greenText, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{problem.after}</p>
+        <p style={{ ...B, fontSize: 13, color: T.greenText, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{stripMd(problem.after)}</p>
         <button onClick={copy} style={{
           position: "absolute", top: 10, right: 10,
           ...B, fontSize: 11, fontWeight: 700,
