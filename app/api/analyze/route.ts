@@ -341,6 +341,9 @@ export async function POST(req: NextRequest) {
     if (firstImgSrc) result.listing_image = firstImgSrc;
     if (!result.listing_image && images && images.length > 0) result.listing_image = images[0];
 
+    // Temporary debug field — remove after confirming image works
+    result._img_debug = firstImgSrc ?? "NULL";
+
     if (url) cache.set(url, result);
     return NextResponse.json(result);
   } catch (err) {
