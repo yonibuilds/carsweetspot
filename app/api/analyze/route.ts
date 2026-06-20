@@ -201,14 +201,20 @@ export async function POST(req: NextRequest) {
         // Extract first listing image URL for sidebar display
         firstImgSrc = listingImgs[0]?.match(/src="([^"]+)"/i)?.[1] ?? null;
 
-        // Extract price directly from HTML — more reliable than asking AI to parse it
-        const priceSpan = html.match(/<span[^>]*class="[^"]*price[^"]*"[^>]*>\s*\$?([\d,]+)\s*<\/span>/i);
-        const priceTitle = html.match(/-\s*\$?([\d,]+)\s*(?:\(|<)/);
-        const priceText = html.match(/\$\s*([\d,]+)\s*(?:OBO|obo|asking|firm|or best)/i);
-        const rawPriceStr = priceSpan?.[1] ?? priceTitle?.[1] ?? priceText?.[1] ?? null;
-        if (rawPriceStr) {
-          const parsed = parseInt(rawPriceStr.replace(/,/g, ""), 10);
-          if (!isNaN(parsed) && parsed > 500 && parsed < 500000) detectedPrice = parsed;
+        // Extract price directly from HTML — try multiple patterns in order of reliability
+        const pricePatterns = [
+          /<span[^>]*class="[^"]*price[^"]*"[^>]*>\s*\$\s*([\d,]+)/i,   // <span class="price">
+          /content="\d{4}[^"]*-\s*\$\s*([\d,]+)/i,                       // og:title meta
+          /-\s*\$\s*([\d,]+)\s*(?:\(|<)/,                                 // "- $23,900 ("
+          /\bask(?:ing)?\s*\$?\s*([\d,]+)/i,                              // "asking $X"
+          /\$\s*([\d,]+)\s*(?:OBO|obo|firm)/i,                            // "$X OBO"
+        ];
+        for (const pat of pricePatterns) {
+          const m = html.slice(0, 20000).match(pat);
+          if (m) {
+            const parsed = parseInt(m[1].replace(/,/g, ""), 10);
+            if (!isNaN(parsed) && parsed > 500 && parsed < 500000) { detectedPrice = parsed; break; }
+          }
         }
 
         // Detect wall-of-text: convert br/p to newlines, count meaningful paragraphs
