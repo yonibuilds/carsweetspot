@@ -471,25 +471,6 @@ function ScoreScreen({ result, fixProblems, onNext }: {
                       </div>
                     )}
 
-                    {/* Next fix or done */}
-                    {idx < fixProblems.length - 1 ? (
-                      <button onClick={() => openNext(idx)} style={{
-                        width: "100%", background: NAVY, border: "none", borderRadius: 12,
-                        padding: "16px 20px", textAlign: "left", cursor: "pointer",
-                        display: "flex", alignItems: "center", gap: 14, marginTop: 20,
-                      }}>
-                        <span style={{ fontSize: 22, flexShrink: 0 }}>{CAT[fixProblems[idx + 1].category ?? ""]?.icon ?? "💡"}</span>
-                        <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-                          <span style={{ ...B, fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Next fix</span>
-                          <span style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE }}>{fixProblems[idx + 1].title}</span>
-                        </span>
-                        <span style={{ fontSize: 18, color: "rgba(255,255,255,0.4)" }}>→</span>
-                      </button>
-                    ) : (
-                      <div style={{ marginTop: 20 }}>
-                        <Btn onClick={onNext}>Done → See your results</Btn>
-                      </div>
-                    )}
 
                     <FinancingCard askingPrice={result.asking_price ?? 0} monthlyPayment={result.monthly_payment ?? 0} />
                   </div>
