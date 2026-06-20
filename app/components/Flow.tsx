@@ -372,12 +372,21 @@ function Btn({ onClick, children }: { onClick?: () => void; children: React.Reac
   );
 }
 
-// ── Score overview screen ─────────────────────────────────────────
+// ── Score overview screen (accordion) ────────────────────────────
 function ScoreScreen({ result, fixProblems, onNext }: {
   result: AnalysisResult; fixProblems: Problem[]; onNext: () => void;
 }) {
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
+
   const catMap: Record<string, Problem | null> = { trust: null, text: null, photos: null };
   fixProblems.forEach(p => { if (p.category && !catMap[p.category]) catMap[p.category] = p; });
+
+  const toggle = (idx: number) => setExpandedIdx(prev => prev === idx ? null : idx);
+  const openNext = (idx: number) => {
+    if (idx + 1 < fixProblems.length) setExpandedIdx(idx + 1);
+    else setExpandedIdx(null);
+  };
 
   return (
     <Fade id={0}>
@@ -396,39 +405,113 @@ function ScoreScreen({ result, fixProblems, onNext }: {
           )}
         </div>
         <p style={{ ...B, fontSize: 15, color: "#6B7280", margin: "0 0 36px", lineHeight: 1.6 }}>
-          We found {fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} hurting your contact rate. Fix them one by one below.
+          We found {fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} hurting your contact rate. Click each to fix it.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 36 }}>
           {(["trust", "text", "photos"] as const).map(cat => {
             const prob = catMap[cat];
             const pass = !prob;
+            const idx = prob ? fixProblems.indexOf(prob) : -1;
+            const isOpen = expandedIdx === idx && !pass;
+
             return (
               <div key={cat} style={{
-                display: "flex", alignItems: "center", gap: 14,
-                background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "14px 18px",
+                borderRadius: 10, overflow: "hidden",
+                border: `1px solid ${isOpen ? BRAND : BORDER}`,
+                transition: "border-color 0.2s",
               }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                  background: pass ? SUCC_SOFT : DANG_SOFT,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  border: `1px solid ${pass ? SUCCESS : DANGER}30`,
-                }}>
-                  <span style={{ fontSize: 12, color: pass ? SUCCESS : DANGER, fontWeight: 700 }}>{pass ? "✓" : "✕"}</span>
+                {/* Header row */}
+                <div
+                  onClick={pass ? undefined : () => toggle(idx)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 14,
+                    background: isOpen ? NAVY : WHITE,
+                    padding: "14px 18px",
+                    cursor: pass ? "default" : "pointer",
+                    transition: "background 0.2s",
+                  }}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                    background: pass ? SUCC_SOFT : (isOpen ? "rgba(255,255,255,0.12)" : DANG_SOFT),
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: `1px solid ${pass ? SUCCESS : DANGER}30`,
+                  }}>
+                    <span style={{ fontSize: 12, color: pass ? SUCCESS : (isOpen ? WHITE : DANGER), fontWeight: 700 }}>{pass ? "✓" : "✕"}</span>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ ...B, fontSize: 13, fontWeight: 700, color: isOpen ? WHITE : NAVY, margin: 0 }}>
+                      {CAT[cat].label}
+                      {pass && <span style={{ fontWeight: 400, color: "#6B7280" }}> — looks good</span>}
+                    </p>
+                    {prob && <p style={{ ...B, fontSize: 12, color: isOpen ? "rgba(255,255,255,0.6)" : "#6B7280", margin: "2px 0 0" }}>{prob.title}</p>}
+                  </div>
+                  {!pass && (
+                    <span style={{ fontSize: 11, color: isOpen ? "rgba(255,255,255,0.45)" : NAVY_MUT }}>
+                      {isOpen ? "▲" : "▼"}
+                    </span>
+                  )}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>
-                    {CAT[cat].label}
-                    {pass && <span style={{ fontWeight: 400, color: "#6B7280" }}> — looks good</span>}
-                  </p>
-                  {!pass && <p style={{ ...B, fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>{prob!.title}</p>}
-                </div>
+
+                {/* Expanded body */}
+                {isOpen && prob && (
+                  <div style={{ padding: "24px 24px 20px", background: STAGE, borderTop: `1px solid ${BORDER}` }}>
+                    <BeforeAfterGrid problem={prob} />
+
+                    {/* Why toggle */}
+                    <button onClick={() => setShowWhy(w => ({ ...w, [idx]: !w[idx] }))} style={{
+                      background: "none", border: "none", cursor: "pointer", padding: "10px 0",
+                      display: "flex", alignItems: "center", gap: 6,
+                    }}>
+                      <span style={{ fontSize: 12, color: "#9CA3AF" }}>ⓘ</span>
+                      <span style={{ ...B, fontSize: 12, color: "#6B7280", borderBottom: "1px dashed #D1D5DB" }}>Why does this matter?</span>
+                      <span style={{ fontSize: 10, color: "#9CA3AF", transform: showWhy[idx] ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
+                    </button>
+                    {showWhy[idx] && (
+                      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "14px 16px", marginBottom: 8 }}>
+                        <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: 0, lineHeight: 1.6 }}>{prob.seller_insight}</p>
+                      </div>
+                    )}
+
+                    {/* Next fix or done */}
+                    {idx < fixProblems.length - 1 ? (
+                      <button onClick={() => openNext(idx)} style={{
+                        width: "100%", background: NAVY, border: "none", borderRadius: 12,
+                        padding: "16px 20px", textAlign: "left", cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 14, marginTop: 20,
+                      }}>
+                        <span style={{ fontSize: 22, flexShrink: 0 }}>{CAT[fixProblems[idx + 1].category ?? ""]?.icon ?? "💡"}</span>
+                        <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+                          <span style={{ ...B, fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Next fix</span>
+                          <span style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE }}>{fixProblems[idx + 1].title}</span>
+                        </span>
+                        <span style={{ fontSize: 18, color: "rgba(255,255,255,0.4)" }}>→</span>
+                      </button>
+                    ) : (
+                      <div style={{ marginTop: 20 }}>
+                        <Btn onClick={onNext}>Done → See your results</Btn>
+                      </div>
+                    )}
+
+                    <FinancingCard askingPrice={result.asking_price ?? 0} monthlyPayment={result.monthly_payment ?? 0} />
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        <Btn onClick={onNext}>Start fixing →</Btn>
+        {expandedIdx === null && <Btn onClick={() => setExpandedIdx(0)}>Start fixing →</Btn>}
+        {expandedIdx !== null && (
+          <button onClick={onNext} style={{
+            ...B, width: "100%", padding: "13px", background: "transparent",
+            color: "#9CA3AF", border: `1px solid ${BORDER}`, borderRadius: 12,
+            fontSize: 14, cursor: "pointer",
+          }}>
+            Skip to full results →
+          </button>
+        )}
       </div>
     </Fade>
   );
@@ -642,26 +725,11 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
   }, [onReset]);
 
   const fixProblems = [result.biggest_problem, ...(result.also_hurting ?? [])].filter(p => p?.title && p?.after);
-  const fixIndex = Math.max(0, screen - 1);
-  const issuesLeft = screen === 0 ? fixProblems.length : Math.max(0, fixProblems.length - fixIndex);
+  const issuesLeft = screen === 0 ? fixProblems.length : 0;
 
   const renderRight = () => {
     if (screen === 0) return <ScoreScreen result={result} fixProblems={fixProblems} onNext={() => setScreen(1)} />;
-    if (fixIndex < fixProblems.length) {
-      return (
-        <FixScreen
-          problem={fixProblems[fixIndex]}
-          index={fixIndex}
-          total={fixProblems.length}
-          remaining={fixProblems.slice(fixIndex + 1)}
-          result={result}
-          onNext={() => setScreen(s => s + 1)}
-          onBack={() => setScreen(s => s - 1)}
-          isLast={fixIndex === fixProblems.length - 1}
-        />
-      );
-    }
-    return <SummaryScreen result={result} onReset={onReset} onBack={() => setScreen(s => s - 1)} />;
+    return <SummaryScreen result={result} onReset={onReset} onBack={() => setScreen(0)} />;
   };
 
   return (
