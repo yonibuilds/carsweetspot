@@ -179,13 +179,41 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
         </button>
       </div>
 
+      {/* Vehicle photo anchor */}
+      {result.listing_image && (
+        <div style={{ marginBottom: 24, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", position: "relative" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={result.listing_image}
+            alt={result.vehicle}
+            style={{ width: "100%", height: 150, objectFit: "cover", display: "block" }}
+          />
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            padding: "28px 14px 10px",
+            background: "linear-gradient(to top, rgba(15,23,42,0.92) 0%, transparent 100%)",
+          }}>
+            <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: 0, lineHeight: 1.3 }}>
+              {result.vehicle}
+            </p>
+            {result.asking_price > 0 && (
+              <p style={{ ...B, fontSize: 11, color: "#94A3B8", margin: "2px 0 0" }}>
+                ${result.asking_price.toLocaleString()}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginBottom: 36 }}>
         <ScoreRing score={result.overall_score} />
         <div style={{ textAlign: "center" }}>
           <p style={{ ...H, fontSize: 15, fontWeight: 700, color: WHITE, margin: 0 }}>Sweet Spot Score</p>
-          <p style={{ ...B, fontSize: 12, color: NAVY_MUT, marginTop: 4, lineHeight: 1.5 }}>
-            {result.vehicle}
-          </p>
+          {!result.listing_image && (
+            <p style={{ ...B, fontSize: 12, color: NAVY_MUT, marginTop: 4, lineHeight: 1.5 }}>
+              {result.vehicle}
+            </p>
+          )}
         </div>
       </div>
 
