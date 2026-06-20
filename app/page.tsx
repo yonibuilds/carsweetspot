@@ -7,7 +7,7 @@ const NAVY    = "#0F172A";
 const NAVY_M  = "#64748B";
 const BRAND   = "#2563EB";
 const BRAND_DK = "#1D4ED8";
-const STAGE   = "#F4F4F5";
+const STAGE   = "#F8FAFC";
 const BORDER  = "#E2E8F0";
 const WHITE   = "#FFFFFF";
 const H: React.CSSProperties = { fontFamily: "var(--font-jakarta)" };
@@ -25,22 +25,15 @@ function AnalyzingScreen() {
     }, 40);
     return () => clearInterval(iv);
   }, []);
-
   const size = 160, stroke = 12, r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
-  const dash = circ * (score / 100);
-
   return (
     <div style={{ minHeight: "100vh", background: NAVY, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ ...B, fontSize: 11, fontWeight: 700, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 36 }}>
-        Analyzing your listing
-      </p>
+      <p style={{ ...B, fontSize: 11, fontWeight: 700, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 36 }}>Analyzing your listing</p>
       <div style={{ position: "relative", width: size, height: size, marginBottom: 28 }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
           <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={BRAND} strokeWidth={stroke}
-            strokeLinecap="round" strokeDasharray={`${dash} ${circ}`}
-            style={{ transition: "stroke-dasharray 0.1s linear" }} />
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={BRAND} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${circ * (score/100)} ${circ}`} style={{ transition: "stroke-dasharray 0.1s linear" }} />
         </svg>
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           <span style={{ ...H, fontSize: 44, fontWeight: 800, color: WHITE, lineHeight: 1, letterSpacing: "-0.04em" }}>{score}</span>
@@ -48,7 +41,7 @@ function AnalyzingScreen() {
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, ...B, fontSize: 13, color: NAVY_M }}>
-        <svg style={{ animation: "spin 1s linear infinite", width: 14, height: 14, flexShrink: 0 }} fill="none" viewBox="0 0 24 24">
+        <svg style={{ animation: "spin 1s linear infinite", width: 14, height: 14 }} fill="none" viewBox="0 0 24 24">
           <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
         </svg>
@@ -59,87 +52,18 @@ function AnalyzingScreen() {
   );
 }
 
-// ── Before/After hero mockup ──────────────────────────────────────
-function BeforeAfterMockup({ isDesktop }: { isDesktop: boolean }) {
-  if (!isDesktop) return null;
-
-  const Card = ({ badge, badgeColor, score, scoreColor, barColor, desc }: {
-    badge: string; badgeColor: string; score: number; scoreColor: string; barColor: string; desc: string;
-  }) => (
-    <div style={{ background: "#1E293B", borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", flex: 1 }}>
-      <div style={{ padding: "14px 16px 10px" }}>
-        <span style={{ ...B, fontSize: 11, fontWeight: 800, color: WHITE, background: badgeColor, borderRadius: 5, padding: "3px 10px" }}>{badge}</span>
-        <p style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE, margin: "10px 0 0" }}>2018 Toyota Camry SE</p>
-      </div>
-      {/* Car image placeholder */}
-      <div style={{ height: 110, background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)", display: "flex", alignItems: "center", justifyContent: "center", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <svg width="80" height="40" viewBox="0 0 80 40" fill="none">
-          <rect x="8" y="20" width="64" height="14" rx="3" fill="#334155"/>
-          <rect x="16" y="10" width="42" height="14" rx="3" fill="#475569"/>
-          <circle cx="20" cy="34" r="6" fill="#1E293B" stroke="#64748B" strokeWidth="2"/>
-          <circle cx="60" cy="34" r="6" fill="#1E293B" stroke="#64748B" strokeWidth="2"/>
-        </svg>
-      </div>
-      <div style={{ padding: "12px 16px 16px" }}>
-        <p style={{ ...B, fontSize: 12, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 14px", fontStyle: "italic" }}>"{desc}"</p>
-        <p style={{ ...B, fontSize: 11, color: NAVY_M, margin: "0 0 6px" }}>Trust Score</p>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 8 }}>
-          <span style={{ ...H, fontSize: 30, fontWeight: 800, color: scoreColor, lineHeight: 1 }}>{score}</span>
-          <span style={{ ...B, fontSize: 13, color: NAVY_M }}>/100</span>
-        </div>
-        <div style={{ height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
-          <div style={{ height: "100%", width: `${score}%`, background: barColor, borderRadius: 3 }} />
-        </div>
-      </div>
-    </div>
-  );
-
+// ── Car SVG placeholder ───────────────────────────────────────────
+function CarPlaceholder() {
   return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-      {/* Glow */}
-      <div style={{
-        position: "absolute", width: 500, height: 400, borderRadius: "50%",
-        background: `radial-gradient(ellipse, ${BRAND}22 0%, transparent 70%)`,
-        filter: "blur(60px)", zIndex: 0, pointerEvents: "none",
-      }} />
-
-      <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
-        {/* REAL EXAMPLE label */}
-        <p style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: "0.12em", textAlign: "center", margin: "0 0 14px" }}>
-          ↓ REAL EXAMPLE
-        </p>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* BEFORE */}
-          <Card
-            badge="BEFORE" badgeColor="#EF4444"
-            score={58} scoreColor="#EF4444" barColor="#EF4444"
-            desc="Runs great. Clean title. Call for details."
-          />
-
-          {/* Arrow */}
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={{ color: WHITE, fontSize: 16 }}>→</span>
-          </div>
-
-          {/* AFTER */}
-          <Card
-            badge="AFTER" badgeColor="#16A34A"
-            score={84} scoreColor="#16A34A" barColor="#16A34A"
-            desc="One-owner 2018 Toyota Camry SE. Dealer maintained since new. All service records available. Clean title in hand."
-          />
-
-          {/* +26 badge */}
-          <div style={{
-            background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`,
-            borderRadius: 12, padding: "16px 14px", textAlign: "center", flexShrink: 0, width: 90,
-          }}>
-            <p style={{ ...H, fontSize: 26, fontWeight: 800, color: WHITE, margin: 0, lineHeight: 1 }}>+26</p>
-            <p style={{ ...B, fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", margin: "4px 0 0" }}>points</p>
-            <p style={{ ...B, fontSize: 9, color: "rgba(255,255,255,0.5)", margin: "6px 0 0", lineHeight: 1.4 }}>Estimated increase in buyer trust</p>
-          </div>
-        </div>
-      </div>
+    <div style={{ width: "100%", height: 130, background: "#0F172A", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="100" height="50" viewBox="0 0 100 50" fill="none">
+        <rect x="10" y="26" width="80" height="16" rx="4" fill="#1E293B"/>
+        <rect x="20" y="12" width="54" height="18" rx="4" fill="#334155"/>
+        <circle cx="26" cy="42" r="7" fill="#0F172A" stroke="#475569" strokeWidth="2"/>
+        <circle cx="74" cy="42" r="7" fill="#0F172A" stroke="#475569" strokeWidth="2"/>
+        <rect x="22" y="14" width="22" height="12" rx="2" fill="#475569" opacity="0.6"/>
+        <rect x="56" y="14" width="16" height="12" rx="2" fill="#475569" opacity="0.6"/>
+      </svg>
     </div>
   );
 }
@@ -152,7 +76,6 @@ export default function Home() {
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isDesktop, setIsDesktop] = useState(false);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -160,10 +83,7 @@ export default function Home() {
     window.history.replaceState({ home: true }, "");
     const onPop = () => { setResult(null); setLoading(false); };
     window.addEventListener("popstate", onPop);
-    const check = () => setIsDesktop(window.innerWidth >= 1024);
-    check();
-    window.addEventListener("resize", check);
-    return () => { window.removeEventListener("popstate", onPop); window.removeEventListener("resize", check); };
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   const compressImage = useCallback((file: File): Promise<string> => {
@@ -232,74 +152,57 @@ export default function Home() {
   const canSubmit = !loading && (!!url || images.length > 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: NAVY }}>
+    <div style={{ minHeight: "100vh", background: NAVY, overflowX: "hidden" }}>
 
-      {/* NAV */}
+      {/* ── NAV ── */}
       <nav style={{
-        position: "sticky", top: 0, zIndex: 50,
+        position: "sticky", top: 0, zIndex: 50, background: NAVY,
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 40px", height: 56,
-        background: NAVY, borderBottom: "1px solid rgba(255,255,255,0.06)",
+        padding: "0 60px", height: 58,
       }}>
-        <span style={{ ...H, fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em" }}>
+        <span style={{ ...H, fontSize: 16, fontWeight: 800, letterSpacing: "-0.02em" }}>
           <span style={{ color: WHITE }}>Car</span><span style={{ color: BRAND }}>SweetSpot</span>
         </span>
         <span style={{ ...B, fontSize: 13, color: NAVY_M }}>No signup. Free to try.</span>
       </nav>
 
-      {/* HERO */}
-      <div style={{
-        display: "flex",
-        flexDirection: isDesktop ? "row" : "column",
-        alignItems: isDesktop ? "center" : "stretch",
-        gap: isDesktop ? 60 : 0,
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: isDesktop ? "80px 60px 60px" : "48px 24px 40px",
-        minHeight: isDesktop ? "calc(100vh - 56px - 100px)" : undefined,
-      }}>
+      {/* ── HERO ── */}
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "72px 60px 0", display: "grid", gridTemplateColumns: "42% 58%", gap: 0, alignItems: "center", minHeight: "calc(100vh - 58px - 120px)" }}>
 
-        {/* LEFT */}
-        <div style={{ flex: isDesktop ? "0 0 480px" : undefined, display: "flex", flexDirection: "column" }}>
+        {/* LEFT — 42% */}
+        <div style={{ maxWidth: 520, display: "flex", flexDirection: "column", gap: 0 }}>
 
           {/* Pill */}
           <div style={{
             ...B, display: "inline-flex", alignItems: "center", gap: 6,
-            background: "rgba(37,99,235,0.18)", color: "#93C5FD",
-            border: "1px solid rgba(37,99,235,0.35)",
-            borderRadius: 99, padding: "5px 14px",
-            fontSize: 12, fontWeight: 700,
-            marginBottom: 24, alignSelf: "flex-start",
+            background: "rgba(37,99,235,0.15)", color: "#93C5FD",
+            border: "1px solid rgba(37,99,235,0.3)", borderRadius: 99,
+            padding: "5px 14px", fontSize: 12, fontWeight: 700,
+            marginBottom: 28, alignSelf: "flex-start",
           }}>
             ✦ AI-Powered · Free · Instant
           </div>
 
           {/* Headline */}
-          <h1 style={{
-            ...H, fontSize: isDesktop ? 52 : 38, fontWeight: 800,
-            lineHeight: 1.05, letterSpacing: "-0.04em", margin: "0 0 18px",
-          }}>
-            <span style={{ color: WHITE }}>Why isn&apos;t your car{" "}</span>
+          <h1 style={{ ...H, fontSize: 56, fontWeight: 800, lineHeight: 1.04, letterSpacing: "-0.04em", margin: "0 0 20px" }}>
+            <span style={{ color: WHITE }}>Why isn&apos;t your car </span>
             <span style={{ color: BRAND }}>getting calls?</span>
           </h1>
 
-          <p style={{ ...B, fontSize: 16, color: NAVY_M, lineHeight: 1.6, margin: "0 0 32px" }}>
+          <p style={{ ...B, fontSize: 17, color: NAVY_M, lineHeight: 1.6, margin: "0 0 36px" }}>
             Paste your listing and get a score + 3 specific fixes that help you sell faster.
           </p>
 
-          {/* INPUT CARD */}
-          <div style={{
-            background: WHITE, borderRadius: 16, padding: "20px",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
-            marginBottom: 20,
-          }}>
+          {/* Input card */}
+          <div style={{ background: WHITE, borderRadius: 18, padding: "22px", boxShadow: "0 28px 72px rgba(0,0,0,0.45)", marginBottom: 24 }}>
             <input
               type="text" value={url} onChange={e => setUrl(e.target.value)}
               onKeyDown={e => e.key === "Enter" && canSubmit && handleSubmit()}
               placeholder="Paste your Craigslist or Facebook listing URL"
               style={{
                 ...B, width: "100%", boxSizing: "border-box",
-                border: `1px solid ${BORDER}`, borderRadius: 10,
+                border: `1.5px solid ${BORDER}`, borderRadius: 10,
                 padding: "13px 16px", fontSize: 14, color: NAVY,
                 background: STAGE, outline: "none", marginBottom: 10,
               }}
@@ -320,14 +223,15 @@ export default function Home() {
                 fontSize: 16, fontWeight: 700, cursor: canSubmit ? "pointer" : "default",
                 letterSpacing: "-0.01em",
                 boxShadow: canSubmit ? "0 4px 20px rgba(37,99,235,0.4)" : "none",
-                transition: "all 0.2s", marginBottom: 14,
+                transition: "background 0.2s",
+                marginBottom: 14,
               }}
             >
               Analyze My Listing Free →
             </button>
 
             {/* Trust row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18 }}>
               {["No signup", "Takes 60 seconds", "100% free"].map(t => (
                 <span key={t} style={{ ...B, fontSize: 12, color: "#6B7280", display: "flex", alignItems: "center", gap: 4 }}>
                   <span style={{ color: "#16A34A", fontWeight: 700 }}>✓</span> {t}
@@ -335,13 +239,10 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Photo upload toggle */}
-            <div style={{ marginTop: 12, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
+            {/* Photo upload */}
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
               {!showPhotoUpload ? (
-                <button onClick={() => setShowPhotoUpload(true)} style={{
-                  ...B, background: "none", border: "none", cursor: "pointer",
-                  fontSize: 12, color: NAVY_M, width: "100%", textAlign: "center",
-                }}>
+                <button onClick={() => setShowPhotoUpload(true)} style={{ ...B, background: "none", border: "none", cursor: "pointer", fontSize: 12, color: NAVY_M, width: "100%", textAlign: "center" }}>
                   📸 Have photos? <span style={{ color: BRAND, fontWeight: 600 }}>Add them for a deeper analysis →</span>
                 </button>
               ) : (
@@ -352,35 +253,25 @@ export default function Home() {
                   onClick={() => fileInputRef.current?.click()}
                   style={{
                     border: `2px dashed ${dragging ? BRAND : images.length > 0 ? "#86EFAC" : BORDER}`,
-                    borderRadius: 10, padding: images.length > 0 ? "12px 14px" : "18px 14px",
+                    borderRadius: 10, padding: images.length > 0 ? "12px" : "18px",
                     textAlign: "center", cursor: "pointer",
                     background: dragging ? "#EFF6FF" : images.length > 0 ? "#F0FDF4" : STAGE,
                     transition: "all 0.2s",
                   }}
                 >
                   {images.length === 0 ? (
-                    <div>
-                      <p style={{ ...B, fontSize: 13, fontWeight: 600, color: NAVY, margin: "0 0 3px" }}>📸 Add listing photos</p>
-                      <p style={{ ...B, fontSize: 11, color: NAVY_M, margin: 0 }}>
-                        Drag & drop · <span style={{ color: BRAND, fontWeight: 600 }}>browse</span> · Ctrl+V
-                      </p>
-                    </div>
+                    <p style={{ ...B, fontSize: 13, color: NAVY_M, margin: 0 }}>
+                      Drag & drop · <span style={{ color: BRAND, fontWeight: 600 }}>browse</span> · Ctrl+V
+                    </p>
                   ) : (
                     <div>
-                      <p style={{ ...B, fontSize: 12, fontWeight: 700, color: "#15803D", margin: "0 0 8px" }}>
-                        ✓ {images.length} photo{images.length > 1 ? "s" : ""} added
-                      </p>
+                      <p style={{ ...B, fontSize: 12, fontWeight: 700, color: "#15803D", margin: "0 0 8px" }}>✓ {images.length} photo{images.length > 1 ? "s" : ""} added</p>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
                         {images.map((src, i) => (
                           <div key={i} style={{ position: "relative", borderRadius: 6, overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${BORDER}` }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            <button onClick={e => { e.stopPropagation(); setImages(p => p.filter((_, j) => j !== i)); }} style={{
-                              position: "absolute", top: 3, right: 3, width: 18, height: 18,
-                              background: "rgba(0,0,0,0.6)", color: WHITE, border: "none",
-                              borderRadius: "50%", fontSize: 10, cursor: "pointer",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                            }}>×</button>
+                            <button onClick={e => { e.stopPropagation(); setImages(p => p.filter((_, j) => j !== i)); }} style={{ position: "absolute", top: 3, right: 3, width: 18, height: 18, background: "rgba(0,0,0,0.6)", color: WHITE, border: "none", borderRadius: "50%", fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
                           </div>
                         ))}
                         {images.length < MAX_IMAGES && (
@@ -396,15 +287,12 @@ export default function Home() {
           </div>
 
           {/* Social proof */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ display: "flex" }}>
-              {["#94A3B8", "#64748B", "#475569"].map((c, i) => (
-                <div key={i} style={{
-                  width: 28, height: 28, borderRadius: "50%", background: c,
-                  border: "2px solid #1E293B", marginLeft: i > 0 ? -8 : 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11,
-                }}>👤</div>
+              {[0,1,2].map(i => (
+                <div key={i} style={{ width: 30, height: 30, borderRadius: "50%", background: ["#475569","#334155","#1E293B"][i], border: "2px solid #0F172A", marginLeft: i > 0 ? -10 : 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
+                  {["👩","👨","🧑"][i]}
+                </div>
               ))}
             </div>
             <div>
@@ -414,18 +302,86 @@ export default function Home() {
           </div>
         </div>
 
-        {/* RIGHT: Before/After mockup */}
-        <BeforeAfterMockup isDesktop={isDesktop} />
+        {/* RIGHT — 58% — BEFORE / AFTER */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", paddingLeft: 40, position: "relative" }}>
+          {/* Glow */}
+          <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: `radial-gradient(ellipse, ${BRAND}18 0%, transparent 70%)`, filter: "blur(80px)", pointerEvents: "none" }} />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <p style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: "0.12em", textAlign: "center", margin: "0 0 16px" }}>↓ REAL EXAMPLE</p>
+
+            <div style={{ display: "flex", alignItems: "stretch", gap: 12 }}>
+
+              {/* BEFORE card — 300px */}
+              <div style={{ width: 300, background: "#1E293B", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "16px 18px 10px" }}>
+                  <span style={{ ...B, fontSize: 11, fontWeight: 800, color: WHITE, background: "#EF4444", borderRadius: 5, padding: "3px 10px" }}>BEFORE</span>
+                  <p style={{ ...H, fontSize: 15, fontWeight: 700, color: WHITE, margin: "12px 0 0" }}>2018 Toyota Camry SE</p>
+                </div>
+                <CarPlaceholder />
+                <div style={{ padding: "14px 18px 18px", flex: 1 }}>
+                  <p style={{ ...B, fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 16px", fontStyle: "italic" }}>
+                    &quot;Runs great. Clean title. Call for details.&quot;
+                  </p>
+                  <p style={{ ...B, fontSize: 12, color: NAVY_M, margin: "0 0 6px" }}>Trust Score</p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 8 }}>
+                    <span style={{ ...H, fontSize: 34, fontWeight: 800, color: "#EF4444", lineHeight: 1 }}>58</span>
+                    <span style={{ ...B, fontSize: 14, color: NAVY_M }}>/100</span>
+                  </div>
+                  <div style={{ height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
+                    <div style={{ height: "100%", width: "58%", background: "#EF4444", borderRadius: 3 }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: WHITE, fontSize: 16 }}>→</span>
+                </div>
+              </div>
+
+              {/* AFTER card — 300px */}
+              <div style={{ width: 300, background: "#1E293B", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "16px 18px 10px" }}>
+                  <span style={{ ...B, fontSize: 11, fontWeight: 800, color: WHITE, background: "#16A34A", borderRadius: 5, padding: "3px 10px" }}>AFTER</span>
+                  <p style={{ ...H, fontSize: 15, fontWeight: 700, color: WHITE, margin: "12px 0 0" }}>2018 Toyota Camry SE</p>
+                </div>
+                <CarPlaceholder />
+                <div style={{ padding: "14px 18px 18px", flex: 1 }}>
+                  <p style={{ ...B, fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 16px", fontStyle: "italic" }}>
+                    &quot;One-owner 2018 Toyota Camry SE. Dealer maintained since new. All service records available. Clean title in hand.&quot;
+                  </p>
+                  <p style={{ ...B, fontSize: 12, color: NAVY_M, margin: "0 0 6px" }}>Trust Score</p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 8 }}>
+                    <span style={{ ...H, fontSize: 34, fontWeight: 800, color: "#16A34A", lineHeight: 1 }}>84</span>
+                    <span style={{ ...B, fontSize: 14, color: NAVY_M }}>/100</span>
+                  </div>
+                  <div style={{ height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
+                    <div style={{ height: "100%", width: "84%", background: "#16A34A", borderRadius: 3 }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* +26 badge */}
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`, borderRadius: 14, padding: "20px 16px", textAlign: "center", width: 100 }}>
+                  <p style={{ ...H, fontSize: 32, fontWeight: 800, color: WHITE, margin: 0, lineHeight: 1 }}>+26</p>
+                  <p style={{ ...B, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", margin: "6px 0 0" }}>points</p>
+                  <p style={{ ...B, fontSize: 10, color: "rgba(255,255,255,0.5)", margin: "8px 0 0", lineHeight: 1.4 }}>Estimated increase in buyer trust</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* BOTTOM FEATURE BAR */}
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: isDesktop ? "0 60px 60px" : "0 24px 40px" }}>
+      {/* ── BOTTOM FEATURE BAR ── */}
+      <div style={{ maxWidth: 1440, margin: "60px auto 60px", padding: "0 60px" }}>
         <div style={{
-          background: WHITE, borderRadius: 16,
-          padding: "24px 32px",
-          display: "grid",
-          gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)",
-          gap: isDesktop ? 0 : 20,
+          maxWidth: 1050, margin: "0 auto",
+          background: WHITE, borderRadius: 18, padding: "28px 40px",
+          display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
         }}>
           {[
             { icon: "📷", title: "Photos", desc: "We analyze your photos and find what's missing or hurting trust." },
@@ -434,13 +390,13 @@ export default function Home() {
             { icon: "🛡️", title: "Buyer Trust", desc: "We look for signals that build (or break) buyer confidence." },
           ].map((f, i) => (
             <div key={f.title} style={{
-              display: "flex", flexDirection: "column", gap: 8,
-              paddingLeft: isDesktop && i > 0 ? 28 : 0,
-              borderLeft: isDesktop && i > 0 ? `1px solid ${BORDER}` : "none",
+              display: "flex", flexDirection: "column", gap: 10,
+              paddingLeft: i > 0 ? 32 : 0,
+              borderLeft: i > 0 ? `1px solid ${BORDER}` : "none",
             }}>
-              <span style={{ fontSize: 22 }}>{f.icon}</span>
-              <p style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY, margin: 0 }}>{f.title}</p>
-              <p style={{ ...B, fontSize: 13, color: NAVY_M, margin: 0, lineHeight: 1.5 }}>{f.desc}</p>
+              <span style={{ fontSize: 24 }}>{f.icon}</span>
+              <p style={{ ...H, fontSize: 15, fontWeight: 700, color: NAVY, margin: 0 }}>{f.title}</p>
+              <p style={{ ...B, fontSize: 13, color: NAVY_M, margin: 0, lineHeight: 1.55 }}>{f.desc}</p>
             </div>
           ))}
         </div>
