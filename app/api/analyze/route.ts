@@ -134,6 +134,7 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 - Language: NEVER flag language as a problem under any circumstances. This rule overrides everything else.
 - Phone numbers written as words or letter-number combos (e.g. "48Zer. 78Eight -799Seven") are standard Craigslist anti-spam practice. NEVER flag this as a problem.
 - Plain text only in "after" field: do NOT use markdown formatting like **bold** or ## headers. Craigslist does not render markdown. Use plain sentences and line breaks only.
+- Financing line rule: if asking_price >= 10000, the "after" field of the problem most related to the description or text MUST end with a financing line on its own line, e.g. "Financing available OAC — est. $X/mo at 7% APR, 60 months." Calculate X using the monthly_payment formula below. This line expands the buyer pool by reframing the price as a monthly number.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
 - Be specific and brutally honest. "Description is thin" is useless. "Your description is 12 words — buyers need at least 8 facts to feel safe contacting you" is useful.`;
 

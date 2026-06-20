@@ -493,7 +493,32 @@ function SummaryScreen({ result, onReset, onBack }: { result: AnalysisResult; on
           <p style={{ ...B, fontSize: 14, color: "#6B7280" }}>{result.vehicle}</p>
         </div>
 
-        {result.asking_price > 0 && result.monthly_payment > 0 && (
+        {result.asking_price >= 10000 && result.monthly_payment > 0 && (
+          <div style={{
+            background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`,
+            borderRadius: 16, padding: "24px", marginBottom: 24,
+          }}>
+            <p style={{ ...B, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 10px" }}>
+              💡 Increase your buyers&apos; purchasing power
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div style={{ background: "rgba(255,255,255,0.12)", borderRadius: 10, padding: "16px", textAlign: "center" }}>
+                <p style={{ ...B, fontSize: 10, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Asking Price</p>
+                <p style={{ ...H, fontSize: 22, fontWeight: 800, color: WHITE, margin: 0, letterSpacing: "-0.03em" }}>${result.asking_price.toLocaleString()}</p>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.18)", borderRadius: 10, padding: "16px", textAlign: "center" }}>
+                <p style={{ ...B, fontSize: 10, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Est. Monthly</p>
+                <p style={{ ...H, fontSize: 24, fontWeight: 800, color: WHITE, margin: 0, letterSpacing: "-0.03em" }}>${result.monthly_payment}<span style={{ fontSize: 13, fontWeight: 600 }}>/mo</span></p>
+                <p style={{ ...B, fontSize: 10, color: "rgba(255,255,255,0.5)", margin: "4px 0 0" }}>7% APR · 60 months</p>
+              </div>
+            </div>
+            <p style={{ ...B, fontSize: 13, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.5 }}>
+              Add <strong style={{ color: WHITE }}>"Financing available OAC — est. ${result.monthly_payment}/mo"</strong> to your listing. Buyers who can&apos;t write a ${result.asking_price.toLocaleString()} check can afford ${result.monthly_payment}/month — and they&apos;re the majority.
+            </p>
+          </div>
+        )}
+
+        {result.asking_price > 0 && result.asking_price < 10000 && result.monthly_payment > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
             <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "20px", textAlign: "center" }}>
               <p style={{ ...B, fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px" }}>Asking Price</p>
