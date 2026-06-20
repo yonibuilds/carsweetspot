@@ -130,11 +130,21 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
       background: NAVY, display: "flex", flexDirection: "column",
       padding: "32px 28px", overflowY: "auto", zIndex: 50,
     }}>
-      <button onClick={onReset} style={{
-        ...H, fontSize: 15, fontWeight: 800, color: WHITE, letterSpacing: "-0.02em",
-        background: "none", border: "none", cursor: "pointer", padding: 0,
-        textAlign: "left", marginBottom: 36,
-      }}>CarSweetSpot</button>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 36 }}>
+        <span style={{ ...H, fontSize: 15, fontWeight: 800, color: WHITE, letterSpacing: "-0.02em" }}>CarSweetSpot</span>
+        <button onClick={onReset} style={{
+          ...B, display: "flex", alignItems: "center", gap: 5,
+          fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.45)",
+          background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 8, padding: "5px 10px", cursor: "pointer",
+          transition: "all 0.15s",
+        }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = WHITE; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.45)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.07)"; }}
+        >
+          ← Back
+        </button>
+      </div>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginBottom: 36 }}>
         <ScoreRing score={result.overall_score} />
