@@ -201,21 +201,6 @@ export async function POST(req: NextRequest) {
         // Extract first listing image URL for sidebar display
         firstImgSrc = listingImgs[0]?.match(/src="([^"]+)"/i)?.[1] ?? null;
 
-        // Extract price directly from HTML — try multiple patterns in order of reliability
-        const pricePatterns = [
-          /<span[^>]*class="[^"]*price[^"]*"[^>]*>\s*\$\s*([\d,]+)/i,   // <span class="price">
-          /content="\d{4}[^"]*-\s*\$\s*([\d,]+)/i,                       // og:title meta
-          /-\s*\$\s*([\d,]+)\s*(?:\(|<)/,                                 // "- $23,900 ("
-          /\bask(?:ing)?\s*\$?\s*([\d,]+)/i,                              // "asking $X"
-          /\$\s*([\d,]+)\s*(?:OBO|obo|firm)/i,                            // "$X OBO"
-        ];
-        for (const pat of pricePatterns) {
-          const m = html.slice(0, 20000).match(pat);
-          if (m) {
-            const parsed = parseInt(m[1].replace(/,/g, ""), 10);
-            if (!isNaN(parsed) && parsed > 500 && parsed < 500000) { detectedPrice = parsed; break; }
-          }
-        }
 
         // Detect wall-of-text: convert br/p to newlines, count meaningful paragraphs
         const withBreaks = html
@@ -237,6 +222,12 @@ export async function POST(req: NextRequest) {
           .replace(/\s+/g, " ")
           .trim()
           .slice(0, 12000);
+        // Extract price from cleaned plain text — the AI can read it so we can too
+        const allPrices = [...cleaned.matchAll(/\$\s*([\d,]+)/g)]
+          .map(m => parseInt(m[1].replace(/,/g, ""), 10))
+          .filter(n => !isNaN(n) && n >= 1000 && n <= 300000);
+        if (allPrices.length > 0) detectedPrice = allPrices[0];
+
         const photoNote = photoCount > 0
           ? `\n\n[PHOTO COUNT DETECTED FROM HTML: ${photoCount} listing photos found. Do NOT flag photos as missing or low-count.]`
           : `\n\n[PHOTO COUNT: Could not detect photos from HTML — evaluate based on description only.]`;
