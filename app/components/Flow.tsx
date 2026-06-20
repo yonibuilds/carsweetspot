@@ -427,7 +427,7 @@ function ScoreScreen({ result, fixProblems, onNext }: {
             const isOpen = expandedIdx === idx;
 
             return (
-              <div key={`${cat}-${idx}`} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
+              <div key={`${cat}-${idx}`} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${isOpen ? BORDER : idx === 0 && expandedIdx === null ? BRAND : BORDER}` }}>
                 {/* Header row */}
                 <div
                   onClick={() => toggle(idx)}
@@ -482,16 +482,13 @@ function ScoreScreen({ result, fixProblems, onNext }: {
           })}
         </div>
 
-        {expandedIdx === null && <Btn onClick={() => setExpandedIdx(0)}>Start fixing →</Btn>}
-        {expandedIdx !== null && (
-          <button onClick={onNext} style={{
-            ...B, width: "100%", padding: "13px", background: "transparent",
-            color: "#9CA3AF", border: `1px solid ${BORDER}`, borderRadius: 12,
-            fontSize: 14, cursor: "pointer",
-          }}>
-            Skip to full results →
-          </button>
-        )}
+        <button onClick={onNext} style={{
+          ...B, width: "100%", padding: "13px", background: "transparent",
+          color: "#9CA3AF", border: `1px solid ${BORDER}`, borderRadius: 12,
+          fontSize: 14, cursor: "pointer",
+        }}>
+          See full results →
+        </button>
       </div>
     </Fade>
   );
