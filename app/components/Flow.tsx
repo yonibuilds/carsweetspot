@@ -127,19 +127,19 @@ function FinancingCard({ askingPrice, monthlyPayment }: { askingPrice: number; m
   return (
     <div style={{
       marginTop: 20, borderRadius: 12,
-      background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`,
+      background: "#1D4ED8",
       padding: "16px 18px",
     }}>
-      <p style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE, margin: "0 0 4px" }}>
+      <p style={{ ...H, fontSize: 14, fontWeight: 700, color: "#ffffff", margin: "0 0 4px" }}>
         💳 {calcMo > 0 ? `$${calcMo}/mo est.` : "Financing available"}
       </p>
-      <p style={{ ...B, fontSize: 12, color: "rgba(255,255,255,0.8)", margin: "0 0 10px", lineHeight: 1.5 }}>
+      <p style={{ ...B, fontSize: 12, color: "#bfdbfe", margin: "0 0 10px", lineHeight: 1.5 }}>
         Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
       </p>
       <div style={{
-        background: "rgba(0,0,0,0.25)", borderRadius: 7,
+        background: "#1e3a8a", borderRadius: 7,
         padding: "8px 12px", fontFamily: "monospace",
-        fontSize: 11, color: "rgba(255,255,255,0.9)", lineHeight: 1.6,
+        fontSize: 11, color: "#e0f2fe", lineHeight: 1.6,
       }}>
         {copyText}
       </div>
