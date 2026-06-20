@@ -146,6 +146,7 @@ export async function POST(req: NextRequest) {
     }
 
     const messageContent: Anthropic.MessageParam["content"] = [];
+    let firstImgSrc: string | null = null;
 
     if (images && images.length > 0) {
       for (const img of images as string[]) {
@@ -193,6 +194,9 @@ export async function POST(req: NextRequest) {
           (/src="[^"]*\.(jpg|jpeg|png|webp)/i.test(tag) && !/logo|icon|avatar|sprite/i.test(tag))
         );
         const photoCount = listingImgs.length;
+
+        // Extract first listing image URL for sidebar display
+        firstImgSrc = listingImgs[0]?.match(/src="([^"]+)"/i)?.[1] ?? null;
 
         // Detect wall-of-text: convert br/p to newlines, count meaningful paragraphs
         const withBreaks = html
@@ -267,6 +271,10 @@ export async function POST(req: NextRequest) {
       const n = 60;
       result.monthly_payment = Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
     }
+
+    // Attach listing image if available
+    if (firstImgSrc) result.listing_image = firstImgSrc;
+    if (!result.listing_image && images && images.length > 0) result.listing_image = images[0];
 
     if (url) cache.set(url, result);
     return NextResponse.json(result);
