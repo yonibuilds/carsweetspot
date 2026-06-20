@@ -384,6 +384,18 @@ export default function Home() {
               Get My Sweet Spot Score →
             </button>
 
+            {url && images.length === 0 && (
+              <div style={{
+                display: "flex", alignItems: "flex-start", gap: 8,
+                background: "#FFFBEB", border: "1px solid #FDE68A",
+                borderRadius: 8, padding: "10px 12px", marginTop: 10,
+              }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>⚠️</span>
+                <p style={{ ...B, fontSize: 12, color: "#92400E", margin: 0, lineHeight: 1.5 }}>
+                  URL analysis can count photos but <strong>can&apos;t see their content</strong>. For a real photo score, upload your listing photos above.
+                </p>
+              </div>
+            )}
             <p style={{ ...B, fontSize: 12, color: NAVY_M, textAlign: "center", marginTop: 10, marginBottom: 0 }}>
               Works with Craigslist & Facebook Marketplace · No signup needed
             </p>

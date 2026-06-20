@@ -161,6 +161,18 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
           Diagnostics
         </h3>
         {metrics.map(m => <MetricBar key={m.label} {...m} />)}
+        {!result.listing_image?.startsWith("data:") && (
+          <div style={{
+            display: "flex", alignItems: "flex-start", gap: 7,
+            background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)",
+            borderRadius: 8, padding: "9px 11px",
+          }}>
+            <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
+            <p style={{ ...B, fontSize: 11, color: "#FCD34D", margin: 0, lineHeight: 1.5 }}>
+              Photo score is estimated — upload photos directly for accurate analysis.
+            </p>
+          </div>
+        )}
       </div>
 
       {issuesLeft > 0 && (
