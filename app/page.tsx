@@ -382,17 +382,56 @@ export default function Home() {
           boxShadow: "0 2px 20px rgba(0,0,0,0.08)",
         }}>
           {[
-            { icon: "📷", title: "Photos", desc: "We analyze your photos and find what's missing or hurting trust." },
-            { icon: "📄", title: "Description", desc: "We find weak or missing details buyers care about." },
-            { icon: "💲", title: "Price & Positioning", desc: "We check if your price matches the market and your car's value." },
-            { icon: "🛡️", title: "Buyer Trust", desc: "We look for signals that build (or break) buyer confidence." },
+            {
+              icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={BRAND} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              ),
+              title: "Photos", desc: "We analyze your photos and find what's missing or hurting trust.",
+            },
+            {
+              icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={BRAND} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              ),
+              title: "Description", desc: "We find weak or missing details buyers care about.",
+            },
+            {
+              icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={BRAND} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v2m0 8v2m-3.5-7h7M9 10a3 3 0 0 1 6 0c0 1.5-1.5 2-3 3"/>
+                </svg>
+              ),
+              title: "Price & Positioning", desc: "We check if your price matches the market and your car's value.",
+            },
+            {
+              icon: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={BRAND} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <polyline points="9 12 11 14 15 10"/>
+                </svg>
+              ),
+              title: "Buyer Trust", desc: "We look for signals that build (or break) buyer confidence.",
+            },
           ].map((f, i) => (
             <div key={f.title} style={{
               display: "flex", flexDirection: "column", gap: 7,
               paddingLeft: i > 0 ? 28 : 0,
               borderLeft: i > 0 ? `1px solid ${BORDER}` : "none",
             }}>
-              <span style={{ fontSize: 20 }}>{f.icon}</span>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10,
+                background: `rgba(37,99,235,0.08)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{f.icon}</div>
               <p style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY, margin: 0 }}>{f.title}</p>
               <p style={{ ...B, fontSize: 12, color: NAVY_M, margin: 0, lineHeight: 1.5 }}>{f.desc}</p>
             </div>
