@@ -208,7 +208,6 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
         )}
       </div>
 
-      <FinancingCard askingPrice={result.asking_price ?? 0} monthlyPayment={result.monthly_payment ?? 0} />
 
       {issuesLeft > 0 && (
         <div style={{
@@ -503,6 +502,8 @@ function FixScreen({ problem, index, total, remaining, result, onNext, onBack, i
           ) : (
             <UpNext remaining={remaining} onNext={onNext} />
           )}
+
+          <FinancingCard askingPrice={result.asking_price ?? 0} monthlyPayment={result.monthly_payment ?? 0} />
         </div>
       </div>
     </Fade>
