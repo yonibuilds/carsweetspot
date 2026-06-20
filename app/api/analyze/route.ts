@@ -282,6 +282,7 @@ export async function POST(req: NextRequest) {
         const priceNote = detectedPrice
           ? `\n\n[PRICE DETECTED FROM HTML: $${detectedPrice.toLocaleString()} — set asking_price to ${detectedPrice}]`
           : "";
+        console.log("[img-debug] html length:", html.length, "| photoCount:", photoCount, "| firstImgSrc:", firstImgSrc);
         messageContent.push({
           type: "text",
           text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}${formattingNote}${priceNote}`,
