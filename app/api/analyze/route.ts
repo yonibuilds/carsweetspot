@@ -171,8 +171,10 @@ export async function POST(req: NextRequest) {
       try {
         const res = await fetch(url, {
           headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            Accept: "text/html",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
           },
           signal: AbortSignal.timeout(8000),
         });
@@ -189,27 +191,63 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        // Extract all image URLs from HTML (src and data-src)
+        // Extract all listing image URLs from HTML using multiple strategies
+        const isListingImage = (src: string) =>
+          /^https?:\/\//i.test(src) &&
+          /\.(jpg|jpeg|png|webp)/i.test(src) &&
+          !/logo|icon|avatar|sprite|pixel|tracking|blank/i.test(src) &&
+          !/1x1|spacer/i.test(src);
+
+        const listingImgs: string[] = [];
+
+        // Strategy 1: JSON blob in <script> tags — Craigslist uses var imgList=[...] or similar
+        const scriptBlobs = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
+        for (const blob of scriptBlobs) {
+          const jsonMatches = blob.match(/"(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || [];
+          for (const m of jsonMatches) {
+            const src = m.replace(/^"|"$/g, "");
+            if (isListingImage(src) && !listingImgs.includes(src)) {
+              listingImgs.push(src);
+            }
+          }
+        }
+
+        // Strategy 2: <img> tags — src, data-src, srcset
         const allImgTags = html.match(/<img[^>]+>/gi) || [];
-        const extractSrc = (tag: string) =>
-          tag.match(/\bsrc="([^"]+)"/i)?.[1] ??
-          tag.match(/\bdata-src="([^"]+)"/i)?.[1] ?? null;
+        const extractImgSrc = (tag: string): string | null => {
+          const src = tag.match(/\bsrc="([^"]+)"/i)?.[1] ?? null;
+          if (src) return src;
+          const dataSrc = tag.match(/\bdata-src="([^"]+)"/i)?.[1] ?? null;
+          if (dataSrc) return dataSrc;
+          const srcset = tag.match(/\bsrcset="([^"]+)"/i)?.[1] ?? null;
+          if (srcset) return srcset.split(/[\s,]+/)[0] ?? null;
+          return null;
+        };
+        for (const tag of allImgTags) {
+          const src = extractImgSrc(tag);
+          if (src && isListingImage(src) && !listingImgs.includes(src)) {
+            listingImgs.push(src);
+          }
+        }
 
-        const listingImgs = allImgTags
-          .map(tag => ({ tag, src: extractSrc(tag) }))
-          .filter(({ src }) =>
-            src &&
-            /^https?:\/\//i.test(src) &&
-            /\.(jpg|jpeg|png|webp)/i.test(src) &&
-            !/logo|icon|avatar|sprite|pixel|tracking|blank/i.test(src) &&
-            !/1x1|spacer/i.test(src)
-          )
-          .map(({ src }) => src as string);
+        // Strategy 3: <a href> links pointing directly to image files (Craigslist wraps thumbnails in <a>)
+        const allAnchorHrefs = html.match(/\bhref="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || [];
+        for (const m of allAnchorHrefs) {
+          const src = m.match(/href="([^"]+)"/i)?.[1] ?? null;
+          if (src && isListingImage(src) && !listingImgs.includes(src)) {
+            listingImgs.push(src);
+          }
+        }
 
-        const photoCount = listingImgs.length;
+        // Upgrade Craigslist thumbnail URLs (_NNxNNc.jpg) to full-size (_600x450.jpg)
+        const upgradedImgs = listingImgs.map(src =>
+          src.replace(/_\d+x\d+c(\.\w+)$/, "_600x450$1")
+        );
+
+        const photoCount = upgradedImgs.length;
 
         // Extract first listing image URL for sidebar display
-        firstImgSrc = listingImgs[0] ?? null;
+        firstImgSrc = upgradedImgs[0] ?? null;
 
 
         // Detect wall-of-text: convert br/p to newlines, count meaningful paragraphs
