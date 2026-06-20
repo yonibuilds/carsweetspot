@@ -22,7 +22,6 @@ export type AnalysisResult = {
   opportunities: Opportunity[];
   whats_working: string[];
   listing_image?: string;
-  _img_debug?: string;
 };
 
 // ── Tokens ────────────────────────────────────────────────────────
@@ -434,12 +433,7 @@ function ScoreScreen({ result, fixProblems, onNext }: {
             </span>
           )}
         </div>
-        {result._img_debug && (
-          <p style={{ ...B, fontSize: 10, color: "#9CA3AF", margin: "0 0 4px", wordBreak: "break-all" }}>
-            🔍 img: {result._img_debug}
-          </p>
-        )}
-        <p style={{ ...B, fontSize: 15, color: "#6B7280", margin: "0 0 24px", lineHeight: 1.6 }}>
+<p style={{ ...B, fontSize: 15, color: "#6B7280", margin: "0 0 24px", lineHeight: 1.6 }}>
           We found {fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} hurting your contact rate. Click each to fix it.
         </p>
 

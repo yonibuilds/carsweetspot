@@ -281,7 +281,6 @@ export async function POST(req: NextRequest) {
         const priceNote = detectedPrice
           ? `\n\n[PRICE DETECTED FROM HTML: $${detectedPrice.toLocaleString()} — set asking_price to ${detectedPrice}]`
           : "";
-        console.log("[img-debug] html length:", html.length, "| photoCount:", photoCount, "| firstImgSrc:", firstImgSrc);
         messageContent.push({
           type: "text",
           text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}${formattingNote}${priceNote}`,
@@ -340,9 +339,6 @@ export async function POST(req: NextRequest) {
     // Attach listing image if available
     if (firstImgSrc) result.listing_image = firstImgSrc;
     if (!result.listing_image && images && images.length > 0) result.listing_image = images[0];
-
-    // Temporary debug field — remove after confirming image works
-    result._img_debug = firstImgSrc ?? "NULL";
 
     if (url) cache.set(url, result);
     return NextResponse.json(result);
