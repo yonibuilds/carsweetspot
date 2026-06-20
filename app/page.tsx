@@ -3,14 +3,13 @@
 import { useState, useRef, useCallback, useEffect, DragEvent, ChangeEvent } from "react";
 import Flow, { AnalysisResult } from "./components/Flow";
 
-// ── Tokens (same as Flow.tsx) ─────────────────────────────────────
-const NAVY   = "#0F172A";
-const NAVY_M = "#64748B";
-const BRAND  = "#2563EB";
+const NAVY    = "#0F172A";
+const NAVY_M  = "#64748B";
+const BRAND   = "#2563EB";
 const BRAND_DK = "#1D4ED8";
-const STAGE  = "#F4F4F5";
-const BORDER = "#E2E8F0";
-const WHITE  = "#FFFFFF";
+const STAGE   = "#F4F4F5";
+const BORDER  = "#E2E8F0";
+const WHITE   = "#FFFFFF";
 const H: React.CSSProperties = { fontFamily: "var(--font-jakarta)" };
 const B: React.CSSProperties = { fontFamily: "var(--font-inter)" };
 
@@ -60,98 +59,87 @@ function AnalyzingScreen() {
   );
 }
 
-// ── Dashboard mockup visual ───────────────────────────────────────
-function DashboardMockup() {
-  const r = 28, circ = 2 * Math.PI * r;
+// ── Before/After hero mockup ──────────────────────────────────────
+function BeforeAfterMockup({ isDesktop }: { isDesktop: boolean }) {
+  if (!isDesktop) return null;
   return (
-    <div style={{
-      borderRadius: 14,
-      overflow: "hidden",
-      boxShadow: "0 32px 80px rgba(0,0,0,0.28), 0 8px 24px rgba(0,0,0,0.12)",
-      border: "1px solid rgba(255,255,255,0.08)",
-      userSelect: "none",
-    }}>
-      {/* Browser chrome */}
-      <div style={{ background: "#1E293B", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#FF5F57", flexShrink: 0 }} />
-        <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#FEBC2E", flexShrink: 0 }} />
-        <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#28C840", flexShrink: 0 }} />
-        <div style={{ flex: 1, background: "#0F172A", borderRadius: 4, padding: "4px 10px", marginLeft: 8 }}>
-          <span style={{ ...B, fontSize: 10, color: NAVY_M }}>carsweetspot.com/report</span>
-        </div>
-      </div>
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+      {/* Glow */}
+      <div style={{
+        position: "absolute", width: 480, height: 360, borderRadius: "50%",
+        background: `radial-gradient(ellipse, ${BRAND}28 0%, transparent 70%)`,
+        filter: "blur(60px)", zIndex: 0,
+      }} />
 
-      {/* App UI */}
-      <div style={{ display: "flex", height: 290 }}>
-        {/* Dark sidebar */}
-        <div style={{ width: "30%", background: NAVY, padding: "14px 12px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <span style={{ ...H, fontSize: 10, fontWeight: 800, color: WHITE }}>CarSweetSpot</span>
-
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-            <div style={{ position: "relative", width: 70, height: 70 }}>
-              <svg width={70} height={70} viewBox="0 0 70 70" style={{ transform: "rotate(-90deg)" }}>
-                <circle cx={35} cy={35} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={6} />
-                <circle cx={35} cy={35} r={r} fill="none" stroke={BRAND} strokeWidth={6}
-                  strokeLinecap="round" strokeDasharray={`${circ * 0.72} ${circ}`} />
-              </svg>
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ ...H, fontSize: 18, fontWeight: 800, color: WHITE, lineHeight: 1 }}>72</span>
-              </div>
-            </div>
-            <span style={{ ...B, fontSize: 8, color: NAVY_M, textAlign: "center" }}>Sweet Spot Score</span>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-            <span style={{ ...B, fontSize: 7, fontWeight: 700, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.1em" }}>Diagnostics</span>
-            {[{ l: "Trust", v: 38 }, { l: "Text", v: 62 }, { l: "Photos", v: 91 }].map(m => (
-              <div key={m.l} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ ...B, fontSize: 8, fontWeight: 600, color: WHITE }}>{m.l}</span>
-                  <span style={{ ...B, fontSize: 8, color: NAVY_M }}>{m.v}%</span>
-                </div>
-                <div style={{ height: 3, background: "rgba(255,255,255,0.1)", borderRadius: 2 }}>
-                  <div style={{ height: "100%", width: `${m.v}%`, background: BRAND, borderRadius: 2 }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginTop: "auto", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", padding: "8px 10px" }}>
-            <p style={{ ...H, fontSize: 8, fontWeight: 600, color: WHITE, margin: "0 0 2px" }}>3 issues left</p>
-            <p style={{ ...B, fontSize: 7, color: NAVY_M, margin: 0, lineHeight: 1.4 }}>Could lift score to 96</p>
-          </div>
+      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 560 }}>
+        {/* Label */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, justifyContent: "center" }}>
+          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.1)" }} />
+          <span style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: "0.1em" }}>REAL EXAMPLE</span>
+          <div style={{ height: 1, flex: 1, background: "rgba(255,255,255,0.1)" }} />
         </div>
 
-        {/* Right panel */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", background: STAGE }}>
-          {/* Blue hero */}
-          <div style={{ background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`, padding: "14px 16px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, padding: "2px 8px", marginBottom: 8 }}>
-              <span style={{ ...B, fontSize: 7, fontWeight: 700, color: WHITE }}>⚠ Top priority fix</span>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 10, alignItems: "start" }}>
+          {/* BEFORE */}
+          <div style={{ background: "#1E293B", borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div style={{ padding: "12px 14px 8px" }}>
+              <span style={{ ...B, fontSize: 10, fontWeight: 800, color: WHITE, background: "#EF4444", borderRadius: 4, padding: "2px 8px" }}>BEFORE</span>
+              <p style={{ ...H, fontSize: 12, fontWeight: 700, color: WHITE, margin: "8px 0 6px" }}>2018 Toyota Camry SE</p>
             </div>
-            <div style={{ ...H, fontSize: 11, fontWeight: 800, color: WHITE, lineHeight: 1.2, marginBottom: 4 }}>
-              Missing ownership timeline
+            <div style={{ background: "#0F172A", height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 28 }}>🚗</span>
             </div>
-            <div style={{ ...B, fontSize: 8, color: "rgba(255,255,255,0.75)", lineHeight: 1.4 }}>
-              Listings that explain ownership convert 2.3× faster.
+            <div style={{ padding: "10px 14px 14px" }}>
+              <p style={{ ...B, fontSize: 11, color: "#94A3B8", lineHeight: 1.5, margin: "0 0 12px" }}>
+                "Runs great. Clean title. Call for details."
+              </p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+                <span style={{ ...B, fontSize: 10, color: NAVY_M }}>Trust Score</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
+                <span style={{ ...H, fontSize: 26, fontWeight: 800, color: "#EF4444", lineHeight: 1 }}>58</span>
+                <span style={{ ...B, fontSize: 11, color: NAVY_M }}>/100</span>
+              </div>
+              <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 2 }}>
+                <div style={{ height: "100%", width: "58%", background: "#EF4444", borderRadius: 2 }} />
+              </div>
             </div>
           </div>
 
-          {/* Before / After */}
-          <div style={{ padding: "12px 14px", flex: 1 }}>
-            <div style={{ ...H, fontSize: 8, fontWeight: 700, color: NAVY, marginBottom: 7 }}>Rewrite the description</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-              <div style={{ background: "#FEF2F2", border: "1px solid #EF444425", borderRadius: 6, padding: "6px 8px" }}>
-                <div style={{ ...B, fontSize: 7, fontWeight: 700, color: "#EF4444", marginBottom: 4 }}>✕ BEFORE</div>
-                <div style={{ ...B, fontSize: 7, color: "#991B1B", lineHeight: 1.5, textDecoration: "line-through", textDecorationColor: "#EF444435" }}>
-                  Well maintained, clean interior. Serious buyers only.
-                </div>
+          {/* Arrow + points */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, paddingTop: 40 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: WHITE, fontSize: 14 }}>→</span>
+            </div>
+            <div style={{ background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`, borderRadius: 10, padding: "10px 12px", textAlign: "center" }}>
+              <p style={{ ...H, fontSize: 18, fontWeight: 800, color: WHITE, margin: 0, lineHeight: 1 }}>+26</p>
+              <p style={{ ...B, fontSize: 9, color: "rgba(255,255,255,0.7)", margin: "4px 0 0", lineHeight: 1.3 }}>points</p>
+              <p style={{ ...B, fontSize: 8, color: "rgba(255,255,255,0.5)", margin: "4px 0 0", lineHeight: 1.3 }}>Est. increase<br/>in buyer trust</p>
+            </div>
+          </div>
+
+          {/* AFTER */}
+          <div style={{ background: "#1E293B", borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div style={{ padding: "12px 14px 8px" }}>
+              <span style={{ ...B, fontSize: 10, fontWeight: 800, color: WHITE, background: "#16A34A", borderRadius: 4, padding: "2px 8px" }}>AFTER</span>
+              <p style={{ ...H, fontSize: 12, fontWeight: 700, color: WHITE, margin: "8px 0 6px" }}>2018 Toyota Camry SE</p>
+            </div>
+            <div style={{ background: "#0F172A", height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 28 }}>🚗</span>
+            </div>
+            <div style={{ padding: "10px 14px 14px" }}>
+              <p style={{ ...B, fontSize: 11, color: "#94A3B8", lineHeight: 1.5, margin: "0 0 12px" }}>
+                "One-owner 2018 Toyota Camry SE. Dealer maintained since new. All service records available. Clean title in hand."
+              </p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+                <span style={{ ...B, fontSize: 10, color: NAVY_M }}>Trust Score</span>
               </div>
-              <div style={{ background: "#F0FDF4", border: "1px solid #16A34A25", borderRadius: 6, padding: "6px 8px" }}>
-                <div style={{ ...B, fontSize: 7, fontWeight: 700, color: "#16A34A", marginBottom: 4 }}>✓ AFTER</div>
-                <div style={{ ...B, fontSize: 7, color: "#14532D", lineHeight: 1.5 }}>
-                  Single owner since 2019, dealer-serviced. Selling due to relocation. Clean title, non-smoker.
-                </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
+                <span style={{ ...H, fontSize: 26, fontWeight: 800, color: "#16A34A", lineHeight: 1 }}>84</span>
+                <span style={{ ...B, fontSize: 11, color: NAVY_M }}>/100</span>
+              </div>
+              <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 2 }}>
+                <div style={{ height: "100%", width: "84%", background: "#16A34A", borderRadius: 2 }} />
               </div>
             </div>
           </div>
@@ -170,6 +158,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isDesktop, setIsDesktop] = useState(false);
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -248,123 +237,81 @@ export default function Home() {
   const canSubmit = !loading && (!!url || images.length > 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: STAGE }}>
+    <div style={{ minHeight: "100vh", background: NAVY }}>
 
       {/* NAV */}
       <nav style={{
-        background: NAVY, position: "sticky", top: 0, zIndex: 50,
+        position: "sticky", top: 0, zIndex: 50,
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 40px", height: 56,
+        background: NAVY, borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}>
-        <span style={{ ...H, fontSize: 15, fontWeight: 800, color: WHITE, letterSpacing: "-0.02em" }}>
-          CarSweetSpot
+        <span style={{ ...H, fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em" }}>
+          <span style={{ color: WHITE }}>Car</span><span style={{ color: BRAND }}>SweetSpot</span>
         </span>
-        <span style={{ ...B, fontSize: 12, color: NAVY_M }}>Free · No signup</span>
+        <span style={{ ...B, fontSize: 13, color: NAVY_M }}>No signup. Free to try.</span>
       </nav>
 
-      {/* HERO — dark navy band */}
-      <div style={{ background: NAVY, borderBottom: `1px solid rgba(255,255,255,0.08)` }}>
+      {/* HERO */}
       <div style={{
         display: "flex",
         flexDirection: isDesktop ? "row" : "column",
         alignItems: isDesktop ? "center" : "stretch",
-        gap: isDesktop ? 80 : 0,
-        maxWidth: 1280,
+        gap: isDesktop ? 60 : 0,
+        maxWidth: 1200,
         margin: "0 auto",
-        padding: isDesktop ? "96px 80px" : "52px 24px 48px",
+        padding: isDesktop ? "80px 60px 60px" : "48px 24px 40px",
+        minHeight: isDesktop ? "calc(100vh - 56px - 100px)" : undefined,
       }}>
 
-        {/* LEFT: copy + input */}
-        <div style={{ flex: isDesktop ? "0 0 500px" : undefined, display: "flex", flexDirection: "column", gap: 0 }}>
-          {/* Eyebrow pill */}
+        {/* LEFT */}
+        <div style={{ flex: isDesktop ? "0 0 480px" : undefined, display: "flex", flexDirection: "column" }}>
+
+          {/* Pill */}
           <div style={{
             ...B, display: "inline-flex", alignItems: "center", gap: 6,
-            background: "rgba(37,99,235,0.2)", color: "#93C5FD", border: "1px solid rgba(37,99,235,0.4)",
+            background: "rgba(37,99,235,0.18)", color: "#93C5FD",
+            border: "1px solid rgba(37,99,235,0.35)",
             borderRadius: 99, padding: "5px 14px",
             fontSize: 12, fontWeight: 700,
-            marginBottom: 28, alignSelf: "flex-start",
+            marginBottom: 24, alignSelf: "flex-start",
           }}>
             ✦ AI-Powered · Free · Instant
           </div>
 
+          {/* Headline */}
           <h1 style={{
-            ...H, fontSize: isDesktop ? 60 : 40, fontWeight: 800, color: WHITE,
-            lineHeight: 1.02, letterSpacing: "-0.04em", margin: "0 0 20px",
+            ...H, fontSize: isDesktop ? 52 : 38, fontWeight: 800,
+            lineHeight: 1.05, letterSpacing: "-0.04em", margin: "0 0 18px",
           }}>
-            Your listing is costing you buyers.
+            <span style={{ color: WHITE }}>Why isn&apos;t your car{" "}</span>
+            <span style={{ color: BRAND }}>getting calls?</span>
           </h1>
 
-          <p style={{ ...B, fontSize: 16, color: NAVY_M, lineHeight: 1.65, margin: "0 0 36px" }}>
-            Paste your Craigslist or Facebook URL. Get a score, find the 3 things killing your contact rate, and copy-paste fixes in 60 seconds.
+          <p style={{ ...B, fontSize: 16, color: NAVY_M, lineHeight: 1.6, margin: "0 0 32px" }}>
+            Paste your listing and get a score + 3 specific fixes that help you sell faster.
           </p>
 
           {/* INPUT CARD */}
           <div style={{
-            background: WHITE, border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 18, padding: "24px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+            background: WHITE, borderRadius: 16, padding: "20px",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
+            marginBottom: 20,
           }}>
             <input
               type="text" value={url} onChange={e => setUrl(e.target.value)}
               onKeyDown={e => e.key === "Enter" && canSubmit && handleSubmit()}
-              placeholder="Paste a listing URL — Craigslist, Facebook..."
+              placeholder="Paste your Craigslist or Facebook listing URL"
               style={{
                 ...B, width: "100%", boxSizing: "border-box",
                 border: `1px solid ${BORDER}`, borderRadius: 10,
-                padding: "12px 16px", fontSize: 14, color: NAVY,
+                padding: "13px 16px", fontSize: 14, color: NAVY,
                 background: STAGE, outline: "none", marginBottom: 10,
               }}
             />
 
-            <div
-              onDragOver={e => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                border: `2px dashed ${dragging ? BRAND : images.length > 0 ? "#86EFAC" : BORDER}`,
-                borderRadius: 10, padding: images.length > 0 ? "12px 14px" : "20px 14px",
-                textAlign: "center", cursor: "pointer",
-                background: dragging ? "#EFF6FF" : images.length > 0 ? "#F0FDF4" : STAGE,
-                transition: "all 0.2s", marginBottom: 12,
-              }}
-            >
-              {images.length === 0 ? (
-                <div>
-                  <p style={{ ...B, fontSize: 14, fontWeight: 600, color: NAVY, margin: "0 0 3px" }}>📸 Add listing photos</p>
-                  <p style={{ ...B, fontSize: 12, color: NAVY_M, margin: 0 }}>
-                    Drag & drop · <span style={{ color: BRAND, fontWeight: 600 }}>browse</span> · Ctrl+V — photos get a deeper analysis
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p style={{ ...B, fontSize: 12, fontWeight: 700, color: "#15803D", margin: "0 0 8px" }}>
-                    ✓ Photo analysis included — {images.length} photo{images.length > 1 ? "s" : ""}
-                  </p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                    {images.map((src, i) => (
-                      <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${BORDER}` }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        <button onClick={e => { e.stopPropagation(); setImages(p => p.filter((_, j) => j !== i)); }} style={{
-                          position: "absolute", top: 4, right: 4, width: 20, height: 20,
-                          background: "rgba(0,0,0,0.6)", color: WHITE, border: "none",
-                          borderRadius: "50%", fontSize: 11, cursor: "pointer",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>×</button>
-                      </div>
-                    ))}
-                    {images.length < MAX_IMAGES && (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: `2px dashed ${BORDER}`, aspectRatio: "16/9", color: NAVY_M, fontSize: 20 }}>+</div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && addFiles(e.target.files)} style={{ display: "none" }} />
-
             {error && (
-              <div style={{ ...B, fontSize: 13, color: "#DC2626", background: "#FFF5F5", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 12 }}>
+              <div style={{ ...B, fontSize: 13, color: "#DC2626", background: "#FFF5F5", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 10 }}>
                 {error}
               </div>
             )}
@@ -372,77 +319,135 @@ export default function Home() {
             <button
               onClick={handleSubmit} disabled={!canSubmit}
               style={{
-                ...H, width: "100%", padding: "14px",
-                background: canSubmit ? `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)` : "#CBD5E1",
+                ...H, width: "100%", padding: "15px",
+                background: canSubmit ? BRAND : "#CBD5E1",
                 color: WHITE, border: "none", borderRadius: 10,
-                fontSize: 15, fontWeight: 700, cursor: canSubmit ? "pointer" : "default",
+                fontSize: 16, fontWeight: 700, cursor: canSubmit ? "pointer" : "default",
                 letterSpacing: "-0.01em",
-                boxShadow: canSubmit ? "0 4px 14px rgba(37,99,235,0.35)" : "none",
-                transition: "all 0.2s",
+                boxShadow: canSubmit ? "0 4px 20px rgba(37,99,235,0.4)" : "none",
+                transition: "all 0.2s", marginBottom: 14,
               }}
             >
-              Get My Sweet Spot Score →
+              Analyze My Listing Free →
             </button>
 
-            {url && images.length === 0 && (
-              <div style={{
-                display: "flex", alignItems: "flex-start", gap: 8,
-                background: "#FFFBEB", border: "1px solid #FDE68A",
-                borderRadius: 8, padding: "10px 12px", marginTop: 10,
-              }}>
-                <span style={{ fontSize: 14, flexShrink: 0 }}>⚠️</span>
-                <p style={{ ...B, fontSize: 12, color: "#92400E", margin: 0, lineHeight: 1.5 }}>
-                  URL analysis can count photos but <strong>can&apos;t see their content</strong>. For a real photo score, upload your listing photos above.
-                </p>
-              </div>
-            )}
-            <p style={{ ...B, fontSize: 12, color: NAVY_M, textAlign: "center", marginTop: 10, marginBottom: 0 }}>
-              Works with Craigslist & Facebook Marketplace · No signup needed
-            </p>
+            {/* Trust row */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+              {["No signup", "Takes 60 seconds", "100% free"].map(t => (
+                <span key={t} style={{ ...B, fontSize: 12, color: "#6B7280", display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ color: "#16A34A", fontWeight: 700 }}>✓</span> {t}
+                </span>
+              ))}
+            </div>
+
+            {/* Photo upload toggle */}
+            <div style={{ marginTop: 12, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
+              {!showPhotoUpload ? (
+                <button onClick={() => setShowPhotoUpload(true)} style={{
+                  ...B, background: "none", border: "none", cursor: "pointer",
+                  fontSize: 12, color: NAVY_M, width: "100%", textAlign: "center",
+                }}>
+                  📸 Have photos? <span style={{ color: BRAND, fontWeight: 600 }}>Add them for a deeper analysis →</span>
+                </button>
+              ) : (
+                <div
+                  onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    border: `2px dashed ${dragging ? BRAND : images.length > 0 ? "#86EFAC" : BORDER}`,
+                    borderRadius: 10, padding: images.length > 0 ? "12px 14px" : "18px 14px",
+                    textAlign: "center", cursor: "pointer",
+                    background: dragging ? "#EFF6FF" : images.length > 0 ? "#F0FDF4" : STAGE,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {images.length === 0 ? (
+                    <div>
+                      <p style={{ ...B, fontSize: 13, fontWeight: 600, color: NAVY, margin: "0 0 3px" }}>📸 Add listing photos</p>
+                      <p style={{ ...B, fontSize: 11, color: NAVY_M, margin: 0 }}>
+                        Drag & drop · <span style={{ color: BRAND, fontWeight: 600 }}>browse</span> · Ctrl+V
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p style={{ ...B, fontSize: 12, fontWeight: 700, color: "#15803D", margin: "0 0 8px" }}>
+                        ✓ {images.length} photo{images.length > 1 ? "s" : ""} added
+                      </p>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                        {images.map((src, i) => (
+                          <div key={i} style={{ position: "relative", borderRadius: 6, overflow: "hidden", aspectRatio: "16/9", border: `1px solid ${BORDER}` }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <button onClick={e => { e.stopPropagation(); setImages(p => p.filter((_, j) => j !== i)); }} style={{
+                              position: "absolute", top: 3, right: 3, width: 18, height: 18,
+                              background: "rgba(0,0,0,0.6)", color: WHITE, border: "none",
+                              borderRadius: "50%", fontSize: 10, cursor: "pointer",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}>×</button>
+                          </div>
+                        ))}
+                        {images.length < MAX_IMAGES && (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, border: `2px dashed ${BORDER}`, aspectRatio: "16/9", color: NAVY_M, fontSize: 18 }}>+</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={(e: ChangeEvent<HTMLInputElement>) => e.target.files && addFiles(e.target.files)} style={{ display: "none" }} />
+            </div>
+          </div>
+
+          {/* Social proof */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex" }}>
+              {["#94A3B8", "#64748B", "#475569"].map((c, i) => (
+                <div key={i} style={{
+                  width: 28, height: 28, borderRadius: "50%", background: c,
+                  border: "2px solid #1E293B", marginLeft: i > 0 ? -8 : 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11,
+                }}>👤</div>
+              ))}
+            </div>
+            <div>
+              <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: 0 }}>247+ listings analyzed this month</p>
+              <p style={{ ...B, fontSize: 12, color: NAVY_M, margin: 0 }}>Join sellers getting more calls</p>
+            </div>
           </div>
         </div>
 
-        {/* RIGHT: dashboard mockup */}
-        {isDesktop && (
-          <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 0 }}>
-            <div style={{
-              position: "absolute", width: 520, height: 380, borderRadius: "50%",
-              background: `radial-gradient(ellipse, ${BRAND}30 0%, transparent 70%)`,
-              filter: "blur(56px)", zIndex: 0,
-            }} />
-            <div style={{
-              position: "relative", zIndex: 1, width: "100%",
-              transform: "perspective(1400px) rotateY(-6deg) rotateX(3deg)",
-            }}>
-              <DashboardMockup />
-            </div>
-          </div>
-        )}
+        {/* RIGHT: Before/After mockup */}
+        <BeforeAfterMockup isDesktop={isDesktop} />
       </div>
-      </div>{/* close hero wrapper */}
 
-      {/* HOW IT WORKS */}
-      <div style={{ borderTop: `1px solid ${BORDER}`, padding: "60px 40px 80px", background: WHITE }}>
-        <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <p style={{ ...B, fontSize: 11, fontWeight: 700, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.12em", textAlign: "center", margin: "0 0 44px" }}>
-            How it works
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : "1fr", gap: isDesktop ? 48 : 32 }}>
-            {[
-              { n: "01", icon: "🔗", title: "Paste your URL", desc: "Craigslist, Facebook Marketplace, or any listing. Or upload your listing photos directly." },
-              { n: "02", icon: "🤖", title: "AI analyzes it", desc: "We score trust signals, description quality, photos, and pricing against real buyer behavior." },
-              { n: "03", icon: "✏️", title: "Fix step by step", desc: "Get specific before/after rewrites you can copy and paste directly into your listing." },
-            ].map(s => (
-              <div key={s.n} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 22 }}>{s.icon}</span>
-                  <span style={{ ...H, fontSize: 11, fontWeight: 700, color: "#CBD5E1", letterSpacing: "0.05em" }}>{s.n}</span>
-                </div>
-                <div style={{ ...H, fontSize: 17, fontWeight: 700, color: NAVY }}>{s.title}</div>
-                <p style={{ ...B, fontSize: 14, color: NAVY_M, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
-              </div>
-            ))}
-          </div>
+      {/* BOTTOM FEATURE BAR */}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: isDesktop ? "0 60px 60px" : "0 24px 40px" }}>
+        <div style={{
+          background: WHITE, borderRadius: 16,
+          padding: "24px 32px",
+          display: "grid",
+          gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)",
+          gap: isDesktop ? 0 : 20,
+        }}>
+          {[
+            { icon: "📷", title: "Photos", desc: "We analyze your photos and find what's missing or hurting trust." },
+            { icon: "📄", title: "Description", desc: "We find confusing, weak, or missing details buyers care about." },
+            { icon: "💲", title: "Price & Positioning", desc: "We check if your price matches the market and your car's value." },
+            { icon: "🛡️", title: "Buyer Trust", desc: "We look for signals that build (or break) buyer confidence." },
+          ].map((f, i) => (
+            <div key={f.title} style={{
+              display: "flex", flexDirection: "column", gap: 8,
+              paddingLeft: isDesktop && i > 0 ? 28 : 0,
+              borderLeft: isDesktop && i > 0 ? `1px solid ${BORDER}` : "none",
+            }}>
+              <span style={{ fontSize: 22 }}>{f.icon}</span>
+              <p style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY, margin: 0 }}>{f.title}</p>
+              <p style={{ ...B, fontSize: 13, color: NAVY_M, margin: 0, lineHeight: 1.5 }}>{f.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
 
