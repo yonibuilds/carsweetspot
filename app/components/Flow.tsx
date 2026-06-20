@@ -373,10 +373,10 @@ function ScoreScreen({ result, fixProblems, onNext }: {
 }
 
 // ── Fix screen ────────────────────────────────────────────────────
-function FixScreen({ problem, index, total, remaining, result, onNext, isLast }: {
+function FixScreen({ problem, index, total, remaining, result, onNext, onBack, isLast }: {
   problem: Problem; index: number; total: number;
   remaining: Problem[]; result: AnalysisResult;
-  onNext: () => void; isLast: boolean;
+  onNext: () => void; onBack: () => void; isLast: boolean;
 }) {
   const [showWhy, setShowWhy] = useState(false);
   const sectionLabel = problem.category === "text" ? "the description"
@@ -388,15 +388,22 @@ function FixScreen({ problem, index, total, remaining, result, onNext, isLast }:
       {/* Blue gradient hero */}
       <div style={{ background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`, padding: "44px 48px" }}>
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            background: "rgba(255,255,255,0.15)", borderRadius: 99,
-            padding: "5px 14px", marginBottom: 18,
-          }}>
-            <span style={{ fontSize: 11 }}>⚠</span>
-            <span style={{ ...B, fontSize: 12, fontWeight: 600, color: WHITE }}>
-              {index === 0 ? "Top priority fix" : `Fix ${index + 1} of ${total}`}
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+            <button onClick={onBack} style={{
+              ...B, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)",
+              background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: 8, padding: "5px 12px", cursor: "pointer",
+            }}>← Back</button>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: "rgba(255,255,255,0.15)", borderRadius: 99,
+              padding: "5px 14px",
+            }}>
+              <span style={{ fontSize: 11 }}>⚠</span>
+              <span style={{ ...B, fontSize: 12, fontWeight: 600, color: WHITE }}>
+                {index === 0 ? "Top priority fix" : `Fix ${index + 1} of ${total}`}
+              </span>
+            </div>
           </div>
           <h1 style={{ ...H, fontSize: 34, fontWeight: 800, color: WHITE, letterSpacing: "-0.03em", lineHeight: 1.1, margin: "0 0 14px" }}>
             {problem.title}
@@ -456,11 +463,16 @@ function FixScreen({ problem, index, total, remaining, result, onNext, isLast }:
 }
 
 // ── Summary screen ────────────────────────────────────────────────
-function SummaryScreen({ result, onReset }: { result: AnalysisResult; onReset: () => void }) {
+function SummaryScreen({ result, onReset, onBack }: { result: AnalysisResult; onReset: () => void; onBack: () => void }) {
   const [p, setP] = useState(false);
   return (
     <Fade id={99}>
       <div style={{ padding: "56px 48px", maxWidth: 640, margin: "0 auto" }}>
+        <button onClick={onBack} style={{
+          ...B, fontSize: 13, fontWeight: 600, color: "#6B7280",
+          background: "none", border: "none", cursor: "pointer", padding: "0 0 28px",
+          display: "flex", alignItems: "center", gap: 6,
+        }}>← Back to fixes</button>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div style={{ fontSize: 44, marginBottom: 12 }}>✅</div>
           <h2 style={{ ...H, fontSize: 26, fontWeight: 800, color: NAVY, letterSpacing: "-0.03em", margin: "0 0 8px" }}>
@@ -564,11 +576,12 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
           remaining={fixProblems.slice(fixIndex + 1)}
           result={result}
           onNext={() => setScreen(s => s + 1)}
+          onBack={() => setScreen(s => s - 1)}
           isLast={fixIndex === fixProblems.length - 1}
         />
       );
     }
-    return <SummaryScreen result={result} onReset={onReset} />;
+    return <SummaryScreen result={result} onReset={onReset} onBack={() => setScreen(s => s - 1)} />;
   };
 
   return (
