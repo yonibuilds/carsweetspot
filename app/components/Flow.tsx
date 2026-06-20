@@ -422,40 +422,35 @@ function ScoreScreen({ result, fixProblems, onNext }: {
         )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 36 }}>
-          {fixProblems.map((prob, idx) => ({ prob, idx, pass: false })).map(({ prob, idx, pass }) => {
-            const cat = prob?.category ?? (rest as { cat?: string }).cat ?? "trust";
-            const isOpen = expandedIdx === idx && !pass;
+          {fixProblems.map((prob, idx) => {
+            const cat = prob?.category ?? "trust";
+            const isOpen = expandedIdx === idx;
 
             return (
               <div key={`${cat}-${idx}`} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
                 {/* Header row */}
                 <div
-                  onClick={pass ? undefined : () => toggle(idx)}
+                  onClick={() => toggle(idx)}
                   style={{
                     display: "flex", alignItems: "center", gap: 12,
                     background: WHITE,
                     padding: "14px 18px",
-                    cursor: pass ? "default" : "pointer",
+                    cursor: "pointer",
                     borderBottom: isOpen ? `1px solid ${BORDER}` : "none",
                   }}
                 >
                   <div style={{
                     width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
-                    background: pass ? SUCC_SOFT : DANG_SOFT,
+                    background: DANG_SOFT,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
-                    <span style={{ fontSize: 11, color: pass ? SUCCESS : DANGER, fontWeight: 700 }}>{pass ? "✓" : "✕"}</span>
+                    <span style={{ fontSize: 11, color: DANGER, fontWeight: 700 }}>✕</span>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>
-                      {CAT[cat].label}
-                      {pass && <span style={{ fontWeight: 400, color: "#6B7280" }}> — looks good</span>}
-                    </p>
+                    <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>{CAT[cat]?.label ?? cat}</p>
                     {prob && <p style={{ ...B, fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>{prob.title}</p>}
                   </div>
-                  {!pass && (
-                    <span style={{ fontSize: 11, color: NAVY_MUT, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
-                  )}
+                  <span style={{ fontSize: 11, color: NAVY_MUT, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
                 </div>
 
                 {/* Expanded body */}
