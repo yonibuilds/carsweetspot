@@ -52,21 +52,7 @@ function AnalyzingScreen() {
   );
 }
 
-// ── Car SVG placeholder ───────────────────────────────────────────
-function CarPlaceholder() {
-  return (
-    <div style={{ width: "100%", height: 130, background: "#0F172A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <svg width="100" height="50" viewBox="0 0 100 50" fill="none">
-        <rect x="10" y="26" width="80" height="16" rx="4" fill="#1E293B"/>
-        <rect x="20" y="12" width="54" height="18" rx="4" fill="#334155"/>
-        <circle cx="26" cy="42" r="7" fill="#0F172A" stroke="#475569" strokeWidth="2"/>
-        <circle cx="74" cy="42" r="7" fill="#0F172A" stroke="#475569" strokeWidth="2"/>
-        <rect x="22" y="14" width="22" height="12" rx="2" fill="#475569" opacity="0.6"/>
-        <rect x="56" y="14" width="16" height="12" rx="2" fill="#475569" opacity="0.6"/>
-      </svg>
-    </div>
-  );
-}
+const CAR_IMG = "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=600&q=80";
 
 // ── Main page ─────────────────────────────────────────────────────
 export default function Home() {
@@ -310,67 +296,73 @@ export default function Home() {
           <div style={{ position: "relative", zIndex: 1 }}>
             <p style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: "0.12em", textAlign: "center", margin: "0 0 16px" }}>↓ REAL EXAMPLE</p>
 
-            <div style={{ display: "flex", alignItems: "stretch", gap: 12 }}>
+            {/* Cards row — relative so +26 badge can overlap */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10 }}>
 
-              {/* BEFORE card — 300px */}
-              <div style={{ width: 300, background: "#1E293B", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column" }}>
-                <div style={{ padding: "16px 18px 10px" }}>
+              {/* BEFORE card */}
+              <div style={{ width: 290, background: "#1E293B", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "14px 16px 8px" }}>
                   <span style={{ ...B, fontSize: 11, fontWeight: 800, color: WHITE, background: "#EF4444", borderRadius: 5, padding: "3px 10px" }}>BEFORE</span>
-                  <p style={{ ...H, fontSize: 15, fontWeight: 700, color: WHITE, margin: "12px 0 0" }}>2018 Toyota Camry SE</p>
+                  <p style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE, margin: "10px 0 0" }}>2018 Toyota Camry SE</p>
                 </div>
-                <CarPlaceholder />
-                <div style={{ padding: "14px 18px 18px", flex: 1 }}>
-                  <p style={{ ...B, fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 16px", fontStyle: "italic" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={CAR_IMG} alt="2018 Toyota Camry" style={{ width: "100%", height: 120, objectFit: "cover", display: "block", filter: "grayscale(40%) brightness(0.7)" }} />
+                <div style={{ padding: "12px 16px 16px" }}>
+                  <p style={{ ...B, fontSize: 12, color: "#94A3B8", lineHeight: 1.55, margin: "0 0 12px", fontStyle: "italic" }}>
                     &quot;Runs great. Clean title. Call for details.&quot;
                   </p>
-                  <p style={{ ...B, fontSize: 12, color: NAVY_M, margin: "0 0 6px" }}>Trust Score</p>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 8 }}>
-                    <span style={{ ...H, fontSize: 34, fontWeight: 800, color: "#EF4444", lineHeight: 1 }}>58</span>
-                    <span style={{ ...B, fontSize: 14, color: NAVY_M }}>/100</span>
+                  <p style={{ ...B, fontSize: 11, color: NAVY_M, margin: "0 0 5px" }}>Trust Score</p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
+                    <span style={{ ...H, fontSize: 30, fontWeight: 800, color: "#EF4444", lineHeight: 1 }}>58</span>
+                    <span style={{ ...B, fontSize: 13, color: NAVY_M }}>/100</span>
                   </div>
-                  <div style={{ height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
+                  <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
                     <div style={{ height: "100%", width: "58%", background: "#EF4444", borderRadius: 3 }} />
                   </div>
                 </div>
               </div>
 
               {/* Arrow */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ color: WHITE, fontSize: 16 }}>→</span>
-                </div>
+              <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ color: WHITE, fontSize: 15 }}>→</span>
               </div>
 
-              {/* AFTER card — 300px */}
-              <div style={{ width: 300, background: "#1E293B", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column" }}>
-                <div style={{ padding: "16px 18px 10px" }}>
-                  <span style={{ ...B, fontSize: 11, fontWeight: 800, color: WHITE, background: "#16A34A", borderRadius: 5, padding: "3px 10px" }}>AFTER</span>
-                  <p style={{ ...H, fontSize: 15, fontWeight: 700, color: WHITE, margin: "12px 0 0" }}>2018 Toyota Camry SE</p>
+              {/* AFTER card — has +26 badge overlapping top-right */}
+              <div style={{ position: "relative", width: 290, background: "#1E293B", borderRadius: 16, overflow: "visible", border: "1px solid rgba(37,99,235,0.35)", display: "flex", flexDirection: "column" }}>
+                {/* +26 badge — overlapping top-right corner */}
+                <div style={{
+                  position: "absolute", top: -14, right: -14, zIndex: 10,
+                  background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`,
+                  borderRadius: 12, padding: "10px 14px", textAlign: "center",
+                  boxShadow: "0 8px 24px rgba(37,99,235,0.5)",
+                }}>
+                  <p style={{ ...H, fontSize: 26, fontWeight: 800, color: WHITE, margin: 0, lineHeight: 1 }}>+26</p>
+                  <p style={{ ...B, fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", margin: "4px 0 0", whiteSpace: "nowrap" }}>pts</p>
                 </div>
-                <CarPlaceholder />
-                <div style={{ padding: "14px 18px 18px", flex: 1 }}>
-                  <p style={{ ...B, fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 16px", fontStyle: "italic" }}>
-                    &quot;One-owner 2018 Toyota Camry SE. Dealer maintained since new. All service records available. Clean title in hand.&quot;
-                  </p>
-                  <p style={{ ...B, fontSize: 12, color: NAVY_M, margin: "0 0 6px" }}>Trust Score</p>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginBottom: 8 }}>
-                    <span style={{ ...H, fontSize: 34, fontWeight: 800, color: "#16A34A", lineHeight: 1 }}>84</span>
-                    <span style={{ ...B, fontSize: 14, color: NAVY_M }}>/100</span>
+
+                <div style={{ borderRadius: "16px 16px 0 0", overflow: "hidden" }}>
+                  <div style={{ padding: "14px 16px 8px" }}>
+                    <span style={{ ...B, fontSize: 11, fontWeight: 800, color: WHITE, background: "#16A34A", borderRadius: 5, padding: "3px 10px" }}>AFTER</span>
+                    <p style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE, margin: "10px 0 0" }}>2018 Toyota Camry SE</p>
                   </div>
-                  <div style={{ height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={CAR_IMG} alt="2018 Toyota Camry" style={{ width: "100%", height: 120, objectFit: "cover", display: "block" }} />
+                </div>
+                <div style={{ padding: "12px 16px 16px" }}>
+                  <p style={{ ...B, fontSize: 12, color: "#94A3B8", lineHeight: 1.55, margin: "0 0 12px", fontStyle: "italic" }}>
+                    &quot;One-owner 2018 Camry SE. Dealer maintained. Service records available. Clean title in hand.&quot;
+                  </p>
+                  <p style={{ ...B, fontSize: 11, color: NAVY_M, margin: "0 0 5px" }}>Trust Score</p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
+                    <span style={{ ...H, fontSize: 30, fontWeight: 800, color: "#16A34A", lineHeight: 1 }}>84</span>
+                    <span style={{ ...B, fontSize: 13, color: NAVY_M }}>/100</span>
+                  </div>
+                  <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
                     <div style={{ height: "100%", width: "84%", background: "#16A34A", borderRadius: 3 }} />
                   </div>
                 </div>
               </div>
 
-              {/* +26 badge */}
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <div style={{ background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`, borderRadius: 14, padding: "20px 16px", textAlign: "center", width: 100 }}>
-                  <p style={{ ...H, fontSize: 32, fontWeight: 800, color: WHITE, margin: 0, lineHeight: 1 }}>+26</p>
-                  <p style={{ ...B, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", margin: "6px 0 0" }}>points</p>
-                  <p style={{ ...B, fontSize: 10, color: "rgba(255,255,255,0.5)", margin: "8px 0 0", lineHeight: 1.4 }}>Estimated increase in buyer trust</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
