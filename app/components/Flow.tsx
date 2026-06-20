@@ -409,14 +409,18 @@ function ScoreScreen({ result, fixProblems, onNext }: {
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 36 }}>
-          {(["trust", "text", "photos"] as const).map(cat => {
-            const prob = catMap[cat];
-            const pass = !prob;
-            const idx = prob ? fixProblems.indexOf(prob) : -1;
+          {/* Problems in priority order, then passing categories */}
+          {[
+            ...fixProblems.map((prob, idx) => ({ prob, idx, pass: false })),
+            ...(["trust", "text", "photos"] as const)
+              .filter(cat => !catMap[cat])
+              .map(cat => ({ prob: null as Problem | null, idx: -1, pass: true, cat })),
+          ].map(({ prob, idx, pass, ...rest }) => {
+            const cat = prob?.category ?? (rest as { cat?: string }).cat ?? "trust";
             const isOpen = expandedIdx === idx && !pass;
 
             return (
-              <div key={cat} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
+              <div key={`${cat}-${idx}`} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
                 {/* Header row */}
                 <div
                   onClick={pass ? undefined : () => toggle(idx)}
