@@ -149,6 +149,7 @@ export async function POST(req: NextRequest) {
 
     const messageContent: Anthropic.MessageParam["content"] = [];
     let firstImgSrc: string | null = null;
+    let detectedPrice: number | null = null;
 
     if (images && images.length > 0) {
       for (const img of images as string[]) {
@@ -200,6 +201,16 @@ export async function POST(req: NextRequest) {
         // Extract first listing image URL for sidebar display
         firstImgSrc = listingImgs[0]?.match(/src="([^"]+)"/i)?.[1] ?? null;
 
+        // Extract price directly from HTML — more reliable than asking AI to parse it
+        const priceSpan = html.match(/<span[^>]*class="[^"]*price[^"]*"[^>]*>\s*\$?([\d,]+)\s*<\/span>/i);
+        const priceTitle = html.match(/-\s*\$?([\d,]+)\s*(?:\(|<)/);
+        const priceText = html.match(/\$\s*([\d,]+)\s*(?:OBO|obo|asking|firm|or best)/i);
+        const rawPriceStr = priceSpan?.[1] ?? priceTitle?.[1] ?? priceText?.[1] ?? null;
+        if (rawPriceStr) {
+          const parsed = parseInt(rawPriceStr.replace(/,/g, ""), 10);
+          if (!isNaN(parsed) && parsed > 500 && parsed < 500000) detectedPrice = parsed;
+        }
+
         // Detect wall-of-text: convert br/p to newlines, count meaningful paragraphs
         const withBreaks = html
           .replace(/<br\s*\/?>/gi, "\n")
@@ -223,9 +234,12 @@ export async function POST(req: NextRequest) {
         const photoNote = photoCount > 0
           ? `\n\n[PHOTO COUNT DETECTED FROM HTML: ${photoCount} listing photos found. Do NOT flag photos as missing or low-count.]`
           : `\n\n[PHOTO COUNT: Could not detect photos from HTML — evaluate based on description only.]`;
+        const priceNote = detectedPrice
+          ? `\n\n[PRICE DETECTED FROM HTML: $${detectedPrice.toLocaleString()} — set asking_price to ${detectedPrice}]`
+          : "";
         messageContent.push({
           type: "text",
-          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}${formattingNote}`,
+          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}${formattingNote}${priceNote}`,
         });
       } catch {
         return NextResponse.json(
@@ -267,6 +281,10 @@ export async function POST(req: NextRequest) {
 
     const result = JSON.parse(jsonMatch[0]);
 
+    // If AI failed to extract price but we detected it from HTML, use it
+    if (!result.asking_price && detectedPrice) {
+      result.asking_price = detectedPrice;
+    }
     if (result.asking_price) {
       const p = result.asking_price;
       const r = 0.07 / 12;
