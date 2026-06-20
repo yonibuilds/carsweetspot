@@ -493,7 +493,7 @@ function SummaryScreen({ result, onReset, onBack }: { result: AnalysisResult; on
           <p style={{ ...B, fontSize: 14, color: "#6B7280" }}>{result.vehicle}</p>
         </div>
 
-        {result.asking_price >= 10000 && result.monthly_payment > 0 && (
+        {result.asking_price >= 8000 && result.monthly_payment > 0 && (
           <div style={{
             background: `linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DK} 100%)`,
             borderRadius: 16, padding: "24px", marginBottom: 24,
