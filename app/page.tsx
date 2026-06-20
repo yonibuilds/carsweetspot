@@ -262,29 +262,24 @@ export default function Home() {
         <span style={{ ...B, fontSize: 12, color: NAVY_M }}>Free · No signup</span>
       </nav>
 
-      {/* HERO */}
-      <div style={{
-        background: isDesktop
-          ? `linear-gradient(180deg, ${NAVY}08 0%, transparent 60%)`
-          : undefined,
-        borderBottom: `1px solid ${BORDER}`,
-      }}>
+      {/* HERO — dark navy band */}
+      <div style={{ background: NAVY, borderBottom: `1px solid rgba(255,255,255,0.08)` }}>
       <div style={{
         display: "flex",
         flexDirection: isDesktop ? "row" : "column",
         alignItems: isDesktop ? "center" : "stretch",
-        gap: isDesktop ? 72 : 0,
+        gap: isDesktop ? 80 : 0,
         maxWidth: 1280,
         margin: "0 auto",
-        padding: isDesktop ? "96px 80px 96px" : "52px 24px 48px",
+        padding: isDesktop ? "96px 80px" : "52px 24px 48px",
       }}>
 
         {/* LEFT: copy + input */}
-        <div style={{ flex: isDesktop ? "0 0 520px" : undefined, display: "flex", flexDirection: "column", gap: 0 }}>
+        <div style={{ flex: isDesktop ? "0 0 500px" : undefined, display: "flex", flexDirection: "column", gap: 0 }}>
           {/* Eyebrow pill */}
           <div style={{
             ...B, display: "inline-flex", alignItems: "center", gap: 6,
-            background: `${BRAND}15`, color: BRAND, border: `1px solid ${BRAND}30`,
+            background: "rgba(37,99,235,0.2)", color: "#93C5FD", border: "1px solid rgba(37,99,235,0.4)",
             borderRadius: 99, padding: "5px 14px",
             fontSize: 12, fontWeight: 700,
             marginBottom: 28, alignSelf: "flex-start",
@@ -293,21 +288,21 @@ export default function Home() {
           </div>
 
           <h1 style={{
-            ...H, fontSize: isDesktop ? 58 : 40, fontWeight: 800, color: NAVY,
+            ...H, fontSize: isDesktop ? 60 : 40, fontWeight: 800, color: WHITE,
             lineHeight: 1.02, letterSpacing: "-0.04em", margin: "0 0 20px",
           }}>
             Your listing is costing you buyers.
           </h1>
 
-          <p style={{ ...B, fontSize: 16, color: NAVY_M, lineHeight: 1.65, margin: "0 0 36px", maxWidth: 420 }}>
+          <p style={{ ...B, fontSize: 16, color: NAVY_M, lineHeight: 1.65, margin: "0 0 36px" }}>
             Paste your Craigslist or Facebook URL. Get a score, find the 3 things killing your contact rate, and copy-paste fixes in 60 seconds.
           </p>
 
           {/* INPUT CARD */}
           <div style={{
-            background: WHITE, border: `1px solid ${BORDER}`,
+            background: WHITE, border: "1px solid rgba(255,255,255,0.1)",
             borderRadius: 18, padding: "24px",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
           }}>
             <input
               type="text" value={url} onChange={e => setUrl(e.target.value)}
@@ -399,9 +394,9 @@ export default function Home() {
         {isDesktop && (
           <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 0 }}>
             <div style={{
-              position: "absolute", width: 500, height: 360, borderRadius: "50%",
-              background: `radial-gradient(ellipse, ${BRAND}18 0%, transparent 70%)`,
-              filter: "blur(48px)", zIndex: 0,
+              position: "absolute", width: 520, height: 380, borderRadius: "50%",
+              background: `radial-gradient(ellipse, ${BRAND}30 0%, transparent 70%)`,
+              filter: "blur(56px)", zIndex: 0,
             }} />
             <div style={{
               position: "relative", zIndex: 1, width: "100%",
