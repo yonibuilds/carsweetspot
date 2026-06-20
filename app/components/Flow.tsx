@@ -378,6 +378,7 @@ function ScoreScreen({ result, fixProblems, onNext }: {
 }) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
+  const [showWorking, setShowWorking] = useState(true);
 
   const catMap: Record<string, Problem | null> = { trust: null, text: null, photos: null };
   fixProblems.forEach(p => { if (p.category && !catMap[p.category]) catMap[p.category] = p; });
@@ -409,15 +410,20 @@ function ScoreScreen({ result, fixProblems, onNext }: {
         </p>
 
         {result.whats_working?.length > 0 && (
-          <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCCESS}22`, borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
-            <p style={{ ...B, fontSize: 11, fontWeight: 700, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" }}>
-              ✓ What&apos;s working
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {result.whats_working.map((w, i) => (
-                <p key={i} style={{ ...B, fontSize: 13, color: SUCC_FG, margin: 0, lineHeight: 1.5 }}>• {w}</p>
-              ))}
+          <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCCESS}22`, borderRadius: 10, marginBottom: 24, overflow: "hidden" }}>
+            <div onClick={() => setShowWorking(w => !w)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", cursor: "pointer" }}>
+              <p style={{ ...B, fontSize: 11, fontWeight: 700, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
+                ✓ What&apos;s working
+              </p>
+              <span style={{ fontSize: 11, color: SUCCESS, transform: showWorking ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
             </div>
+            {showWorking && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "0 18px 14px" }}>
+                {result.whats_working.map((w, i) => (
+                  <p key={i} style={{ ...B, fontSize: 13, color: SUCC_FG, margin: 0, lineHeight: 1.5 }}>• {w}</p>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
