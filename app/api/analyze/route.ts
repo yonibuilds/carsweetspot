@@ -17,7 +17,7 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
 
 {
   "vehicle": "<Year Make Model Trim>",
-  "asking_price": <number in USD, 0 if not found>,
+  "asking_price": <number in USD, 0 if not found. Convert shorthand: "10K" → 10000, "$15k" → 15000, "15,000" → 15000>,
   "overall_score": <0-100>,
   "monthly_payment": <number, calculated from asking_price at 7% APR 60 months, 0 if no price>,
   "biggest_problem": {
