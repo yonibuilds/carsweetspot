@@ -264,31 +264,37 @@ export default function Home() {
 
       {/* HERO */}
       <div style={{
+        background: isDesktop
+          ? `linear-gradient(180deg, ${NAVY}08 0%, transparent 60%)`
+          : undefined,
+        borderBottom: `1px solid ${BORDER}`,
+      }}>
+      <div style={{
         display: "flex",
         flexDirection: isDesktop ? "row" : "column",
         alignItems: isDesktop ? "center" : "stretch",
-        gap: isDesktop ? 60 : 0,
-        maxWidth: 1200,
+        gap: isDesktop ? 72 : 0,
+        maxWidth: 1280,
         margin: "0 auto",
-        padding: isDesktop ? "72px 60px" : "48px 24px 40px",
+        padding: isDesktop ? "96px 80px 96px" : "52px 24px 48px",
       }}>
 
         {/* LEFT: copy + input */}
-        <div style={{ flex: isDesktop ? "0 0 480px" : undefined, display: "flex", flexDirection: "column", gap: 0 }}>
+        <div style={{ flex: isDesktop ? "0 0 520px" : undefined, display: "flex", flexDirection: "column", gap: 0 }}>
           {/* Eyebrow pill */}
           <div style={{
             ...B, display: "inline-flex", alignItems: "center", gap: 6,
             background: `${BRAND}15`, color: BRAND, border: `1px solid ${BRAND}30`,
             borderRadius: 99, padding: "5px 14px",
             fontSize: 12, fontWeight: 700,
-            marginBottom: 24, alignSelf: "flex-start",
+            marginBottom: 28, alignSelf: "flex-start",
           }}>
             ✦ AI-Powered · Free · Instant
           </div>
 
           <h1 style={{
-            ...H, fontSize: isDesktop ? 50 : 38, fontWeight: 800, color: NAVY,
-            lineHeight: 1.05, letterSpacing: "-0.04em", margin: "0 0 16px",
+            ...H, fontSize: isDesktop ? 58 : 40, fontWeight: 800, color: NAVY,
+            lineHeight: 1.02, letterSpacing: "-0.04em", margin: "0 0 20px",
           }}>
             Your listing is costing you buyers.
           </h1>
@@ -391,23 +397,22 @@ export default function Home() {
 
         {/* RIGHT: dashboard mockup */}
         {isDesktop && (
-          <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {/* Glow blob */}
+          <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 0 }}>
             <div style={{
-              position: "absolute", width: 400, height: 300, borderRadius: "50%",
-              background: `radial-gradient(ellipse, ${BRAND}20 0%, transparent 70%)`,
-              filter: "blur(40px)",
-              zIndex: 0,
+              position: "absolute", width: 500, height: 360, borderRadius: "50%",
+              background: `radial-gradient(ellipse, ${BRAND}18 0%, transparent 70%)`,
+              filter: "blur(48px)", zIndex: 0,
             }} />
-            <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 520,
-              transform: "perspective(1200px) rotateY(-4deg) rotateX(2deg)",
-              transition: "transform 0.3s ease",
+            <div style={{
+              position: "relative", zIndex: 1, width: "100%",
+              transform: "perspective(1400px) rotateY(-6deg) rotateX(3deg)",
             }}>
               <DashboardMockup />
             </div>
           </div>
         )}
       </div>
+      </div>{/* close hero wrapper */}
 
       {/* HOW IT WORKS */}
       <div style={{ borderTop: `1px solid ${BORDER}`, padding: "60px 40px 80px", background: WHITE }}>
