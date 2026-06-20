@@ -422,13 +422,7 @@ function ScoreScreen({ result, fixProblems, onNext }: {
         )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 36 }}>
-          {/* Problems in priority order, then passing categories */}
-          {[
-            ...fixProblems.map((prob, idx) => ({ prob, idx, pass: false })),
-            ...(["trust", "text", "photos"] as const)
-              .filter(cat => !catMap[cat])
-              .map(cat => ({ prob: null as Problem | null, idx: -1, pass: true, cat })),
-          ].map(({ prob, idx, pass, ...rest }) => {
+          {fixProblems.map((prob, idx) => ({ prob, idx, pass: false })).map(({ prob, idx, pass }) => {
             const cat = prob?.category ?? (rest as { cat?: string }).cat ?? "trust";
             const isOpen = expandedIdx === idx && !pass;
 
