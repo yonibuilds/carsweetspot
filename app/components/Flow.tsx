@@ -175,29 +175,39 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
         )}
       </div>
 
-      {result.asking_price >= 8000 && result.monthly_payment > 0 && (
-        <div style={{
-          marginTop: 20, borderRadius: 12,
-          background: `linear-gradient(135deg, ${BRAND}22 0%, ${BRAND_DK}33 100%)`,
-          border: `1px solid ${BRAND}40`,
-          padding: "14px 16px",
-        }}>
-          <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: "0 0 4px" }}>
-            💳 ${result.monthly_payment}<span style={{ fontSize: 11, fontWeight: 500 }}>/mo est.</span>
-          </p>
-          <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: "0 0 8px", lineHeight: 1.5 }}>
-            Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
-          </p>
+      {(() => {
+        const price = result.asking_price;
+        const mo = result.monthly_payment;
+        const calcMo = price >= 8000 && !mo
+          ? Math.round((price * 0.07/12 * Math.pow(1+0.07/12, 60)) / (Math.pow(1+0.07/12, 60) - 1))
+          : mo;
+        const showFull = price >= 8000 && calcMo > 0;
+        return (
           <div style={{
-            background: "rgba(255,255,255,0.07)", borderRadius: 7,
-            padding: "7px 10px",
-            fontFamily: "monospace", fontSize: 10, color: "rgba(255,255,255,0.7)",
-            lineHeight: 1.6,
+            marginTop: 20, borderRadius: 12,
+            background: `linear-gradient(135deg, ${BRAND}22 0%, ${BRAND_DK}33 100%)`,
+            border: `1px solid ${BRAND}40`,
+            padding: "14px 16px",
           }}>
-            &ldquo;Financing available OAC — est. ${result.monthly_payment}/mo&rdquo;
+            <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: "0 0 4px" }}>
+              💳 {showFull ? `$${calcMo}/mo est.` : "Financing available"}
+            </p>
+            <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: "0 0 8px", lineHeight: 1.5 }}>
+              Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
+            </p>
+            <div style={{
+              background: "rgba(255,255,255,0.07)", borderRadius: 7,
+              padding: "7px 10px",
+              fontFamily: "monospace", fontSize: 10, color: "rgba(255,255,255,0.7)",
+              lineHeight: 1.6,
+            }}>
+              {showFull
+                ? `"Financing available OAC — est. $${calcMo}/mo"`
+                : `"Financing available OAC — ask me about monthly options"`}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {issuesLeft > 0 && (
         <div style={{
