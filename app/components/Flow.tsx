@@ -175,9 +175,33 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
         )}
       </div>
 
+      {result.asking_price >= 8000 && result.monthly_payment > 0 && (
+        <div style={{
+          marginTop: 20, borderRadius: 12,
+          background: `linear-gradient(135deg, ${BRAND}22 0%, ${BRAND_DK}33 100%)`,
+          border: `1px solid ${BRAND}40`,
+          padding: "14px 16px",
+        }}>
+          <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: "0 0 4px" }}>
+            💳 ${result.monthly_payment}<span style={{ fontSize: 11, fontWeight: 500 }}>/mo est.</span>
+          </p>
+          <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: "0 0 8px", lineHeight: 1.5 }}>
+            Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
+          </p>
+          <div style={{
+            background: "rgba(255,255,255,0.07)", borderRadius: 7,
+            padding: "7px 10px",
+            fontFamily: "monospace", fontSize: 10, color: "rgba(255,255,255,0.7)",
+            lineHeight: 1.6,
+          }}>
+            &ldquo;Financing available OAC — est. ${result.monthly_payment}/mo&rdquo;
+          </div>
+        </div>
+      )}
+
       {issuesLeft > 0 && (
         <div style={{
-          marginTop: 32, borderRadius: 12,
+          marginTop: 16, borderRadius: 12,
           border: "1px solid rgba(255,255,255,0.1)",
           background: "rgba(255,255,255,0.05)", padding: "16px",
         }}>
@@ -187,30 +211,6 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
           <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: 0, lineHeight: 1.5 }}>
             Fixing these could lift your score to {projected}.
           </p>
-        </div>
-      )}
-
-      {result.asking_price >= 8000 && result.monthly_payment > 0 && (
-        <div style={{
-          marginTop: 16, borderRadius: 12,
-          background: `linear-gradient(135deg, ${BRAND}22 0%, ${BRAND_DK}33 100%)`,
-          border: `1px solid ${BRAND}40`,
-          padding: "14px 16px",
-        }}>
-          <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: "0 0 4px" }}>
-            💳 ${result.monthly_payment}<span style={{ fontSize: 11, fontWeight: 500 }}>/mo</span>
-          </p>
-          <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: "0 0 8px", lineHeight: 1.5 }}>
-            Most Americans buy with financing. Don&apos;t lose them — add this line to your listing.
-          </p>
-          <div style={{
-            background: "rgba(255,255,255,0.07)", borderRadius: 7,
-            padding: "7px 10px",
-            fontFamily: "var(--font-mono, monospace)", fontSize: 10, color: "rgba(255,255,255,0.7)",
-            lineHeight: 1.5,
-          }}>
-            "Financing available OAC —<br/>est. ${result.monthly_payment}/mo"
-          </div>
         </div>
       )}
     </div>
