@@ -427,7 +427,7 @@ function ScoreScreen({ result, fixProblems, onNext }: {
             const isOpen = expandedIdx === idx;
 
             return (
-              <div key={`${cat}-${idx}`} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${isOpen ? BORDER : idx === 0 && expandedIdx === null ? BRAND : BORDER}` }}>
+              <div key={`${cat}-${idx}`} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
                 {/* Header row */}
                 <div
                   onClick={() => toggle(idx)}
@@ -450,7 +450,10 @@ function ScoreScreen({ result, fixProblems, onNext }: {
                     <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>{CAT[cat]?.label ?? cat}</p>
                     {prob && <p style={{ ...B, fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>{prob.title}</p>}
                   </div>
-                  <span style={{ fontSize: 11, color: NAVY_MUT, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                    {!isOpen && <span style={{ ...B, fontSize: 11, fontWeight: 600, color: BRAND }}>Fix →</span>}
+                    <span style={{ fontSize: 11, color: NAVY_MUT, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+                  </div>
                 </div>
 
                 {/* Expanded body */}
