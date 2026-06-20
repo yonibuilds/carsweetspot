@@ -114,6 +114,39 @@ function MetricBar({ label, value, hint }: { label: string; value: number; hint:
   );
 }
 
+// ── Financing card ────────────────────────────────────────────────
+function FinancingCard({ askingPrice, monthlyPayment }: { askingPrice: number; monthlyPayment: number }) {
+  const calcMo = monthlyPayment > 0
+    ? monthlyPayment
+    : askingPrice >= 8000
+      ? Math.round((askingPrice * 0.07/12 * Math.pow(1+0.07/12, 60)) / (Math.pow(1+0.07/12, 60) - 1))
+      : 0;
+  const copyText = calcMo > 0
+    ? `"Financing available OAC — est. $${calcMo}/mo"`
+    : `"Financing available OAC — ask me about monthly options"`;
+  return (
+    <div style={{
+      marginTop: 20, borderRadius: 12,
+      background: `linear-gradient(135deg, ${BRAND}22 0%, ${BRAND_DK}33 100%)`,
+      border: `1px solid ${BRAND}40`, padding: "14px 16px",
+    }}>
+      <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: "0 0 4px" }}>
+        💳 {calcMo > 0 ? `$${calcMo}/mo est.` : "Financing available"}
+      </p>
+      <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: "0 0 8px", lineHeight: 1.5 }}>
+        Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
+      </p>
+      <div style={{
+        background: "rgba(255,255,255,0.07)", borderRadius: 7,
+        padding: "7px 10px", fontFamily: "monospace",
+        fontSize: 10, color: "rgba(255,255,255,0.7)", lineHeight: 1.6,
+      }}>
+        {copyText}
+      </div>
+    </div>
+  );
+}
+
 // ── Dark sidebar ──────────────────────────────────────────────────
 function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
   result: AnalysisResult; biggest: Problem; also: Problem[];
@@ -156,7 +189,7 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: "auto" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <h3 style={{ ...B, fontSize: 10, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.12em", margin: 0 }}>
           Diagnostics
         </h3>
@@ -175,39 +208,7 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
         )}
       </div>
 
-      {(() => {
-        const price = result.asking_price;
-        const mo = result.monthly_payment;
-        const calcMo = price >= 8000 && !mo
-          ? Math.round((price * 0.07/12 * Math.pow(1+0.07/12, 60)) / (Math.pow(1+0.07/12, 60) - 1))
-          : mo;
-        const showFull = price >= 8000 && calcMo > 0;
-        return (
-          <div style={{
-            marginTop: 20, borderRadius: 12,
-            background: `linear-gradient(135deg, ${BRAND}22 0%, ${BRAND_DK}33 100%)`,
-            border: `1px solid ${BRAND}40`,
-            padding: "14px 16px",
-          }}>
-            <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: "0 0 4px" }}>
-              💳 {showFull ? `$${calcMo}/mo est.` : "Financing available"}
-            </p>
-            <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: "0 0 8px", lineHeight: 1.5 }}>
-              Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
-            </p>
-            <div style={{
-              background: "rgba(255,255,255,0.07)", borderRadius: 7,
-              padding: "7px 10px",
-              fontFamily: "monospace", fontSize: 10, color: "rgba(255,255,255,0.7)",
-              lineHeight: 1.6,
-            }}>
-              {showFull
-                ? `"Financing available OAC — est. $${calcMo}/mo"`
-                : `"Financing available OAC — ask me about monthly options"`}
-            </div>
-          </div>
-        );
-      })()}
+      <FinancingCard askingPrice={result.asking_price ?? 0} monthlyPayment={result.monthly_payment ?? 0} />
 
       {issuesLeft > 0 && (
         <div style={{
