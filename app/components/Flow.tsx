@@ -285,28 +285,37 @@ function BeforeAfterGrid({ problem }: { problem: Problem }) {
 // ── Up next ───────────────────────────────────────────────────────
 function UpNext({ remaining, onNext }: { remaining: Problem[]; onNext: () => void }) {
   if (remaining.length === 0) return null;
+  const next = remaining[0];
+  const after = remaining[1];
   return (
     <div style={{ marginTop: 32 }}>
-      <h3 style={{ ...H, fontSize: 18, fontWeight: 700, color: NAVY, margin: "0 0 14px", letterSpacing: "-0.02em" }}>
-        Up next
-      </h3>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        {remaining.slice(0, 2).map((p, i) => (
-          <button key={i} onClick={onNext} style={{
-            background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12,
-            padding: "16px", textAlign: "left", cursor: "pointer",
-            display: "flex", alignItems: "flex-start", gap: 12,
-          }}>
-            <span style={{ fontSize: 20, flexShrink: 0 }}>{CAT[p.category ?? ""]?.icon ?? "💡"}</span>
-            <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ ...H, fontSize: 13, fontWeight: 700, color: NAVY, lineHeight: 1.3 }}>{p.title}</span>
-              <span style={{ ...B, fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
-                {(p.why_buyers_care ?? "").slice(0, 65)}{p.why_buyers_care?.length > 65 ? "…" : ""}
-              </span>
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* Primary next fix CTA */}
+      <button onClick={onNext} style={{
+        width: "100%", background: NAVY, border: "none", borderRadius: 14,
+        padding: "18px 20px", textAlign: "left", cursor: "pointer",
+        display: "flex", alignItems: "center", gap: 14, marginBottom: after ? 10 : 0,
+      }}>
+        <span style={{ fontSize: 24, flexShrink: 0 }}>{CAT[next.category ?? ""]?.icon ?? "💡"}</span>
+        <span style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
+          <span style={{ ...B, fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Next fix</span>
+          <span style={{ ...H, fontSize: 15, fontWeight: 700, color: WHITE, lineHeight: 1.3 }}>{next.title}</span>
+        </span>
+        <span style={{ fontSize: 20, color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>→</span>
+      </button>
+
+      {/* Preview of what comes after */}
+      {after && (
+        <div style={{
+          background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10,
+          padding: "12px 16px", display: "flex", alignItems: "center", gap: 12,
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0, opacity: 0.5 }}>{CAT[after.category ?? ""]?.icon ?? "💡"}</span>
+          <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ ...B, fontSize: 10, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em" }}>Then</span>
+            <span style={{ ...H, fontSize: 13, fontWeight: 600, color: "#6B7280" }}>{after.title}</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -457,16 +466,7 @@ function FixScreen({ problem, index, total, remaining, result, onNext, onBack, i
               <Btn onClick={onNext}>Done → See your results</Btn>
             </div>
           ) : (
-            <>
-              <UpNext remaining={remaining} onNext={onNext} />
-              <div style={{ marginTop: 20, textAlign: "center" }}>
-                <button onClick={onNext} style={{
-                  ...B, fontSize: 13, color: "#9CA3AF", background: "none", border: "none", cursor: "pointer",
-                }}>
-                  Skip →
-                </button>
-              </div>
-            </>
+            <UpNext remaining={remaining} onNext={onNext} />
           )}
         </div>
       </div>
