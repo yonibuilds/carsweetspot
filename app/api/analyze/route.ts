@@ -189,17 +189,27 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        // Count photos before stripping HTML (Craigslist stores them in <img> tags)
-        const imgMatches = html.match(/<img[^>]+src="[^"]*\.(jpg|jpeg|png|webp)[^"]*"/gi) || [];
-        // Filter out icons/logos — real listing photos are usually >5KB hint or in /images/ path
-        const listingImgs = imgMatches.filter(tag =>
-          /\/images\/|craigslist\.org.*\.(jpg|jpeg|png|webp)/i.test(tag) ||
-          (/src="[^"]*\.(jpg|jpeg|png|webp)/i.test(tag) && !/logo|icon|avatar|sprite/i.test(tag))
-        );
+        // Extract all image URLs from HTML (src and data-src)
+        const allImgTags = html.match(/<img[^>]+>/gi) || [];
+        const extractSrc = (tag: string) =>
+          tag.match(/\bsrc="([^"]+)"/i)?.[1] ??
+          tag.match(/\bdata-src="([^"]+)"/i)?.[1] ?? null;
+
+        const listingImgs = allImgTags
+          .map(tag => ({ tag, src: extractSrc(tag) }))
+          .filter(({ src }) =>
+            src &&
+            /^https?:\/\//i.test(src) &&
+            /\.(jpg|jpeg|png|webp)/i.test(src) &&
+            !/logo|icon|avatar|sprite|pixel|tracking|blank/i.test(src) &&
+            !/1x1|spacer/i.test(src)
+          )
+          .map(({ src }) => src as string);
+
         const photoCount = listingImgs.length;
 
         // Extract first listing image URL for sidebar display
-        firstImgSrc = listingImgs[0]?.match(/src="([^"]+)"/i)?.[1] ?? null;
+        firstImgSrc = listingImgs[0] ?? null;
 
 
         // Detect wall-of-text: convert br/p to newlines, count meaningful paragraphs
