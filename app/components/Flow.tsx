@@ -425,38 +425,35 @@ function ScoreScreen({ result, fixProblems, onNext }: {
                 <div
                   onClick={pass ? undefined : () => toggle(idx)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 14,
-                    background: isOpen ? NAVY : WHITE,
+                    display: "flex", alignItems: "center", gap: 12,
+                    background: WHITE,
                     padding: "14px 18px",
                     cursor: pass ? "default" : "pointer",
-                    transition: "background 0.2s",
+                    borderBottom: isOpen ? `1px solid ${BORDER}` : "none",
                   }}
                 >
                   <div style={{
-                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                    background: pass ? SUCC_SOFT : (isOpen ? "rgba(255,255,255,0.12)" : DANG_SOFT),
+                    width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+                    background: pass ? SUCC_SOFT : DANG_SOFT,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    border: `1px solid ${pass ? SUCCESS : DANGER}30`,
                   }}>
-                    <span style={{ fontSize: 12, color: pass ? SUCCESS : (isOpen ? WHITE : DANGER), fontWeight: 700 }}>{pass ? "✓" : "✕"}</span>
+                    <span style={{ fontSize: 11, color: pass ? SUCCESS : DANGER, fontWeight: 700 }}>{pass ? "✓" : "✕"}</span>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ ...B, fontSize: 13, fontWeight: 700, color: isOpen ? WHITE : NAVY, margin: 0 }}>
+                    <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>
                       {CAT[cat].label}
                       {pass && <span style={{ fontWeight: 400, color: "#6B7280" }}> — looks good</span>}
                     </p>
-                    {prob && <p style={{ ...B, fontSize: 12, color: isOpen ? "rgba(255,255,255,0.6)" : "#6B7280", margin: "2px 0 0" }}>{prob.title}</p>}
+                    {prob && <p style={{ ...B, fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>{prob.title}</p>}
                   </div>
                   {!pass && (
-                    <span style={{ fontSize: 11, color: isOpen ? "rgba(255,255,255,0.45)" : NAVY_MUT }}>
-                      {isOpen ? "▲" : "▼"}
-                    </span>
+                    <span style={{ fontSize: 11, color: NAVY_MUT, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
                   )}
                 </div>
 
                 {/* Expanded body */}
                 {isOpen && prob && (
-                  <div style={{ padding: "24px 24px 20px", background: STAGE, borderTop: `1px solid ${BORDER}` }}>
+                  <div style={{ padding: "24px 24px 20px", background: STAGE }}>
                     <BeforeAfterGrid problem={prob} />
 
                     {/* Why toggle */}
