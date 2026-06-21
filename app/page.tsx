@@ -201,7 +201,7 @@ export default function Home() {
           setResult(parsed);
           setLoading(false);
           setPendingResult(null);
-        }, hasPrice ? 4200 : 0);
+        }, hasPrice ? 7000 : 0);
       }
     } catch (err) { setError(`Network error: ${err instanceof Error ? err.message : String(err)}`); setLoading(false); }
   };
