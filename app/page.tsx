@@ -14,38 +14,98 @@ const H: React.CSSProperties = { fontFamily: "var(--font-jakarta)" };
 const B: React.CSSProperties = { fontFamily: "var(--font-inter)" };
 
 // ── Analyzing screen ──────────────────────────────────────────────
-function AnalyzingScreen() {
-  const [score, setScore] = useState(0);
-  const ref = useRef(0);
+const STEPS = [
+  "Reading listing details",
+  "Counting photos",
+  "Evaluating trust signals",
+  "Comparing against strong listings",
+];
+
+function AnalyzingScreen({ pendingResult }: { pendingResult: AnalysisResult | null }) {
+  const [visibleSteps, setVisibleSteps] = useState(0);
+  const [showCard, setShowCard] = useState(false);
+
   useEffect(() => {
-    const iv = setInterval(() => {
-      ref.current += 0.6;
-      if (ref.current >= 78) { ref.current = 78; clearInterval(iv); }
-      setScore(Math.round(ref.current));
-    }, 40);
-    return () => clearInterval(iv);
+    STEPS.forEach((_, i) => {
+      setTimeout(() => setVisibleSteps(i + 1), (i + 1) * 900);
+    });
   }, []);
-  const size = 160, stroke = 12, r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
+
+  useEffect(() => {
+    if (pendingResult && pendingResult.asking_price > 0) {
+      const t = setTimeout(() => setShowCard(true), 350);
+      return () => clearTimeout(t);
+    }
+  }, [pendingResult]);
+
+  const calcMo = (() => {
+    if (!pendingResult || pendingResult.asking_price < 8000) return 0;
+    if (pendingResult.monthly_payment > 0) return pendingResult.monthly_payment;
+    const p = pendingResult.asking_price, r = 0.07 / 12, n = 60;
+    return Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+  })();
+
+  const hasAffordability = pendingResult && pendingResult.asking_price > 0 && calcMo > 0;
+
   return (
-    <div style={{ minHeight: "100vh", background: NAVY, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ ...B, fontSize: 11, fontWeight: 700, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 36 }}>Analyzing your listing</p>
-      <div style={{ position: "relative", width: size, height: size, marginBottom: 28 }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={BRAND} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${circ * (score/100)} ${circ}`} style={{ transition: "stroke-dasharray 0.1s linear" }} />
-        </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ ...H, fontSize: 44, fontWeight: 800, color: WHITE, lineHeight: 1, letterSpacing: "-0.04em" }}>{score}</span>
-          <span style={{ ...B, fontSize: 11, color: NAVY_M, marginTop: 6 }}>scoring…</span>
+    <div style={{ minHeight: "100vh", background: NAVY, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
+      <div style={{ width: "100%", maxWidth: 360 }}>
+        <p style={{ ...B, fontSize: 11, fontWeight: 700, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 28, textAlign: "center" }}>
+          Analyzing your listing
+        </p>
+
+        {/* Step checklist */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {STEPS.map((step, i) => {
+            const on = i < visibleSteps;
+            return (
+              <div key={step} style={{ display: "flex", alignItems: "center", gap: 12, opacity: on ? 1 : 0, transform: on ? "translateY(0)" : "translateY(6px)", transition: "opacity 0.4s ease, transform 0.4s ease" }}>
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                  background: on ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${on ? "rgba(34,197,94,0.35)" : "rgba(255,255,255,0.07)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.3s",
+                }}>
+                  {on && <span style={{ color: "#22C55E", fontSize: 11, fontWeight: 700 }}>✓</span>}
+                </div>
+                <span style={{ ...B, fontSize: 14, color: on ? WHITE : "#1E293B", transition: "color 0.3s" }}>{step}</span>
+              </div>
+            );
+          })}
         </div>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, ...B, fontSize: 13, color: NAVY_M }}>
-        <svg style={{ animation: "spin 1s linear infinite", width: 14, height: 14 }} fill="none" viewBox="0 0 24 24">
-          <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-        </svg>
-        Reading your listing…
+
+        {/* Affordability reveal */}
+        {hasAffordability && (
+          <div style={{
+            marginTop: 36,
+            opacity: showCard ? 1 : 0,
+            transform: showCard ? "translateY(0)" : "translateY(14px)",
+            transition: "opacity 0.55s ease, transform 0.55s ease",
+          }}>
+            <div style={{ height: 1, background: "rgba(255,255,255,0.07)", marginBottom: 28 }} />
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 16, padding: "22px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+                {/* Asking price */}
+                <div style={{ flex: 1 }}>
+                  <p style={{ ...B, fontSize: 10, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Asking Price</p>
+                  <p style={{ ...H, fontSize: 22, fontWeight: 700, color: WHITE, margin: 0 }}>${pendingResult!.asking_price.toLocaleString()}</p>
+                </div>
+                {/* Arrow */}
+                <div style={{ ...B, fontSize: 18, color: "#334155" }}>→</div>
+                {/* Monthly */}
+                <div style={{ flex: 1, textAlign: "right" }}>
+                  <p style={{ ...B, fontSize: 10, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Est. Buyer Payment</p>
+                  <p style={{ ...H, fontSize: 22, fontWeight: 700, color: "#60A5FA", margin: 0 }}>${calcMo}/mo</p>
+                </div>
+              </div>
+              <p style={{ ...B, fontSize: 12, color: "#64748B", margin: 0, lineHeight: 1.65, textAlign: "center" }}>
+                Most buyers don&apos;t think only in this number.<br />
+                <span style={{ color: "#94A3B8" }}>One reason buyers respond is affordability — how the price feels month to month.</span>
+              </p>
+            </div>
+          </div>
+        )}
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -57,6 +117,7 @@ const CAR_IMG = "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=
 // ── Main page ─────────────────────────────────────────────────────
 export default function Home() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [pendingResult, setPendingResult] = useState<AnalysisResult | null>(null);
   const [url, setUrl] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -128,12 +189,22 @@ export default function Home() {
       const res = await fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Something went wrong."); setLoading(false); }
-      else { window.history.pushState({ results: true }, ""); setResult(data as AnalysisResult); setLoading(false); }
+      else {
+        const parsed = data as AnalysisResult;
+        const hasPrice = parsed.asking_price > 0;
+        setPendingResult(parsed);
+        setTimeout(() => {
+          window.history.pushState({ results: true }, "");
+          setResult(parsed);
+          setLoading(false);
+          setPendingResult(null);
+        }, hasPrice ? 2800 : 0);
+      }
     } catch (err) { setError(`Network error: ${err instanceof Error ? err.message : String(err)}`); setLoading(false); }
   };
 
   if (result) return <Flow result={result} onReset={() => { setResult(null); setUrl(""); setImages([]); }} />;
-  if (loading) return <AnalyzingScreen />;
+  if (loading) return <AnalyzingScreen pendingResult={pendingResult} />;
 
   const canSubmit = !loading && (!!url || images.length > 0);
 
