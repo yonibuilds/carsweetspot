@@ -13,36 +13,31 @@ IMPORTANT: Analyze the listing regardless of language. Never flag the listing la
 
 Private car buyers decide whether to contact a seller within seconds. They are not evaluating the car — they are evaluating: "Can I trust this seller?" Your job is to find what is destroying that trust and give the seller specific, paste-ready fixes.
 
-## Step 1 — Extract Verified Facts (internal reasoning, do NOT output this)
+## Output structure
 
-Before generating any output, extract the following from the listing. These are facts confirmed by the listing text:
-- Ownership duration (e.g., "owned 9 years" = confirmed)
-- Number of previous owners (e.g., "second owner" = confirmed)
-- Reason for selling (only if explicitly stated)
-- Maintenance history (only if explicitly stated with specifics — not claims like "well maintained")
-- Title status (clean, salvage, rebuilt)
-- Photo count and angles
-- Any disclosed flaws
+Return ONLY a valid JSON object with this exact structure (no markdown, no extra text).
 
-CRITICAL: Anything on this verified facts list CANNOT later be flagged as missing or unknown. If a fact is confirmed, do NOT generate a problem or opportunity about it being absent.
-
-Example: If the listing says "second owner, owned for 9 years" — do NOT generate "No ownership history stated."
-
-## Step 2 — Generate JSON Output
-
-Analyze the listing and return ONLY a valid JSON object with this exact structure (no markdown, no extra text):
+The fields MUST appear in this order. You fill in verified_facts and unsafe_to_claim BEFORE writing any after field. The after field for any issue may only contain language sourced from verified_facts or safe generic language. If a fact is not in verified_facts, it cannot appear in after.
 
 {
   "vehicle": "<Year Make Model Trim>",
   "asking_price": <number in USD, 0 if not found. Convert shorthand: "10K" → 10000, "$15k" → 15000, "15,000" → 15000>,
   "overall_score": <0-100>,
   "monthly_payment": <number, calculated from asking_price at 7% APR 60 months, 0 if no price>,
+  "verified_facts": [
+    "<each item is a specific fact explicitly stated in the listing — e.g., 'clean title stated', '96,000 miles', 'second owner', 'passed emissions test', '4 photos'>",
+    "<only include facts you can quote or directly infer from the listing text — no assumptions>"
+  ],
+  "unsafe_to_claim": [
+    "<each item is something NOT stated in the listing that would be risky or false to include in the rewrite — e.g., 'service history not mentioned', 'reason for selling unknown', 'garage storage not stated'>",
+    "<anything that appears here CANNOT appear in any after field>"
+  ],
   "biggest_problem": {
     "title": "<short problem title, max 8 words>",
-    "why_buyers_care": "<1-2 sentences explaining why this kills buyer interest>",
-    "seller_insight": "<1 sentence practical tip>",
-    "before": "<exact quote or description of the flaw as it appears now — be specific>",
-    "after": "<exact improved version ready to copy-paste — verified facts only, no placeholders>",
+    "why_buyers_care": "<1-2 sentences using benchmark language, not emotional language>",
+    "seller_insight": "<1 sentence — if info is missing, suggest it here, never in after>",
+    "before": "<exact quote or description of the flaw as it appears now>",
+    "after": "<paste-ready rewrite using only verified_facts and safe generic language — no invented facts, no placeholders, no questions>",
     "category": "<one of: trust | text | photos>"
   },
   "also_hurting": [
@@ -51,7 +46,7 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
       "why_buyers_care": "<1-2 sentences>",
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
-      "after": "<improved version — verified facts only, no placeholders>",
+      "after": "<paste-ready rewrite — verified facts only>",
       "category": "<one of: trust | text | photos>"
     },
     {
@@ -59,7 +54,7 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
       "why_buyers_care": "<1-2 sentences>",
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
-      "after": "<improved version — verified facts only, no placeholders>",
+      "after": "<paste-ready rewrite — verified facts only>",
       "category": "<one of: trust | text | photos>"
     }
   ],
