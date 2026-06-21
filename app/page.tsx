@@ -104,6 +104,9 @@ function AnalyzingScreen({ pendingResult }: { pendingResult: AnalysisResult | nu
                 <span style={{ color: "#94A3B8" }}>One reason buyers respond is affordability — how the price feels month to month.</span>
               </p>
             </div>
+            <p style={{ ...B, fontSize: 11, color: "#334155", textAlign: "center", margin: "20px 0 0", letterSpacing: "0.02em" }}>
+              Finalizing your report…
+            </p>
           </div>
         )}
       </div>
@@ -198,7 +201,7 @@ export default function Home() {
           setResult(parsed);
           setLoading(false);
           setPendingResult(null);
-        }, hasPrice ? 2800 : 0);
+        }, hasPrice ? 4200 : 0);
       }
     } catch (err) { setError(`Network error: ${err instanceof Error ? err.message : String(err)}`); setLoading(false); }
   };
