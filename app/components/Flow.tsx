@@ -346,12 +346,16 @@ function LeftSidebar({ result, fixProblems, onReset }: {
 function MainContent({ result, fixProblems, onReset }: {
   result: AnalysisResult; fixProblems: Problem[]; onReset: () => void;
 }) {
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(0);
+  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
   const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
   const [showWorking, setShowWorking] = useState(true);
   const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
 
-  const toggle = (idx: number) => setExpandedIdx(prev => prev === idx ? null : idx);
+  const toggle = (idx: number) => setExpandedSet(prev => {
+    const next = new Set(prev);
+    next.has(idx) ? next.delete(idx) : next.add(idx);
+    return next;
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -421,7 +425,7 @@ function MainContent({ result, fixProblems, onReset }: {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {fixProblems.map((prob, idx) => {
           const cat = prob?.category ?? "trust";
-          const isOpen = expandedIdx === idx;
+          const isOpen = expandedSet.has(idx);
           const impact = IMPACTS[Math.min(idx, IMPACTS.length - 1)];
 
           return (
