@@ -25,51 +25,69 @@ export type AnalysisResult = {
 };
 
 // ── Tokens ────────────────────────────────────────────────────────
-const NAVY      = "#0F172A";
-const NAVY_MUT  = "#64748B";
-const BRAND     = "#2563EB";
-const BRAND_DK  = "#1D4ED8";
-const STAGE     = "#F4F4F5";
-const SUCCESS   = "#16A34A";
-const SUCC_SOFT = "#F0FDF4";
-const SUCC_FG   = "#14532D";
-const DANGER    = "#EF4444";
-const DANG_SOFT = "#FEF2F2";
-const DANG_FG   = "#991B1B";
-const BORDER    = "#E4E4E7";
-const WHITE     = "#FFFFFF";
+const PAGE_BG     = "#F8FAFC";
+const WHITE       = "#FFFFFF";
+const NAVY        = "#0F172A";
+const NAVY_MUT    = "#64748B";
+const BORDER      = "#E2E8F0";
+const BRAND       = "#2563EB";
+const SUCCESS     = "#16A34A";
+const SUCC_SOFT   = "#F0FDF4";
+const SUCC_FG     = "#14532D";
+const SUCC_BOR    = "#BBF7D0";
+const DANGER      = "#EF4444";
+const DANG_SOFT   = "#FEF2F2";
+const DANG_FG     = "#991B1B";
+const DANG_BOR    = "#FECACA";
 
 const H: React.CSSProperties = { fontFamily: "var(--font-jakarta)" };
 const B: React.CSSProperties = { fontFamily: "var(--font-inter)" };
 
-const CAT: Record<string, { label: string; hint: string; icon: string }> = {
-  trust:  { label: "Trust",  hint: "Ownership history & credibility", icon: "🤝" },
-  text:   { label: "Text",   hint: "Description quality & formatting", icon: "✍️" },
-  photos: { label: "Photos", hint: "Visual proof & image coverage",    icon: "📸" },
+const CAT: Record<string, { label: string }> = {
+  trust:  { label: "Trust" },
+  text:   { label: "Text" },
+  photos: { label: "Photos" },
 };
 
-function opIcon(type: string): string {
-  const m: Record<string, string> = {
-    financing:"💰", inspection:"🔧", carfax:"📋", title:"📄", photos:"📸",
-    description:"✏️", garage:"🏠", warranty:"🛡️", price:"💲", payment:"💳", formatting:"📝",
-  };
-  return m[type] ?? "💡";
+const IMPACTS = [
+  { label: "High",   color: "#B91C1C", bg: "#FEF2F2" },
+  { label: "Medium", color: "#B45309", bg: "#FFFBEB" },
+  { label: "Low",    color: "#374151", bg: "#F3F4F6" },
+];
+
+function scoreBadge(score: number) {
+  if (score >= 90) return { label: "Exceptional",    color: "#1D4ED8", bg: "#EFF6FF" };
+  if (score >= 75) return { label: "Strong Listing", color: "#15803D", bg: "#F0FDF4" };
+  if (score >= 60) return { label: "Average Listing",color: "#B45309", bg: "#FFFBEB" };
+  return               { label: "Needs Work",        color: "#B91C1C", bg: "#FEF2F2" };
 }
 
 function stripMd(t: string): string {
   return t.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
 }
 
-function catScore(cat: string, biggest: Problem, also: Problem[]): number {
-  if (biggest?.category === cat) return 38;
-  if (also?.some(p => p?.category === cat)) return 62;
-  return 91;
+function calcMonthly(askingPrice: number, monthlyPayment: number): number {
+  if (monthlyPayment > 0) return monthlyPayment;
+  if (askingPrice >= 8000) {
+    const r = 0.07 / 12, n = 60;
+    return Math.round((askingPrice * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+  }
+  return 0;
+}
+
+// ── Card ──────────────────────────────────────────────────────────
+function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, ...style }}>
+      {children}
+    </div>
+  );
 }
 
 // ── Fade ──────────────────────────────────────────────────────────
-function Fade({ children, id }: { children: React.ReactNode; id: number }) {
+function Fade({ children }: { children: React.ReactNode }) {
   const [v, setV] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setV(true), 20); return () => clearTimeout(t); }, [id]);
+  useEffect(() => { const t = setTimeout(() => setV(true), 20); return () => clearTimeout(t); }, []);
   return (
     <div style={{ opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(8px)", transition: "opacity 0.28s ease, transform 0.28s ease" }}>
       {children}
@@ -79,178 +97,26 @@ function Fade({ children, id }: { children: React.ReactNode; id: number }) {
 
 // ── ScoreRing ─────────────────────────────────────────────────────
 function ScoreRing({ score }: { score: number }) {
-  const size = 180, stroke = 14, r = (size - stroke) / 2;
+  const size = 120, stroke = 10, r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const dash = circ * Math.min(score / 100, 1);
   return (
-    <div style={{ position: "relative", width: size, height: size }}>
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#E2E8F0" strokeWidth={stroke} />
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={BRAND} strokeWidth={stroke}
           strokeLinecap="round" strokeDasharray={`${dash} ${circ}`}
           style={{ transition: "stroke-dasharray 1s ease-out" }} />
       </svg>
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ ...H, fontSize: 50, fontWeight: 800, color: WHITE, lineHeight: 1, letterSpacing: "-0.04em" }}>{score}</span>
-        <span style={{ ...B, fontSize: 12, color: NAVY_MUT, marginTop: 4 }}>out of 100</span>
+        <span style={{ ...H, fontSize: 32, fontWeight: 700, color: NAVY, lineHeight: 1 }}>{score}</span>
+        <span style={{ ...B, fontSize: 11, color: NAVY_MUT, marginTop: 2 }}>out of 100</span>
       </div>
     </div>
   );
 }
 
-// ── MetricBar ─────────────────────────────────────────────────────
-function MetricBar({ label, value, hint }: { label: string; value: number; hint: string }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <span style={{ ...B, fontSize: 13, fontWeight: 600, color: WHITE }}>{label}</span>
-        <span style={{ ...B, fontSize: 12, color: NAVY_MUT }}>{value}%</span>
-      </div>
-      <div style={{ height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${value}%`, background: BRAND, borderRadius: 3, transition: "width 1s ease-out" }} />
-      </div>
-      <span style={{ ...B, fontSize: 11, color: NAVY_MUT, lineHeight: 1.4 }}>{hint}</span>
-    </div>
-  );
-}
-
-// ── Financing card ────────────────────────────────────────────────
-function FinancingCard({ askingPrice, monthlyPayment }: { askingPrice: number; monthlyPayment: number }) {
-  const calcMo = monthlyPayment > 0
-    ? monthlyPayment
-    : askingPrice >= 8000
-      ? Math.round((askingPrice * 0.07/12 * Math.pow(1+0.07/12, 60)) / (Math.pow(1+0.07/12, 60) - 1))
-      : 0;
-  const copyText = calcMo > 0
-    ? `"Financing available OAC — est. $${calcMo}/mo"`
-    : `"Financing available OAC — ask me about monthly options"`;
-  return (
-    <div style={{
-      marginTop: 20, borderRadius: 12,
-      background: "#1D4ED8",
-      padding: "16px 18px",
-    }}>
-      <p style={{ ...H, fontSize: 14, fontWeight: 700, color: "#ffffff", margin: "0 0 4px" }}>
-        💳 {calcMo > 0 ? `$${calcMo}/mo est.` : "Financing available"}
-      </p>
-      <p style={{ ...B, fontSize: 12, color: "#bfdbfe", margin: "0 0 10px", lineHeight: 1.5 }}>
-        Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
-      </p>
-      <div style={{
-        background: "#1e3a8a", borderRadius: 7,
-        padding: "8px 12px", fontFamily: "monospace",
-        fontSize: 11, color: "#e0f2fe", lineHeight: 1.6,
-      }}>
-        {copyText}
-      </div>
-    </div>
-  );
-}
-
-// ── Dark sidebar ──────────────────────────────────────────────────
-function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
-  result: AnalysisResult; biggest: Problem; also: Problem[];
-  issuesLeft: number; onReset: () => void;
-}) {
-  const metrics = (["trust", "text", "photos"] as const).map(c => ({
-    label: CAT[c].label, value: catScore(c, biggest, also), hint: CAT[c].hint,
-  }));
-  const projected = Math.min(100, result.overall_score + issuesLeft * 8);
-
-  return (
-    <div style={{
-      position: "fixed", top: 0, left: 0, width: "30%", height: "100vh",
-      background: NAVY, display: "flex", flexDirection: "column",
-      padding: "32px 28px", overflowY: "auto", zIndex: 50,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 36 }}>
-        <span style={{ ...H, fontSize: 15, fontWeight: 800, color: WHITE, letterSpacing: "-0.02em" }}>CarSweetSpot</span>
-        <button onClick={onReset} style={{
-          ...B, display: "flex", alignItems: "center", gap: 5,
-          fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.45)",
-          background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: 8, padding: "5px 10px", cursor: "pointer",
-          transition: "all 0.15s",
-        }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = WHITE; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.45)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.07)"; }}
-        >
-          ← Back
-        </button>
-      </div>
-
-      {/* Vehicle photo card */}
-      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 24, position: "relative", flexShrink: 0 }}>
-        {result.listing_image ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={result.listing_image} alt={result.vehicle} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 14px 10px", background: "linear-gradient(to top, rgba(15,23,42,0.9) 0%, transparent 100%)" }}>
-              <p style={{ ...H, fontSize: 12, fontWeight: 700, color: WHITE, margin: 0, lineHeight: 1.3 }}>{result.vehicle}</p>
-              {result.asking_price > 0 && <p style={{ ...B, fontSize: 11, color: "#94A3B8", margin: "2px 0 0" }}>${result.asking_price.toLocaleString()}</p>}
-            </div>
-          </>
-        ) : (
-          <div style={{ width: "100%", height: "100%", background: "rgba(255,255,255,0.04)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            <p style={{ ...B, fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>No photo uploaded</p>
-          </div>
-        )}
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginBottom: 36 }}>
-        <ScoreRing score={result.overall_score} />
-        <div style={{ textAlign: "center" }}>
-          <p style={{ ...H, fontSize: 15, fontWeight: 700, color: WHITE, margin: 0 }}>Sweet Spot Score</p>
-          {!result.listing_image && (
-            <p style={{ ...B, fontSize: 12, color: NAVY_MUT, marginTop: 4, lineHeight: 1.5 }}>
-              {result.vehicle}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <h3 style={{ ...B, fontSize: 10, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.12em", margin: 0 }}>
-          Diagnostics
-        </h3>
-        {metrics.map(m => <MetricBar key={m.label} {...m} />)}
-        {!result.listing_image?.startsWith("data:") && (
-          <div style={{
-            display: "flex", alignItems: "flex-start", gap: 7,
-            background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)",
-            borderRadius: 8, padding: "9px 11px",
-          }}>
-            <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
-            <p style={{ ...B, fontSize: 11, color: "#FCD34D", margin: 0, lineHeight: 1.5 }}>
-              Photo score is estimated — upload photos directly for accurate analysis.
-            </p>
-          </div>
-        )}
-      </div>
-
-
-      {issuesLeft > 0 && (
-        <div style={{
-          marginTop: 16, borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.1)",
-          background: "rgba(255,255,255,0.05)", padding: "16px",
-        }}>
-          <p style={{ ...H, fontSize: 14, fontWeight: 600, color: WHITE, margin: "0 0 4px" }}>
-            {issuesLeft} issue{issuesLeft !== 1 ? "s" : ""} left to fix
-          </p>
-          <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: 0, lineHeight: 1.5 }}>
-            Fixing these could lift your score to {projected}.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Before / After grid ───────────────────────────────────────────
+// ── Before / After ────────────────────────────────────────────────
 function BeforeAfterGrid({ problem }: { problem: Problem }) {
   const [copied, setCopied] = useState(false);
   const afterText = stripMd(problem.after);
@@ -260,31 +126,28 @@ function BeforeAfterGrid({ problem }: { problem: Problem }) {
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 4 }}>
-      {/* Before */}
-      <div style={{ background: DANG_SOFT, border: `1px solid ${DANGER}28`, borderRadius: 12, padding: "18px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
-          <span style={{ color: DANGER, fontSize: 13, fontWeight: 700 }}>✕</span>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ background: DANG_SOFT, border: `1px solid ${DANG_BOR}`, borderRadius: 12, padding: "14px 16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+          <span style={{ color: DANGER, fontSize: 12, fontWeight: 700 }}>✕</span>
           <span style={{ ...B, fontSize: 10, fontWeight: 700, color: DANGER, textTransform: "uppercase", letterSpacing: "0.09em" }}>Before</span>
         </div>
-        <p style={{ ...B, fontSize: 13, color: DANG_FG, lineHeight: 1.6, margin: 0, textDecoration: "line-through", textDecorationColor: `${DANGER}40` }}>
+        <p style={{ ...B, fontSize: 13, color: DANG_FG, lineHeight: 1.6, margin: 0 }}>
           {problem.before || "No text currently in the listing."}
         </p>
       </div>
-
-      {/* After */}
-      <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCCESS}28`, borderRadius: 12, padding: "18px 20px", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <span style={{ color: SUCCESS, fontSize: 13, fontWeight: 700 }}>✓</span>
+      <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ color: SUCCESS, fontSize: 12, fontWeight: 700 }}>✓</span>
             <span style={{ ...B, fontSize: 10, fontWeight: 700, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.09em" }}>After</span>
           </div>
           <button onClick={copy} style={{
-            ...B, fontSize: 11, fontWeight: 700, cursor: "pointer",
+            ...B, fontSize: 11, fontWeight: 600, cursor: "pointer",
             background: copied ? SUCCESS : WHITE,
             color: copied ? WHITE : SUCCESS,
             border: `1px solid ${SUCCESS}`,
-            borderRadius: 6, padding: "4px 10px",
+            borderRadius: 6, padding: "3px 10px",
             transition: "all 0.2s", whiteSpace: "nowrap",
           }}>
             {copied ? "✓ Copied" : "Copy"}
@@ -298,134 +161,292 @@ function BeforeAfterGrid({ problem }: { problem: Problem }) {
   );
 }
 
-// ── Score overview screen (accordion) ────────────────────────────
-function ScoreScreen({ result, fixProblems, onReset }: {
+// ── Left sidebar ──────────────────────────────────────────────────
+function LeftSidebar({ result, fixProblems, onReset }: {
   result: AnalysisResult; fixProblems: Problem[]; onReset: () => void;
 }) {
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
-  const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
-  const [showWorking, setShowWorking] = useState(true);
+  const badge = scoreBadge(result.overall_score);
+  const potentialScore = Math.min(100, result.overall_score + fixProblems.length * 4);
+  const pointsGain = potentialScore - result.overall_score;
+  const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
+  const [copied, setCopied] = useState(false);
 
-  const catMap: Record<string, Problem | null> = { trust: null, text: null, photos: null };
-  fixProblems.forEach(p => { if (p.category && !catMap[p.category]) catMap[p.category] = p; });
-
-  const toggle = (idx: number) => setExpandedIdx(prev => prev === idx ? null : idx);
-  const openNext = (idx: number) => {
-    if (idx + 1 < fixProblems.length) setExpandedIdx(idx + 1);
-    else setExpandedIdx(null);
+  const copyFinancing = () => {
+    const t = calcMo > 0
+      ? `Financing available OAC — est. $${calcMo}/mo at 7% APR, 60 months.`
+      : `Financing available OAC — ask me about monthly options.`;
+    navigator.clipboard.writeText(t);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <Fade id={0}>
-      <div style={{ padding: "56px 48px", maxWidth: 640, margin: "0 auto" }}>
-        <p style={{ ...B, fontSize: 11, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 20px" }}>
-          Analysis complete
-        </p>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
-          <h1 style={{ ...H, fontSize: 30, fontWeight: 800, color: NAVY, letterSpacing: "-0.03em", lineHeight: 1.15, margin: 0 }}>
-            {result.vehicle}
-          </h1>
-          {result.asking_price > 0 && (
-            <span style={{ ...H, fontSize: 20, fontWeight: 700, color: BRAND }}>
-              ${result.asking_price.toLocaleString()}
-            </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* 1. Vehicle card */}
+      <Card>
+        <div style={{ padding: "14px 16px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <span style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY }}>CarSweetSpot</span>
+            <button onClick={onReset} style={{
+              ...B, fontSize: 12, color: NAVY_MUT, background: "none", border: "none",
+              cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0,
+            }}>
+              ← Back to listings
+            </button>
+          </div>
+        </div>
+        <div style={{ width: "100%", aspectRatio: "16/9", overflow: "hidden", background: "#F1F5F9" }}>
+          {result.listing_image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={result.listing_image} alt={result.vehicle} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          ) : (
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+            </div>
           )}
         </div>
-<p style={{ ...B, fontSize: 15, color: "#6B7280", margin: "0 0 24px", lineHeight: 1.6 }}>
-          We found {fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} hurting your contact rate. Click each to fix it.
-        </p>
-
-        {result.whats_working?.length > 0 && (
-          <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCCESS}22`, borderRadius: 10, marginBottom: 24, overflow: "hidden" }}>
-            <div onClick={() => setShowWorking(w => !w)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", cursor: "pointer" }}>
-              <p style={{ ...B, fontSize: 11, fontWeight: 700, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-                ✓ What&apos;s working
-              </p>
-              <span style={{ fontSize: 11, color: SUCCESS, transform: showWorking ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
-            </div>
-            {showWorking && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "0 18px 14px" }}>
-                {result.whats_working.map((w, i) => (
-                  <p key={i} style={{ ...B, fontSize: 13, color: SUCC_FG, margin: 0, lineHeight: 1.5 }}>• {w}</p>
-                ))}
-              </div>
+        <div style={{ padding: "14px 16px 16px" }}>
+          <p style={{ ...H, fontSize: 15, fontWeight: 600, color: NAVY, margin: "0 0 5px", lineHeight: 1.3 }}>{result.vehicle}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {result.asking_price > 0 && (
+              <span style={{ ...H, fontSize: 15, fontWeight: 700, color: BRAND }}>${result.asking_price.toLocaleString()}</span>
             )}
           </div>
-        )}
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 36 }}>
-          {fixProblems.map((prob, idx) => {
-            const cat = prob?.category ?? "trust";
-            const isOpen = expandedIdx === idx;
-
-            return (
-              <div key={`${cat}-${idx}`} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-                {/* Header row */}
-                <div
-                  onClick={() => toggle(idx)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    background: WHITE,
-                    padding: "14px 18px",
-                    cursor: "pointer",
-                    borderBottom: isOpen ? `1px solid ${BORDER}` : "none",
-                  }}
-                >
-                  <div style={{
-                    width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
-                    background: DANG_SOFT,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <span style={{ fontSize: 11, color: DANGER, fontWeight: 700 }}>✕</span>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>{CAT[cat]?.label ?? cat}</p>
-                    {prob && <p style={{ ...B, fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>{prob.title}</p>}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                    {!isOpen && <span style={{ ...B, fontSize: 11, fontWeight: 600, color: BRAND }}>Fix →</span>}
-                    <span style={{ fontSize: 11, color: NAVY_MUT, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
-                  </div>
-                </div>
-
-                {/* Expanded body */}
-                {isOpen && prob && (
-                  <div style={{ padding: "24px 24px 20px", background: STAGE }}>
-                    <BeforeAfterGrid problem={prob} />
-
-                    {/* Why toggle */}
-                    <button onClick={() => setShowWhy(w => ({ ...w, [idx]: !w[idx] }))} style={{
-                      background: "none", border: "none", cursor: "pointer", padding: "10px 0",
-                      display: "flex", alignItems: "center", gap: 6,
-                    }}>
-                      <span style={{ fontSize: 12, color: "#9CA3AF" }}>ⓘ</span>
-                      <span style={{ ...B, fontSize: 12, color: "#6B7280", borderBottom: "1px dashed #D1D5DB" }}>Why does this matter?</span>
-                      <span style={{ fontSize: 10, color: "#9CA3AF", transform: showWhy[idx] ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
-                    </button>
-                    {showWhy[idx] && (
-                      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "14px 16px", marginBottom: 8 }}>
-                        <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: 0, lineHeight: 1.6 }}>{prob.seller_insight}</p>
-                      </div>
-                    )}
-
-
-                    <FinancingCard askingPrice={result.asking_price ?? 0} monthlyPayment={result.monthly_payment ?? 0} />
-                  </div>
-                )}
-              </div>
-            );
-          })}
         </div>
+      </Card>
 
-        <button onClick={onReset} style={{
-          ...B, width: "100%", padding: "13px", background: "transparent",
-          color: "#9CA3AF", border: `1px solid ${BORDER}`, borderRadius: 12,
-          fontSize: 14, cursor: "pointer",
-        }}>
-          ← Analyze another listing
-        </button>
+      {/* 2. Score card */}
+      <Card style={{ padding: "20px" }}>
+        <p style={{ ...B, fontSize: 11, fontWeight: 600, color: NAVY_MUT, margin: "0 0 16px", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+          Sweet Spot Score
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 18 }}>
+          <ScoreRing score={result.overall_score} />
+          <div>
+            <div style={{ display: "inline-block", background: badge.bg, color: badge.color, fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "4px 12px", marginBottom: 8 }}>
+              {badge.label}
+            </div>
+            <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: 0, lineHeight: 1.5 }}>
+              Strong listings<br />typically score 75+.
+            </p>
+          </div>
+        </div>
+        <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 16 }}>
+          <p style={{ ...B, fontSize: 11, fontWeight: 600, color: NAVY_MUT, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.07em" }}>Potential Score</p>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
+            <span style={{ ...H, fontSize: 30, fontWeight: 700, color: NAVY }}>{potentialScore}</span>
+            <span style={{ fontSize: 16, color: SUCCESS }}>↑</span>
+          </div>
+          <p style={{ ...B, fontSize: 12, fontWeight: 600, color: SUCCESS, margin: "0 0 4px" }}>+{pointsGain} points available</p>
+          <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: 0, lineHeight: 1.5 }}>Fix the issues below to increase your score.</p>
+        </div>
+      </Card>
+
+      {/* 3. Monthly payment card */}
+      {calcMo > 0 && (
+        <Card style={{ padding: "20px" }}>
+          <p style={{ ...B, fontSize: 11, fontWeight: 600, color: NAVY_MUT, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.07em" }}>Estimated Monthly Payment</p>
+          <p style={{ ...H, fontSize: 28, fontWeight: 700, color: BRAND, margin: "0 0 6px" }}>
+            ${calcMo}<span style={{ fontSize: 14, fontWeight: 400, color: NAVY_MUT }}>/mo est.</span>
+          </p>
+          <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "0 0 14px", lineHeight: 1.5 }}>
+            Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
+          </p>
+          <button onClick={copyFinancing} style={{
+            width: "100%", background: "#EFF6FF", border: `1px solid #BFDBFE`,
+            borderRadius: 10, padding: "10px 14px", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            textAlign: "left",
+          }}>
+            <span style={{ fontFamily: "monospace", fontSize: 12, color: "#1D4ED8", lineHeight: 1.5 }}>
+              Financing available OAC — est. ${calcMo}/mo
+            </span>
+            <span style={{ ...B, fontSize: 11, color: "#1D4ED8", marginLeft: 10, whiteSpace: "nowrap", fontWeight: 600 }}>
+              {copied ? "✓ Copied" : "Copy"}
+            </span>
+          </button>
+        </Card>
+      )}
+
+      {/* 4. Data points card */}
+      <Card style={{ padding: "14px 16px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={BRAND} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div>
+            <p style={{ ...H, fontSize: 13, fontWeight: 600, color: BRAND, margin: "0 0 3px" }}>Your score is based on 30+ data points</p>
+            <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: 0, lineHeight: 1.5 }}>
+              We benchmark your listing against thousands of strong private-party listings.
+            </p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ── Main content ──────────────────────────────────────────────────
+function MainContent({ result, fixProblems, onReset }: {
+  result: AnalysisResult; fixProblems: Problem[]; onReset: () => void;
+}) {
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(0);
+  const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
+  const [showWorking, setShowWorking] = useState(true);
+  const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
+
+  const toggle = (idx: number) => setExpandedIdx(prev => prev === idx ? null : idx);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Success banner */}
+      <Card style={{ padding: "16px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "50%", background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ color: SUCCESS, fontSize: 16, fontWeight: 700 }}>✓</span>
+            </div>
+            <div>
+              <p style={{ ...H, fontSize: 15, fontWeight: 700, color: SUCCESS, margin: 0 }}>
+                We found {fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} hurting your contact rate.
+              </p>
+              <p style={{ ...B, fontSize: 13, color: NAVY_MUT, margin: 0 }}>Fix them to stand out and sell faster.</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* What's Working */}
+      {result.whats_working?.length > 0 && (
+        <Card style={{ overflow: "hidden" }}>
+          <div
+            onClick={() => setShowWorking(w => !w)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "16px 20px", cursor: "pointer",
+              background: SUCC_SOFT,
+              borderBottom: showWorking ? `1px solid ${SUCC_BOR}` : "none",
+              borderRadius: showWorking ? "16px 16px 0 0" : 16,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: SUCCESS, fontSize: 15 }}>✓</span>
+              <span style={{ ...H, fontSize: 14, fontWeight: 700, color: SUCCESS }}>What&apos;s Working</span>
+            </div>
+            <span style={{ fontSize: 11, color: SUCCESS, transform: showWorking ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▲</span>
+          </div>
+          {showWorking && (
+            <div style={{ padding: "16px 20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" }}>
+              {result.whats_working.map((w, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <span style={{ color: SUCCESS, fontSize: 14, marginTop: 1, flexShrink: 0 }}>✓</span>
+                  <p style={{ ...B, fontSize: 13, color: SUCC_FG, margin: 0, lineHeight: 1.5 }}>{w}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Issues header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 22, height: 22, borderRadius: "50%", background: DANG_SOFT, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: DANGER, fontSize: 12, fontWeight: 700 }}>!</span>
+          </div>
+          <span style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY }}>{fixProblems.length} Issues to Fix</span>
+        </div>
+        <span style={{ ...B, fontSize: 12, color: NAVY_MUT }}>
+          Fix all {fixProblems.length} to reach a <strong style={{ color: SUCCESS }}>Strong</strong> score
+        </span>
       </div>
-    </Fade>
+
+      {/* Issue cards */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {fixProblems.map((prob, idx) => {
+          const cat = prob?.category ?? "trust";
+          const isOpen = expandedIdx === idx;
+          const impact = IMPACTS[Math.min(idx, IMPACTS.length - 1)];
+
+          return (
+            <Card key={`${cat}-${idx}`} style={{ overflow: "hidden" }}>
+              <div
+                onClick={() => toggle(idx)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "14px 18px", cursor: "pointer", background: WHITE,
+                  borderBottom: isOpen ? `1px solid ${BORDER}` : "none",
+                }}
+              >
+                <div style={{ width: 22, height: 22, borderRadius: "50%", background: DANG_SOFT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ fontSize: 10, color: DANGER, fontWeight: 700 }}>✕</span>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>{CAT[cat]?.label ?? cat}</p>
+                  {prob && <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{prob.title}</p>}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span style={{ ...B, fontSize: 11, fontWeight: 600, color: impact.color, background: impact.bg, borderRadius: 20, padding: "3px 10px" }}>
+                    Impact: {impact.label}
+                  </span>
+                  <span style={{ fontSize: 11, color: NAVY_MUT, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+                </div>
+              </div>
+
+              {isOpen && prob && (
+                <div style={{ padding: "20px 20px 16px", background: PAGE_BG }}>
+                  <BeforeAfterGrid problem={prob} />
+
+                  <button
+                    onClick={() => setShowWhy(w => ({ ...w, [idx]: !w[idx] }))}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: "10px 0", display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <span style={{ fontSize: 12, color: "#9CA3AF" }}>ⓘ</span>
+                    <span style={{ ...B, fontSize: 12, color: NAVY_MUT, borderBottom: "1px dashed #D1D5DB" }}>Why does this matter?</span>
+                    <span style={{ fontSize: 10, color: "#9CA3AF", transform: showWhy[idx] ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
+                  </button>
+
+                  {showWhy[idx] && (
+                    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px", marginBottom: 8 }}>
+                      <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: 0, lineHeight: 1.6 }}>{prob.why_buyers_care}</p>
+                      {prob.seller_insight && (
+                        <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "8px 0 0", lineHeight: 1.5, fontStyle: "italic" }}>{prob.seller_insight}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {calcMo > 0 && idx === 0 && (
+                    <div style={{ marginTop: 16, background: "#1D4ED8", borderRadius: 12, padding: "14px 18px" }}>
+                      <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: "0 0 3px" }}>
+                        💳 ${calcMo}/mo est.
+                      </p>
+                      <p style={{ ...B, fontSize: 12, color: "#BFDBFE", margin: "0 0 10px", lineHeight: 1.5 }}>
+                        Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
+                      </p>
+                      <div style={{ background: "#1e3a8a", borderRadius: 8, padding: "8px 12px", fontFamily: "monospace", fontSize: 11, color: "#E0F2FE", lineHeight: 1.6 }}>
+                        &quot;Financing available OAC — est. ${calcMo}/mo at 7% APR, 60 months.&quot;
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      <button onClick={onReset} style={{
+        ...B, width: "100%", padding: "13px", background: WHITE,
+        color: NAVY_MUT, border: `1px solid ${BORDER}`, borderRadius: 12,
+        fontSize: 14, cursor: "pointer",
+      }}>
+        ← Analyze another listing
+      </button>
+    </div>
   );
 }
 
@@ -448,38 +469,38 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
 
   const fixProblems = [result.biggest_problem, ...(result.also_hurting ?? [])].filter(p => p?.title && p?.after);
 
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", background: STAGE }}>
-      {/* Mobile nav */}
-      {!isDesktop && (
-        <nav style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-          background: NAVY, height: 50,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 20px",
-        }}>
-          <button onClick={onReset} style={{ ...H, fontSize: 14, fontWeight: 800, color: WHITE, background: "none", border: "none", cursor: "pointer" }}>
-            CarSweetSpot
-          </button>
+  if (!isDesktop) {
+    return (
+      <div style={{ background: PAGE_BG, minHeight: "100vh" }}>
+        <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: WHITE, borderBottom: `1px solid ${BORDER}`, height: 50, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px" }}>
+          <span style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY }}>CarSweetSpot</span>
           <span style={{ ...B, fontSize: 12, color: NAVY_MUT }}>{result.overall_score}/100</span>
         </nav>
-      )}
-
-      {/* Desktop sidebar */}
-      {isDesktop && (
-        <DarkSidebar
-          result={result}
-          biggest={result.biggest_problem}
-          also={result.also_hurting ?? []}
-          issuesLeft={fixProblems.length}
-          onReset={onReset}
-        />
-      )}
-
-      {/* Right panel */}
-      <div style={{ marginLeft: isDesktop ? "30%" : 0, flex: 1, minHeight: "100vh", paddingTop: !isDesktop ? 50 : 0 }}>
-        <ScoreScreen result={result} fixProblems={fixProblems} onReset={onReset} />
+        <div style={{ paddingTop: 66, padding: "66px 16px 32px" }}>
+          <Fade>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <LeftSidebar result={result} fixProblems={fixProblems} onReset={onReset} />
+              <MainContent result={result} fixProblems={fixProblems} onReset={onReset} />
+            </div>
+          </Fade>
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div style={{ background: PAGE_BG, minHeight: "100vh" }}>
+      <Fade>
+        <div style={{
+          maxWidth: 1300, margin: "0 auto", padding: "36px 40px",
+          display: "grid", gridTemplateColumns: "360px 1fr", gap: 24, alignItems: "start",
+        }}>
+          <div style={{ position: "sticky", top: 32 }}>
+            <LeftSidebar result={result} fixProblems={fixProblems} onReset={onReset} />
+          </div>
+          <MainContent result={result} fixProblems={fixProblems} onReset={onReset} />
+        </div>
+      </Fade>
     </div>
   );
 }
