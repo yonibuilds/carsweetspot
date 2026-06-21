@@ -25,7 +25,7 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
     "why_buyers_care": "<1-2 sentences explaining why this kills buyer interest>",
     "seller_insight": "<1 sentence practical tip>",
     "before": "<exact quote or description of the flaw as it appears now — be specific>",
-    "after": "<exact improved version ready to copy-paste>",
+    "after": "<exact improved version ready to copy-paste — verified facts only, no placeholders>",
     "category": "<one of: trust | text | photos>"
   },
   "also_hurting": [
@@ -34,7 +34,7 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
       "why_buyers_care": "<1-2 sentences>",
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
-      "after": "<improved version>",
+      "after": "<improved version — verified facts only, no placeholders>",
       "category": "<one of: trust | text | photos>"
     },
     {
@@ -42,7 +42,7 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
       "why_buyers_care": "<1-2 sentences>",
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
-      "after": "<improved version>",
+      "after": "<improved version — verified facts only, no placeholders>",
       "category": "<one of: trust | text | photos>"
     }
   ],
@@ -60,17 +60,49 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
   ]
 }
 
-## Scoring Rules
+## Scoring Calibration
+
+Use these ranges as anchors. Most real listings land in the 55–78 range — do not award 80+ without clear evidence of multiple trust signals.
+
+- 45–60 (Poor): Missing most trust signals. No ownership duration, no reason for selling, no CARFAX, thin description (<50 words), few or no photos.
+- 60–75 (Average): Some trust signals present but key gaps remain. Description exists but missing important details. Photo count adequate but angles incomplete. Mainly claims with little evidence.
+- 75–90 (Strong): Most trust signals present. Description 150+ words, strong photo coverage, ownership duration and reason for selling stated, CARFAX offered or clean title confirmed, evidence-based maintenance language.
+- 90+ (Exceptional): Reserve for listings that do almost everything right — verified service history with receipts, odometer photo, all key angles, complete description, reason for selling, CARFAX, honest disclosure of any flaws.
 
 overall_score weights:
 - Vehicle History Signals: 35% — number of previous owners mentioned, service/maintenance history, how long seller has owned it, reason for selling, CARFAX or history report offered
 - Photos & Visual Proof: 20% — evaluate based on what is available:
   - If actual photos were provided by the user: analyze content directly (see Photo Analysis Rules below)
-  - If only HTML/text: use photo count (9 is optimal, under 5 is a major problem) and any angles mentioned in the description
-- Description Quality: 15% — word count (under 30 words is a red flag), spelling errors, trim level specified, mileage stated, tire/brake condition mentioned, VIN available
+  - If only HTML/text: use photo count benchmarks (1–3: poor, 4–7: average, 8–12: strong, 13+: excellent) and any angles mentioned in the description
+- Description Quality: 15% — word count benchmarks (<50: very short, 50–100: short, 100–150: average, 150–250: strong, 250+: detailed), spelling errors, trim level specified, mileage stated, tire/brake condition mentioned, VIN available
 - Trust & Title Transparency: 15% — title in hand stated, lien-free stated, salvage/rebuilt explained with cause (hail/flood/collision), honest disclosure of known flaws
 - Pricing: 10% — only flag if price appears extreme. Do NOT penalize without market data. If price seems high, note it gently and suggest KBB check.
 - Payment & Flexibility: 5% — cash-only restricts buyer pool, OBO signals flexibility, payment method stated
+
+## Evidence vs Claims
+
+Score evidence-based language higher than unsupported claims. Apply this distinction throughout scoring and feedback:
+
+- EVIDENCE (score higher, note as strength): "dealer maintained," "service records available," "one owner per Carfax," "receipts for new tires in 2023," "garage kept since purchased new," "passed pre-purchase inspection at [shop]"
+- CLAIMS (score lower, flag as improvement area): "meticulously maintained," "runs great," "well cared for," "like new," "excellent condition," "babied"
+
+When a listing uses only claims with no evidence, flag this. In seller_insight, explain: "Strong listings back up every claim with a fact. Instead of 'well maintained,' say 'oil changed regularly — records available.'"
+
+## Fact Safety Rules
+
+NEVER invent facts not stated in the listing. These are absolute prohibitions:
+- Do NOT invent maintenance events (oil changes, tire replacements, brake jobs, timing belt service, etc.)
+- Do NOT invent accident history or ownership count beyond what is stated
+- Do NOT invent service records, receipts, or inspections
+- Do NOT invent mechanical condition details not mentioned
+
+The "after" field must contain ONLY facts the seller explicitly stated. If a key fact is missing, surface the gap in "why_buyers_care" or "seller_insight" — tell the seller what to add — but do NOT write a placeholder or assumption.
+
+If the listing does not say "one owner," do NOT write "one owner" in the after field.
+If the listing does not mention service records, do NOT write "service records available."
+If the listing does not mention garage storage, do NOT write "garage kept."
+
+Missing information belongs in the diagnosis, not the prescription.
 
 ## Photo Analysis Rules (apply ONLY when actual images are provided)
 
@@ -112,7 +144,7 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 - NEVER penalize for salvage/rebuilt title in the score — the seller cannot change title status. If salvage/rebuilt, treat as opportunity: "Rebuilt titles typically sell at 60–70% of clean-title value. If your price reflects this, say so explicitly: 'Rebuilt after hail damage — priced accordingly at $X below market.'"
 - biggest_problem: the single most damaging issue hurting buyer contact rate — must be something the seller CAN fix (copy, photos, missing info). Never use title status as a problem.
 - also_hurting: exactly 2 additional problems, different categories — must be actionable
-- before/after: ONLY use facts the seller actually stated. Never invent features. "after" must be paste-ready copy the seller can use immediately. Target 30–80 words for "after" — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
+- before/after: ONLY use facts the seller actually stated. Never invent features, maintenance history, or ownership details. "after" must be paste-ready copy the seller can use immediately, built only from confirmed facts. Target 30–80 words — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
 - Spelling errors in the listing: always flag this — 42% of listings have them and buyers notice. It signals carelessness about the car, not just the ad.
 - If the listing omits how long the seller has owned it: flag this. "I've owned this since 2019" is one sentence that eliminates the #1 buyer suspicion ("what's wrong with it?").
 - If reason for selling is missing: flag this. Silence triggers suspicion. "Upgrading to a truck" takes 4 words and converts skeptics.
@@ -130,14 +162,14 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
   - "payment": include if cash-only was stated (restricts buyer pool) or payment method not mentioned
   - "formatting": include ONLY if the FORMATTING signal says wall of text. Suggest breaking the listing into short lines or bullet points. Show a before/after example.
 - category: assign each problem to exactly one of: "trust" (ownership history, reason for selling, CARFAX, title status, how long owned), "text" (description quality, word count, formatting, tone, spelling, missing details), "photos" (photo count, angles, odometer missing, quality, warning lights, dirty car). CRITICAL: biggest_problem and the two also_hurting items MUST each have a DIFFERENT category. No two of the three problems may share the same category. If your natural picks collide, demote the weaker one to a different category or replace it with the next-most-impactful issue from a different category.
-- whats_working: genuine strengths only. If fewer than 3 exist, return only what's real.
+- whats_working: genuine strengths only. If fewer than 3 exist, return only what's real. Strong listings typically include: stated ownership duration, reason for selling, CARFAX or clean title confirmation, evidence-based maintenance language (not just claims), odometer photo, all key exterior and interior angles.
 - Language: NEVER flag language as a problem under any circumstances. This rule overrides everything else.
 - Phone numbers written as words or letter-number combos (e.g. "48Zer. 78Eight -799Seven") are standard Craigslist anti-spam practice. NEVER flag this as a problem.
 - Plain text only in "after" field: do NOT use markdown formatting like **bold** or ## headers. Craigslist does not render markdown. Use plain sentences and line breaks only.
-- Emoji overuse rule: if the listing contains 6 or more emoji characters, flag this as a problem under category "text". Title: "Too many emojis hurt credibility". Explain that 6+ emoji reads as dealer-style marketing and reduces buyer trust — private sellers should use 0–2 max. The ✅ checkmark next to negatives (e.g. "✅ Salvage title") is especially damaging: it signals approval of a problem, creating cognitive dissonance. The "after" should be a clean plain-text version of the listing without emoji overuse.
+- Emoji overuse rule: if the listing contains 6 or more emoji characters, flag this as a problem under category "text". Title: "Too many emojis hurt credibility". Explain that 6+ emoji reads as dealer-style marketing and reduces buyer trust — private sellers should use 0–2 max. The ✅ checkmark next to negatives (e.g. "✅ Salvage title") is especially damaging: it signals approval of a problem, creating cognitive dissonance. The "after" should be a clean plain-text version of the listing without emoji overuse, using only confirmed facts from the listing.
 - Financing line rule: if asking_price >= 8000, the "after" field of the problem most related to the description or text MUST end with a financing line on its own line, e.g. "Financing available OAC — est. $X/mo at 7% APR, 60 months." Calculate X using the monthly_payment formula below. This line expands the buyer pool by reframing the price as a monthly number.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
-- Be specific and brutally honest. "Description is thin" is useless. "Your description is 12 words — buyers need at least 8 facts to feel safe contacting you" is useful.`;
+- Be specific with benchmarks, not vague. "Description is thin" is useless. "Your description is 18 words — strong listings typically run 150–250 words and cover mileage, trim, condition, ownership history, and reason for selling" is useful.`;
 
 export async function POST(req: NextRequest) {
   try {
