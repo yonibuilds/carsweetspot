@@ -179,31 +179,26 @@ function DarkSidebar({ result, biggest, also, issuesLeft, onReset }: {
         </button>
       </div>
 
-      {/* Vehicle photo anchor */}
-      {result.listing_image && (
-        <div style={{ marginBottom: 24, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", position: "relative" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={result.listing_image}
-            alt={result.vehicle}
-            style={{ width: "100%", height: 150, objectFit: "cover", display: "block" }}
-          />
-          <div style={{
-            position: "absolute", bottom: 0, left: 0, right: 0,
-            padding: "28px 14px 10px",
-            background: "linear-gradient(to top, rgba(15,23,42,0.92) 0%, transparent 100%)",
-          }}>
-            <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: 0, lineHeight: 1.3 }}>
-              {result.vehicle}
-            </p>
-            {result.asking_price > 0 && (
-              <p style={{ ...B, fontSize: 11, color: "#94A3B8", margin: "2px 0 0" }}>
-                ${result.asking_price.toLocaleString()}
-              </p>
-            )}
+      {/* Vehicle photo card */}
+      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 24, position: "relative", flexShrink: 0 }}>
+        {result.listing_image ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={result.listing_image} alt={result.vehicle} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 14px 10px", background: "linear-gradient(to top, rgba(15,23,42,0.9) 0%, transparent 100%)" }}>
+              <p style={{ ...H, fontSize: 12, fontWeight: 700, color: WHITE, margin: 0, lineHeight: 1.3 }}>{result.vehicle}</p>
+              {result.asking_price > 0 && <p style={{ ...B, fontSize: 11, color: "#94A3B8", margin: "2px 0 0" }}>${result.asking_price.toLocaleString()}</p>}
+            </div>
+          </>
+        ) : (
+          <div style={{ width: "100%", height: "100%", background: "rgba(255,255,255,0.04)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            <p style={{ ...B, fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>No photo uploaded</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginBottom: 36 }}>
         <ScoreRing score={result.overall_score} />
