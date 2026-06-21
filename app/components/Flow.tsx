@@ -357,21 +357,35 @@ function MainContent({ result, fixProblems, onReset }: {
     return next;
   });
 
+  const potentialScore = Math.min(100, result.overall_score + fixProblems.length * 4);
+  const topIssue = fixProblems[0];
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Success banner */}
-      <Card style={{ padding: "16px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ color: SUCCESS, fontSize: 16, fontWeight: 700 }}>✓</span>
+      {/* Analysis summary card */}
+      <Card style={{ padding: "18px 22px", borderLeft: `3px solid ${SUCCESS}` }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
+              <span style={{ color: SUCCESS, fontSize: 13, fontWeight: 700 }}>✓</span>
+              <span style={{ ...B, fontSize: 12, fontWeight: 600, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.06em" }}>Analysis complete</span>
             </div>
-            <div>
-              <p style={{ ...H, fontSize: 15, fontWeight: 700, color: SUCCESS, margin: 0 }}>
-                We found {fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} hurting your contact rate.
+            <p style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY, margin: "0 0 6px" }}>
+              {fixProblems.length} fix{fixProblems.length !== 1 ? "es" : ""} found for this listing
+            </p>
+            {topIssue && (
+              <p style={{ ...B, fontSize: 13, color: NAVY_MUT, margin: 0 }}>
+                Start with: <span style={{ color: NAVY, fontWeight: 600 }}>{topIssue.title}</span>
               </p>
-              <p style={{ ...B, fontSize: 13, color: NAVY_MUT, margin: 0 }}>Fix them to stand out and sell faster.</p>
+            )}
+          </div>
+          <div style={{ textAlign: "right", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end", marginBottom: 2 }}>
+              <span style={{ ...H, fontSize: 22, fontWeight: 700, color: NAVY_MUT }}>{result.overall_score}</span>
+              <span style={{ color: "#94A3B8", fontSize: 14 }}>→</span>
+              <span style={{ ...H, fontSize: 22, fontWeight: 700, color: SUCCESS }}>{potentialScore}</span>
             </div>
+            <p style={{ ...B, fontSize: 11, color: "#94A3B8", margin: 0, textAlign: "right" }}>potential score</p>
           </div>
         </div>
       </Card>
