@@ -254,20 +254,20 @@ export async function POST(req: NextRequest) {
           !/logo|icon|avatar|sprite|pixel|tracking|blank/i.test(src) &&
           !/1x1|spacer/i.test(src);
 
-        const seen = new Set<string>();
-        const listingImgs: string[] = [];
-        const addImg = (src: string) => {
-          if (isListingImage(src) && !seen.has(src)) { seen.add(src); listingImgs.push(src); }
+        const rawImgs: string[] = [];
+        const rawSeen = new Set<string>();
+        const collectImg = (src: string) => {
+          if (isListingImage(src) && !rawSeen.has(src)) { rawSeen.add(src); rawImgs.push(src); }
         };
 
         // Strategy 0: og:image
-        if (ogImg) addImg(ogImg);
+        if (ogImg) collectImg(ogImg);
 
         // Strategy 1: JSON blobs in <script> tags — always run (catches CL gallery, FB arrays)
         const scriptBlobs = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
         for (const blob of scriptBlobs) {
           for (const m of blob.match(/"(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || []) {
-            addImg(m.replace(/^"|"$/g, ""));
+            collectImg(m.replace(/^"|"$/g, ""));
           }
         }
 
@@ -277,19 +277,22 @@ export async function POST(req: NextRequest) {
             ?? tag.match(/\bdata-src="([^"]+)"/i)?.[1]
             ?? tag.match(/\bsrcset="([^"]+)"/i)?.[1]?.split(/[\s,]+/)[0]
             ?? null;
-          if (src) addImg(src);
+          if (src) collectImg(src);
         }
 
         // Strategy 3: <a href> pointing to image files — always run
         for (const m of html.match(/\bhref="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || []) {
           const src = m.match(/href="([^"]+)"/i)?.[1] ?? null;
-          if (src) addImg(src);
+          if (src) collectImg(src);
         }
 
-        // Upgrade Craigslist thumbnail URLs to full-size
-        const upgradedImgs = listingImgs.map(src =>
-          src.replace(/_\d+x\d+c(\.\w+)$/, "_600x450$1")
-        );
+        // Upgrade Craigslist thumbnail URLs to full-size, then deduplicate again after upgrade
+        const upgradedSeen = new Set<string>();
+        const upgradedImgs: string[] = [];
+        for (const src of rawImgs) {
+          const upgraded = src.replace(/_\d+x\d+c(\.\w+)$/, "_600x450$1");
+          if (!upgradedSeen.has(upgraded)) { upgradedSeen.add(upgraded); upgradedImgs.push(upgraded); }
+        }
 
         const photoCount = upgradedImgs.length;
         firstImgSrc = upgradedImgs[0] ?? null;
