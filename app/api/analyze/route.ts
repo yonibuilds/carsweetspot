@@ -254,42 +254,36 @@ export async function POST(req: NextRequest) {
           !/logo|icon|avatar|sprite|pixel|tracking|blank/i.test(src) &&
           !/1x1|spacer/i.test(src);
 
-        const listingImgs: string[] = ogImg && isListingImage(ogImg) ? [ogImg] : [];
+        const seen = new Set<string>();
+        const listingImgs: string[] = [];
+        const addImg = (src: string) => {
+          if (isListingImage(src) && !seen.has(src)) { seen.add(src); listingImgs.push(src); }
+        };
 
-        // Strategy 1: JSON blob in <script> tags
-        if (listingImgs.length === 0) {
-          const scriptBlobs = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
-          for (const blob of scriptBlobs) {
-            const jsonMatches = blob.match(/"(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || [];
-            for (const m of jsonMatches) {
-              const src = m.replace(/^"|"$/g, "");
-              if (isListingImage(src) && !listingImgs.includes(src)) listingImgs.push(src);
-            }
+        // Strategy 0: og:image
+        if (ogImg) addImg(ogImg);
+
+        // Strategy 1: JSON blobs in <script> tags — always run (catches CL gallery, FB arrays)
+        const scriptBlobs = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
+        for (const blob of scriptBlobs) {
+          for (const m of blob.match(/"(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || []) {
+            addImg(m.replace(/^"|"$/g, ""));
           }
         }
 
-        // Strategy 2: <img> tags — src, data-src, srcset
-        if (listingImgs.length === 0) {
-          const allImgTags = html.match(/<img[^>]+>/gi) || [];
-          const extractImgSrc = (tag: string): string | null => {
-            return tag.match(/\bsrc="([^"]+)"/i)?.[1]
-              ?? tag.match(/\bdata-src="([^"]+)"/i)?.[1]
-              ?? tag.match(/\bsrcset="([^"]+)"/i)?.[1]?.split(/[\s,]+/)[0]
-              ?? null;
-          };
-          for (const tag of allImgTags) {
-            const src = extractImgSrc(tag);
-            if (src && isListingImage(src) && !listingImgs.includes(src)) listingImgs.push(src);
-          }
+        // Strategy 2: <img> tags — src, data-src, srcset — always run
+        for (const tag of html.match(/<img[^>]+>/gi) || []) {
+          const src = tag.match(/\bsrc="([^"]+)"/i)?.[1]
+            ?? tag.match(/\bdata-src="([^"]+)"/i)?.[1]
+            ?? tag.match(/\bsrcset="([^"]+)"/i)?.[1]?.split(/[\s,]+/)[0]
+            ?? null;
+          if (src) addImg(src);
         }
 
-        // Strategy 3: <a href> pointing to image files
-        if (listingImgs.length === 0) {
-          const anchors = html.match(/\bhref="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || [];
-          for (const m of anchors) {
-            const src = m.match(/href="([^"]+)"/i)?.[1] ?? null;
-            if (src && isListingImage(src) && !listingImgs.includes(src)) listingImgs.push(src);
-          }
+        // Strategy 3: <a href> pointing to image files — always run
+        for (const m of html.match(/\bhref="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || []) {
+          const src = m.match(/href="([^"]+)"/i)?.[1] ?? null;
+          if (src) addImg(src);
         }
 
         // Upgrade Craigslist thumbnail URLs to full-size
