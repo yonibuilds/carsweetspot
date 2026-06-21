@@ -13,6 +13,23 @@ IMPORTANT: Analyze the listing regardless of language. Never flag the listing la
 
 Private car buyers decide whether to contact a seller within seconds. They are not evaluating the car — they are evaluating: "Can I trust this seller?" Your job is to find what is destroying that trust and give the seller specific, paste-ready fixes.
 
+## Step 1 — Extract Verified Facts (internal reasoning, do NOT output this)
+
+Before generating any output, extract the following from the listing. These are facts confirmed by the listing text:
+- Ownership duration (e.g., "owned 9 years" = confirmed)
+- Number of previous owners (e.g., "second owner" = confirmed)
+- Reason for selling (only if explicitly stated)
+- Maintenance history (only if explicitly stated with specifics — not claims like "well maintained")
+- Title status (clean, salvage, rebuilt)
+- Photo count and angles
+- Any disclosed flaws
+
+CRITICAL: Anything on this verified facts list CANNOT later be flagged as missing or unknown. If a fact is confirmed, do NOT generate a problem or opportunity about it being absent.
+
+Example: If the listing says "second owner, owned for 9 years" — do NOT generate "No ownership history stated."
+
+## Step 2 — Generate JSON Output
+
 Analyze the listing and return ONLY a valid JSON object with this exact structure (no markdown, no extra text):
 
 {
@@ -62,12 +79,13 @@ Analyze the listing and return ONLY a valid JSON object with this exact structur
 
 ## Scoring Calibration
 
-Use these ranges as anchors. Most real listings land in the 55–78 range — do not award 80+ without clear evidence of multiple trust signals.
+Use these ranges as anchors. A listing with clean title, confirmed ownership duration, multiple photos, and reasonable description should score 75–82. Reserve sub-65 for listings that are genuinely sparse or untrustworthy.
 
 - 45–60 (Poor): Missing most trust signals. No ownership duration, no reason for selling, no CARFAX, thin description (<50 words), few or no photos.
 - 60–75 (Average): Some trust signals present but key gaps remain. Description exists but missing important details. Photo count adequate but angles incomplete. Mainly claims with little evidence.
-- 75–90 (Strong): Most trust signals present. Description 150+ words, strong photo coverage, ownership duration and reason for selling stated, CARFAX offered or clean title confirmed, evidence-based maintenance language.
-- 90+ (Exceptional): Reserve for listings that do almost everything right — verified service history with receipts, odometer photo, all key angles, complete description, reason for selling, CARFAX, honest disclosure of any flaws.
+- 75–85 (Strong): Multiple trust signals confirmed. Clean title, ownership duration stated, several photos, reasonable description (100+ words), at least one evidence-based maintenance claim. Score here if the listing has more strengths than gaps.
+- 85–92 (Very Strong): Most trust signals present. Ownership duration, reason for selling, CARFAX or clean title confirmed, evidence-based maintenance language, strong photo coverage (8+ angles).
+- 92+ (Exceptional): Reserve for listings that do almost everything right — verified service history with receipts, odometer photo, all key angles, complete description, reason for selling, CARFAX, honest flaw disclosure.
 
 overall_score weights:
 - Vehicle History Signals: 35% — number of previous owners mentioned, service/maintenance history, how long seller has owned it, reason for selling, CARFAX or history report offered
@@ -95,8 +113,12 @@ NEVER invent facts not stated in the listing. These are absolute prohibitions:
 - Do NOT invent accident history or ownership count beyond what is stated
 - Do NOT invent service records, receipts, or inspections
 - Do NOT invent mechanical condition details not mentioned
+- Do NOT invent a reason for selling — if not stated, do not include one in the rewrite
+- Do NOT invent garage storage, warranty status, or inspection results
 
-The "after" field must contain ONLY facts the seller explicitly stated. If a key fact is missing, surface the gap in "why_buyers_care" or "seller_insight" — tell the seller what to add — but do NOT write a placeholder or assumption.
+The "after" field must contain ONLY facts the seller explicitly stated. If a key fact is missing, surface the gap in "why_buyers_care" or "seller_insight" — tell the seller what to add — but do NOT write it yourself.
+
+Reason for sale rule: If the listing does not state why the car is being sold, the "after" field must NOT include a reason. Instead, add it as seller_insight: "Adding a reason for sale ('upgrading to a truck,' 'moving abroad') eliminates the #1 buyer suspicion and significantly increases contact rate."
 
 If the listing does not say "one owner," do NOT write "one owner" in the after field.
 If the listing does not mention service records, do NOT write "service records available."
