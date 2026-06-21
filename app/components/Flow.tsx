@@ -192,12 +192,26 @@ function LeftSidebar({ result, fixProblems, onReset }: {
   const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
   const [copied, setCopied] = useState(false);
 
-  const S = {
-    muted:   "#64748B" as const,
-    dim:     "rgba(255,255,255,0.08)" as const,
-    dimBor:  "rgba(255,255,255,0.1)" as const,
-    label:   { ...B, fontSize: 11, fontWeight: 600 as const, color: "#64748B", textTransform: "uppercase" as const, letterSpacing: "0.07em" },
+  const muted   = "#64748B";
+  const dimBor  = "rgba(255,255,255,0.09)";
+  const lbl: React.CSSProperties = { ...B, fontSize: 10, fontWeight: 600, color: muted, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" };
+
+  // Score breakdown per category
+  const catColors: Record<string, { fill: string; bg: string }> = {
+    ok:     { fill: "#22C55E", bg: "rgba(34,197,94,0.15)" },
+    medium: { fill: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
+    bad:    { fill: "#EF4444", bg: "rgba(239,68,68,0.15)" },
   };
+  function catLevel(cat: string) {
+    if (result.biggest_problem?.category === cat) return "bad";
+    if (result.also_hurting?.some(p => p?.category === cat)) return "medium";
+    return "ok";
+  }
+  const breakdown = (["trust", "text", "photos"] as const).map(c => ({
+    label: c === "trust" ? "Trust" : c === "text" ? "Text" : "Photos",
+    level: catLevel(c),
+    score: catLevel(c) === "bad" ? 38 : catLevel(c) === "medium" ? 62 : 91,
+  }));
 
   const copyFinancing = () => {
     const t = calcMo > 0
@@ -209,107 +223,118 @@ function LeftSidebar({ result, fixProblems, onReset }: {
   };
 
   return (
-    <div style={{ background: NAVY, borderRadius: 20, padding: "24px 20px", display: "flex", flexDirection: "column", gap: 0 }}>
+    <div style={{ background: NAVY, borderRadius: 18, padding: "20px 18px", display: "flex", flexDirection: "column" }}>
       {/* Logo + back */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <span style={{ ...H, fontSize: 15, fontWeight: 700, color: WHITE }}>CarSweetSpot</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <span style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE }}>CarSweetSpot</span>
         <button onClick={onReset} style={{
-          ...B, fontSize: 12, color: S.muted, background: S.dim, border: `1px solid ${S.dimBor}`,
-          borderRadius: 8, padding: "5px 10px", cursor: "pointer",
-        }}>
-          ← Back
-        </button>
+          ...B, fontSize: 11, color: muted, background: "rgba(255,255,255,0.07)", border: `1px solid ${dimBor}`,
+          borderRadius: 7, padding: "4px 9px", cursor: "pointer",
+        }}>← Back</button>
       </div>
 
       {/* Vehicle photo */}
-      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 12, overflow: "hidden", border: `1px solid ${S.dimBor}`, marginBottom: 24, background: "rgba(255,255,255,0.04)", position: "relative", flexShrink: 0 }}>
+      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 10, overflow: "hidden", border: `1px solid ${dimBor}`, marginBottom: 18, background: "rgba(255,255,255,0.04)", position: "relative", flexShrink: 0 }}>
         {result.listing_image ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={result.listing_image} alt={result.vehicle} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 12px 10px", background: "linear-gradient(to top, rgba(15,23,42,0.9), transparent)" }}>
-              <p style={{ ...H, fontSize: 12, fontWeight: 600, color: WHITE, margin: 0, lineHeight: 1.3 }}>{result.vehicle}</p>
-              {result.asking_price > 0 && <p style={{ ...B, fontSize: 11, color: S.muted, margin: "2px 0 0" }}>${result.asking_price.toLocaleString()}</p>}
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "18px 12px 9px", background: "linear-gradient(to top, rgba(15,23,42,0.92), transparent)" }}>
+              <p style={{ ...H, fontSize: 11, fontWeight: 600, color: WHITE, margin: 0, lineHeight: 1.3 }}>{result.vehicle}</p>
+              {result.asking_price > 0 && <p style={{ ...B, fontSize: 10, color: muted, margin: "2px 0 0" }}>${result.asking_price.toLocaleString()}</p>}
             </div>
           </>
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
             </svg>
-            <p style={{ ...B, fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>No photo</p>
-            <p style={{ ...H, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", margin: 0, textAlign: "center", padding: "0 8px" }}>{result.vehicle}</p>
-            {result.asking_price > 0 && <p style={{ ...B, fontSize: 11, color: S.muted, margin: 0 }}>${result.asking_price.toLocaleString()}</p>}
+            <p style={{ ...H, fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", margin: 0, textAlign: "center", padding: "0 8px" }}>{result.vehicle}</p>
+            {result.asking_price > 0 && <p style={{ ...B, fontSize: 10, color: muted, margin: 0 }}>${result.asking_price.toLocaleString()}</p>}
           </div>
         )}
       </div>
 
-      {/* Score section */}
-      <p style={{ ...S.label, margin: "0 0 14px" }}>Sweet Spot Score</p>
-      <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
+      {/* Score */}
+      <p style={lbl}>Sweet Spot Score</p>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
         <ScoreRingDark score={result.overall_score} />
         <div>
-          <div style={{ display: "inline-block", background: badge.bg, color: badge.color, fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "4px 12px", marginBottom: 8 }}>
+          <div style={{ display: "inline-block", background: badge.bg, color: badge.color, fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px", marginBottom: 6 }}>
             {badge.label}
           </div>
-          <p style={{ ...B, fontSize: 12, color: S.muted, margin: 0, lineHeight: 1.5 }}>
-            Strong listings<br />typically score 75+.
-          </p>
+          <p style={{ ...B, fontSize: 11, color: muted, margin: 0, lineHeight: 1.5 }}>Strong listings<br />typically score 75+.</p>
         </div>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: S.dimBor, margin: "0 0 18px" }} />
+      {/* Score breakdown */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 16 }}>
+        {breakdown.map(({ label, level, score }) => {
+          const c = catColors[level];
+          return (
+            <div key={label}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ ...B, fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{label}</span>
+                <span style={{ ...B, fontSize: 11, color: c.fill }}>{score}%</span>
+              </div>
+              <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${score}%`, background: c.fill, borderRadius: 2, transition: "width 1s ease-out" }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ height: 1, background: dimBor, margin: "0 0 14px" }} />
 
       {/* Potential score */}
-      <p style={{ ...S.label, margin: "0 0 8px" }}>Potential Score</p>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
-        <span style={{ ...H, fontSize: 30, fontWeight: 700, color: WHITE }}>{potentialScore}</span>
-        <span style={{ fontSize: 16, color: "#4ADE80" }}>↑</span>
+      <p style={lbl}>Potential Score</p>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 3 }}>
+        <span style={{ ...H, fontSize: 26, fontWeight: 700, color: WHITE }}>{potentialScore}</span>
+        <span style={{ fontSize: 14, color: "#4ADE80" }}>↑</span>
       </div>
-      <p style={{ ...B, fontSize: 12, fontWeight: 600, color: "#4ADE80", margin: "0 0 4px" }}>+{pointsGain} points available</p>
-      <p style={{ ...B, fontSize: 11, color: S.muted, margin: "0 0 20px", lineHeight: 1.5 }}>Fix the issues below to increase your score.</p>
+      <p style={{ ...B, fontSize: 11, fontWeight: 600, color: "#4ADE80", margin: "0 0 3px" }}>+{pointsGain} points available</p>
+      <p style={{ ...B, fontSize: 11, color: muted, margin: "0 0 14px", lineHeight: 1.5 }}>Fix the issues below to increase your score.</p>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: S.dimBor, margin: "0 0 18px" }} />
+      <div style={{ height: 1, background: dimBor, margin: "0 0 14px" }} />
 
       {/* Monthly payment */}
       {calcMo > 0 && (
         <>
-          <p style={{ ...S.label, margin: "0 0 8px" }}>Estimated Monthly Payment</p>
-          <p style={{ ...H, fontSize: 26, fontWeight: 700, color: "#60A5FA", margin: "0 0 6px" }}>
-            ${calcMo}<span style={{ fontSize: 13, fontWeight: 400, color: S.muted }}>/mo est.</span>
+          <p style={lbl}>Estimated Monthly Payment</p>
+          <p style={{ ...H, fontSize: 24, fontWeight: 700, color: "#60A5FA", margin: "0 0 5px" }}>
+            ${calcMo}<span style={{ fontSize: 12, fontWeight: 400, color: muted }}>/mo est.</span>
           </p>
-          <p style={{ ...B, fontSize: 11, color: S.muted, margin: "0 0 12px", lineHeight: 1.5 }}>
+          <p style={{ ...B, fontSize: 11, color: muted, margin: "0 0 10px", lineHeight: 1.5 }}>
             Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
           </p>
           <button onClick={copyFinancing} style={{
-            width: "100%", background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.3)`,
-            borderRadius: 10, padding: "9px 12px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20,
+            width: "100%", background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.28)`,
+            borderRadius: 9, padding: "8px 11px", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14,
           }}>
             <span style={{ fontFamily: "monospace", fontSize: 11, color: "#93C5FD", lineHeight: 1.5, textAlign: "left" }}>
               Financing available OAC — est. ${calcMo}/mo
             </span>
-            <span style={{ ...B, fontSize: 11, color: "#60A5FA", marginLeft: 8, whiteSpace: "nowrap", fontWeight: 600 }}>
+            <span style={{ ...B, fontSize: 10, color: "#60A5FA", marginLeft: 8, whiteSpace: "nowrap", fontWeight: 600 }}>
               {copied ? "✓" : "Copy"}
             </span>
           </button>
-          <div style={{ height: 1, background: S.dimBor, margin: "0 0 18px" }} />
+          <div style={{ height: 1, background: dimBor, margin: "0 0 14px" }} />
         </>
       )}
 
       {/* Data points */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-        <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.25)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.22)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
         </div>
         <div>
-          <p style={{ ...H, fontSize: 12, fontWeight: 600, color: "#60A5FA", margin: "0 0 3px" }}>Your score is based on 30+ data points</p>
-          <p style={{ ...B, fontSize: 11, color: S.muted, margin: 0, lineHeight: 1.5 }}>
-            We benchmark your listing against thousands of strong private-party listings.
+          <p style={{ ...H, fontSize: 11, fontWeight: 600, color: "#60A5FA", margin: "0 0 2px" }}>Score based on 30+ data points</p>
+          <p style={{ ...B, fontSize: 10, color: muted, margin: 0, lineHeight: 1.5 }}>
+            Benchmarked against thousands of strong private-party listings.
           </p>
         </div>
       </div>

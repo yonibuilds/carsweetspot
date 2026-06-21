@@ -124,7 +124,9 @@ If the listing does not say "one owner," do NOT write "one owner" in the after f
 If the listing does not mention service records, do NOT write "service records available."
 If the listing does not mention garage storage, do NOT write "garage kept."
 
-Missing information belongs in the diagnosis, not the prescription.
+No questions in the "after" field: the "after" field is copy-ready text the seller can paste directly. Never write questions inside it ("How long have you owned it?" / "Any service records?"). Questions and suggestions belong only in "seller_insight". The after field should be a clean rewrite of what the seller CAN say now — nothing more.
+
+Missing information belongs in the diagnosis (seller_insight), not the prescription (after).
 
 ## Photo Analysis Rules (apply ONLY when actual images are provided)
 
@@ -191,7 +193,8 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 - Emoji overuse rule: if the listing contains 6 or more emoji characters, flag this as a problem under category "text". Title: "Too many emojis hurt credibility". Explain that 6+ emoji reads as dealer-style marketing and reduces buyer trust — private sellers should use 0–2 max. The ✅ checkmark next to negatives (e.g. "✅ Salvage title") is especially damaging: it signals approval of a problem, creating cognitive dissonance. The "after" should be a clean plain-text version of the listing without emoji overuse, using only confirmed facts from the listing.
 - Financing line rule: if asking_price >= 8000, the "after" field of the problem most related to the description or text MUST end with a financing line on its own line, e.g. "Financing available OAC — est. $X/mo at 7% APR, 60 months." Calculate X using the monthly_payment formula below. This line expands the buyer pool by reframing the price as a monthly number.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
-- Be specific with benchmarks, not vague. "Description is thin" is useless. "Your description is 18 words — strong listings typically run 150–250 words and cover mileage, trim, condition, ownership history, and reason for selling" is useful.`;
+- Use benchmark language, not emotional language. Never write "kills buyer trust," "destroys credibility," "red flag," or similar charged phrases. Instead, use neutral, data-driven framing: "At 18 words, this description is well below the 150–250 word range typical of listings that generate strong contact rates." / "Listings with 4 or fewer photos receive 40% fewer inquiries on average." / "42% of listings contain spelling errors — buyers consistently cite this as a signal of how a seller cares for their car."
+- Be specific with counts and benchmarks, not vague. "Description is thin" is useless. "18 words vs. the 150–250 range typical of high-contact listings" is useful. Always include the actual number from the listing alongside the benchmark.`;
 
 export async function POST(req: NextRequest) {
   try {
