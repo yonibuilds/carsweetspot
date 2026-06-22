@@ -141,6 +141,61 @@ function ScoreRingDark({ score }: { score: number }) {
   );
 }
 
+// ── Buyer Reach card ──────────────────────────────────────────────
+function BuyerReachCard({ askingPrice, calcMo, isMobile }: { askingPrice: number; calcMo: number; isMobile?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const line = `Estimated buyer payment around $${calcMo}/mo for qualified buyers. OAC.`;
+  const copy = () => { navigator.clipboard.writeText(line); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  return (
+    <Card style={{ overflow: "hidden" }}>
+      <div onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", cursor: "pointer", background: WHITE, borderBottom: open ? `1px solid ${BORDER}` : "none" }}>
+        <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <span style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND }}>$</span>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>Buyer Reach</p>
+          <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Buyer affordability / market potential</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <span style={{ ...B, fontSize: 11, fontWeight: 600, color: BRAND, background: "#EFF6FF", borderRadius: 20, padding: "3px 10px" }}>Opportunity</span>
+          <span style={{ fontSize: 11, color: NAVY_MUT, transform: open ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+        </div>
+      </div>
+      {open && (
+        <div style={{ padding: "20px 20px 16px", background: PAGE_BG }}>
+          <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: "0 0 16px", lineHeight: 1.6 }}>
+            Many buyers compare cars by monthly payment, not total price. Showing an estimated payment helps more buyers see this listing as affordable.
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+            <div style={{ flex: 1, minWidth: 120, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px" }}>
+              <p style={{ ...B, fontSize: 10, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Asking Price</p>
+              <p style={{ ...H, fontSize: 20, fontWeight: 700, color: NAVY, margin: 0 }}>${askingPrice.toLocaleString()}</p>
+            </div>
+            <div style={{ flex: 1, minWidth: 120, background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 10, padding: "12px 16px" }}>
+              <p style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Est. Buyer Payment</p>
+              <p style={{ ...H, fontSize: 20, fontWeight: 700, color: BRAND, margin: "0 0 2px" }}>${calcMo}<span style={{ ...B, fontSize: 12, fontWeight: 400, color: NAVY_MUT }}>/mo</span></p>
+              <p style={{ ...B, fontSize: 10, color: NAVY_MUT, margin: 0 }}>OAC · estimate only</p>
+            </div>
+          </div>
+          <p style={{ ...B, fontSize: 11, color: NAVY_MUT, margin: "0 0 8px" }}>Copy-safe line to add to your listing:</p>
+          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: 12 }}>
+            <p style={{ ...B, fontSize: 13, color: NAVY, margin: 0, lineHeight: 1.5, flex: 1 }}>
+              &quot;{line}&quot;
+            </p>
+            <button onClick={copy} style={{ ...B, fontSize: 11, fontWeight: 600, cursor: "pointer", background: copied ? SUCCESS : WHITE, color: copied ? WHITE : BRAND, border: `1px solid ${copied ? SUCCESS : BRAND}`, borderRadius: 6, padding: "5px 12px", whiteSpace: "nowrap", transition: "all 0.2s", flexShrink: 0 }}>
+              {copied ? "✓ Copied" : "Copy"}
+            </button>
+          </div>
+          <p style={{ ...B, fontSize: 11, color: "#94A3B8", margin: "10px 0 0", lineHeight: 1.5 }}>
+            Based on 7% APR, 60-month term. For buyer reference only — this does not mean the seller offers financing.
+          </p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 // ── Before / After ────────────────────────────────────────────────
 function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -360,9 +415,10 @@ function LeftSidebar({ result, fixProblems, onReset }: {
 function MainContent({ result, fixProblems, onReset, isMobile }: {
   result: AnalysisResult; fixProblems: Problem[]; onReset: () => void; isMobile?: boolean;
 }) {
-  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
-  const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
+  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set([0]));
+  const [showWhy, setShowWhy] = useState<Record<number, boolean>>({ 0: true });
   const [showWorking, setShowWorking] = useState(true);
+  const [showSuggested, setShowSuggested] = useState(false);
   const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
 
   const toggle = (idx: number) => setExpandedSet(prev => {
@@ -371,8 +427,10 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
     return next;
   });
 
-  const potentialScore = Math.min(100, result.overall_score + fixProblems.length * 4);
+  const quickFixScore = Math.min(100, result.overall_score + fixProblems.length * 4);
   const topIssue = fixProblems[0];
+  const totalImprovements = fixProblems.length + (calcMo > 0 ? 1 : 0);
+  const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -393,13 +451,19 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
               </p>
             )}
           </div>
-          <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end", marginBottom: 2 }}>
+          <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+            <div>
               <span style={{ ...H, fontSize: 22, fontWeight: 700, color: NAVY_MUT }}>{result.overall_score}</span>
-              <span style={{ color: "#94A3B8", fontSize: 14 }}>→</span>
-              <span style={{ ...H, fontSize: 22, fontWeight: 700, color: SUCCESS }}>{potentialScore}</span>
+              <span style={{ ...B, fontSize: 11, color: "#94A3B8", marginLeft: 4 }}>now</span>
             </div>
-            <p style={{ ...B, fontSize: 11, color: "#94A3B8", margin: 0, textAlign: "right" }}>potential score</p>
+            <div>
+              <span style={{ ...H, fontSize: 18, fontWeight: 700, color: SUCCESS }}>{quickFixScore}</span>
+              <span style={{ ...B, fontSize: 11, color: SUCCESS, marginLeft: 4 }}>quick fixes</span>
+            </div>
+            <div>
+              <span style={{ ...H, fontSize: 16, fontWeight: 700, color: BRAND }}>90+</span>
+              <span style={{ ...B, fontSize: 11, color: BRAND, marginLeft: 4 }}>with added details</span>
+            </div>
           </div>
         </div>
       </Card>
@@ -437,15 +501,10 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
       )}
 
       {/* Issues header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 22, height: 22, borderRadius: "50%", background: DANG_SOFT, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: DANGER, fontSize: 12, fontWeight: 700 }}>!</span>
-          </div>
-          <span style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY }}>{fixProblems.length} Issues to Fix</span>
-        </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <span style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY }}>{totalImprovements} Ways to Improve This Listing</span>
         <span style={{ ...B, fontSize: 12, color: NAVY_MUT }}>
-          Fix all {fixProblems.length} to reach a <strong style={{ color: SUCCESS }}>Strong</strong> score
+          Fix all to reach a <strong style={{ color: SUCCESS }}>Strong</strong> score
         </span>
       </div>
 
@@ -483,24 +542,46 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
 
               {isOpen && prob && (
                 <div style={{ padding: "20px 20px 16px", background: PAGE_BG }}>
-                  <BeforeAfterGrid problem={prob} isMobile={isMobile} />
-
-                  <button
-                    onClick={() => setShowWhy(w => ({ ...w, [idx]: !w[idx] }))}
-                    style={{ background: "none", border: "none", cursor: "pointer", padding: "10px 0", display: "flex", alignItems: "center", gap: 6 }}
-                  >
-                    <span style={{ fontSize: 12, color: "#9CA3AF" }}>ⓘ</span>
-                    <span style={{ ...B, fontSize: 12, color: NAVY_MUT, borderBottom: "1px dashed #D1D5DB" }}>Why does this matter?</span>
-                    <span style={{ fontSize: 10, color: "#9CA3AF", transform: showWhy[idx] ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
-                  </button>
-
-                  {showWhy[idx] && (
-                    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px", marginBottom: 8 }}>
+                  {/* why_buyers_care: always visible for first issue, toggleable for rest */}
+                  {idx === 0 ? (
+                    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
                       <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: 0, lineHeight: 1.6 }}>{prob.why_buyers_care}</p>
                       {prob.seller_insight && (
                         <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "8px 0 0", lineHeight: 1.5, fontStyle: "italic" }}>{prob.seller_insight}</p>
                       )}
                     </div>
+                  ) : null}
+
+                  {/* Word count badge for text issues */}
+                  {prob.category === "text" && prob.before && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                      <span style={{ ...B, fontSize: 11, color: NAVY_MUT }}>Current description:</span>
+                      <span style={{ ...B, fontSize: 11, fontWeight: 700, color: DANGER, background: DANG_SOFT, borderRadius: 6, padding: "2px 8px" }}>~{wordCount(prob.before)} words</span>
+                      <span style={{ ...B, fontSize: 11, color: NAVY_MUT }}>Strong listings: 150–250 words</span>
+                    </div>
+                  )}
+
+                  <BeforeAfterGrid problem={prob} isMobile={isMobile} />
+
+                  {idx > 0 && (
+                    <>
+                      <button
+                        onClick={() => setShowWhy(w => ({ ...w, [idx]: !w[idx] }))}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: "10px 0", display: "flex", alignItems: "center", gap: 6 }}
+                      >
+                        <span style={{ fontSize: 12, color: "#9CA3AF" }}>ⓘ</span>
+                        <span style={{ ...B, fontSize: 12, color: NAVY_MUT, borderBottom: "1px dashed #D1D5DB" }}>Why does this matter?</span>
+                        <span style={{ fontSize: 10, color: "#9CA3AF", transform: showWhy[idx] ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
+                      </button>
+                      {showWhy[idx] && (
+                        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px", marginBottom: 8 }}>
+                          <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: 0, lineHeight: 1.6 }}>{prob.why_buyers_care}</p>
+                          {prob.seller_insight && (
+                            <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "8px 0 0", lineHeight: 1.5, fontStyle: "italic" }}>{prob.seller_insight}</p>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {calcMo > 0 && idx === 0 && (
@@ -523,20 +604,32 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
         })}
       </div>
 
-      {/* Suggested additions */}
+      {/* Buyer Reach card */}
+      {calcMo > 0 && <BuyerReachCard askingPrice={result.asking_price} calcMo={calcMo} isMobile={isMobile} />}
+
+      {/* Add details to reach 90+ */}
       {result.suggested_additions && result.suggested_additions.length > 0 && (
-        <Card style={{ padding: "18px 20px" }}>
-          <p style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>
-            Optional additions
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {result.suggested_additions.map((tip, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <span style={{ color: BRAND, fontSize: 12, marginTop: 1, flexShrink: 0 }}>→</span>
-                <span style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.5 }}>{tip}</span>
-              </div>
-            ))}
+        <Card style={{ overflow: "hidden" }}>
+          <div
+            onClick={() => setShowSuggested(s => !s)}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", cursor: "pointer", background: showSuggested ? "#F8FAFC" : WHITE, borderBottom: showSuggested ? `1px solid ${BORDER}` : "none" }}
+          >
+            <div>
+              <p style={{ ...H, fontSize: 14, fontWeight: 700, color: BRAND, margin: "0 0 2px" }}>Add a few details to reach 90+</p>
+              <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: 0 }}>{result.suggested_additions.length} high-impact details buyers want to see</p>
+            </div>
+            <span style={{ fontSize: 11, color: NAVY_MUT, transform: showSuggested ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
           </div>
+          {showSuggested && (
+            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {result.suggested_additions.map((tip, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <span style={{ ...B, fontSize: 13, fontWeight: 700, color: BRAND, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+                  <span style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.6 }}>{tip}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       )}
 
