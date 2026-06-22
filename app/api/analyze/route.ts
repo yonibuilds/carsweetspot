@@ -250,8 +250,9 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 - Language: Never flag vague tone, writing style, or language choice as a problem. Only flag specific detectable issues: keyword spam (3+ competitor brand names listed without context), excessive emojis (6+), all-caps sections, spelling errors, grammar errors, wall-of-text formatting, or clearly aggressive wording.
 - Phone numbers written as words or letter-number combos (e.g. "48Zer. 78Eight -799Seven") are standard Craigslist anti-spam practice. NEVER flag this as a problem.
 - Plain text only in "after" field: do NOT use markdown formatting like **bold** or ## headers. Craigslist does not render markdown. Use plain sentences and line breaks only.
+- "after" must be copy-ready text the seller can paste directly. NEVER include: "Example:", example sentences, placeholders in brackets, questions directed at the seller, invented facts, or suggested facts the seller hasn't confirmed. If information is missing (ownership duration, reason for selling, etc.), leave it out of "after" entirely — put a coaching tip in suggested_additions instead.
 - Emoji overuse rule: if the listing contains 6 or more emoji characters, flag this as a problem under category "text". Title: "Too many emojis hurt credibility". Explain that 6+ emoji reads as dealer-style marketing and reduces buyer trust — private sellers should use 0–2 max. The ✅ checkmark next to negatives (e.g. "✅ Salvage title") is especially damaging: it signals approval of a problem, creating cognitive dissonance. The "after" should be a clean plain-text version of the listing without emoji overuse, using only confirmed facts from the listing.
-- Financing line rule: if asking_price >= 8000, the "after" field of the problem most related to the description or text MUST end with a financing line on its own line. Use: "Financing available OAC — est. $X/mo at 7% APR, 60 months." Calculate X using the monthly_payment formula. This is presented as an estimated buyer payment — do NOT phrase it as if the seller personally offers financing. Never write "I offer financing" or "seller financing available."
+- Financing: never mention financing, monthly payments, or buyer affordability in any "after" field. This belongs in a separate UI section and must not appear in issue copy.
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
 - Mileage per year rule: if a [MILEAGE RATE] note is provided, use it. Flag >20,000 miles/year as high usage, >30,000 miles/year as extreme usage. Use benchmark language: "At X miles/year, this vehicle was driven significantly above the 12,000–15,000 mile annual average. Buyers will likely ask about the nature of that use." Never say "highway miles" or explain the mileage cause unless the seller stated it.
 - PPV / Fleet / Commercial use: if the listing mentions PPV, police package, fleet, rental, taxi, commercial, or government use — flag as context-needed if the use history is not explained. Generate an issue only if unexplained. If explained clearly, treat as opportunity. Never invent the vehicle's history.
@@ -597,17 +598,24 @@ export async function POST(req: NextRequest) {
     // Expose photo count for UI bar calibration
     result.photo_count = parserPhotoCount;
 
-    // Post-processing: financing lines belong only in non-trust issues
-    // Strip from trust issues; fix amount in all others
-    if (result.monthly_payment) {
-      const mo = result.monthly_payment;
-      const stripFinancing = (text: string): string =>
-        text.split('\n').filter(l => !/financing available|est\.\s*\$[\d,]+\/mo/i.test(l)).join('\n').trim();
-      const fixFinancing = (text: string): string =>
-        text.replace(/est\.\s*\$[\d,]+\/mo\b[^.]*/gi, `est. $${mo}/mo at 7% APR, 60 months`);
-      const processIssue = (issue: { after?: string; category?: string } | null) => {
+    // Post-processing: strip financing and unsafe content from all issue after fields
+    {
+      const cleanAfterCopy = (text: string): string => {
+        const lines = text.split('\n');
+        const filtered = lines.filter(l => {
+          // Remove financing / monthly payment lines
+          if (/financing available|est\.\s*\$[\d,]+\/mo|\$\d+\/mo/i.test(l)) return false;
+          // Remove "Example:" lines
+          if (/^\s*[\*\-]?\s*example:/i.test(l)) return false;
+          // Remove lines that are questions directed at the seller
+          if (/^\s*[\*\-]?\s*(do you|did you|have you|are you|when did|how long|why are you)/i.test(l)) return false;
+          return true;
+        });
+        return filtered.join('\n').trim();
+      };
+      const processIssue = (issue: { after?: string } | null) => {
         if (!issue?.after) return;
-        issue.after = issue.category === "trust" ? stripFinancing(issue.after) : fixFinancing(issue.after);
+        issue.after = cleanAfterCopy(issue.after);
       };
       processIssue(result.biggest_problem);
       for (const issue of result.also_hurting ?? []) processIssue(issue);
