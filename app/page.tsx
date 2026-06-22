@@ -127,7 +127,15 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     window.history.replaceState({ home: true }, "");
@@ -219,7 +227,7 @@ export default function Home() {
         position: "sticky", top: 0, zIndex: 50, background: NAVY,
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 60px", height: 58,
+        padding: isDesktop ? "0 60px" : "0 16px", height: 58,
       }}>
         <span style={{ ...H, fontSize: 16, fontWeight: 800, letterSpacing: "-0.02em" }}>
           <span style={{ color: WHITE }}>Car</span><span style={{ color: BRAND }}>SweetSpot</span>
@@ -228,7 +236,7 @@ export default function Home() {
       </nav>
 
       {/* ── HERO ── */}
-      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "72px 60px 0", display: "grid", gridTemplateColumns: "42% 58%", gap: 0, alignItems: "center", minHeight: "calc(100vh - 58px - 120px)" }}>
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: isDesktop ? "72px 60px 0" : "36px 16px 32px", display: "grid", gridTemplateColumns: isDesktop ? "42% 58%" : "1fr", gap: 0, alignItems: "center", minHeight: isDesktop ? "calc(100vh - 58px - 120px)" : undefined }}>
 
         {/* LEFT — 42% */}
         <div style={{ maxWidth: 520, display: "flex", flexDirection: "column", gap: 0 }}>
@@ -245,7 +253,7 @@ export default function Home() {
           </div>
 
           {/* Headline */}
-          <h1 style={{ ...H, fontSize: 56, fontWeight: 800, lineHeight: 1.04, letterSpacing: "-0.04em", margin: "0 0 20px" }}>
+          <h1 style={{ ...H, fontSize: isDesktop ? 56 : 38, fontWeight: 800, lineHeight: 1.04, letterSpacing: "-0.04em", margin: "0 0 20px" }}>
             <span style={{ color: WHITE }}>Why isn&apos;t your car </span>
             <span style={{ color: BRAND }}>getting calls?</span>
           </h1>
@@ -363,8 +371,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* RIGHT — 58% — BEFORE / AFTER */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", paddingLeft: 40, position: "relative" }}>
+        {/* RIGHT — 58% — BEFORE / AFTER (desktop only) */}
+        <div style={{ display: isDesktop ? "flex" : "none", alignItems: "center", justifyContent: "flex-end", paddingLeft: 40, position: "relative" }}>
           {/* Glow */}
           <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: `radial-gradient(ellipse, ${BRAND}18 0%, transparent 70%)`, filter: "blur(80px)", pointerEvents: "none" }} />
 
@@ -448,11 +456,12 @@ export default function Home() {
       </div>
 
       {/* ── BOTTOM FEATURE BAR ── */}
-      <div style={{ maxWidth: 1440, margin: "48px auto 52px", padding: "0 60px" }}>
+      <div style={{ maxWidth: 1440, margin: "48px auto 52px", padding: isDesktop ? "0 60px" : "0 16px" }}>
         <div style={{
           maxWidth: 1050, margin: "0 auto",
-          background: WHITE, borderRadius: 16, padding: "22px 36px",
-          display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
+          background: WHITE, borderRadius: 16, padding: isDesktop ? "22px 36px" : "20px 20px",
+          display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)",
+          gap: isDesktop ? 0 : 20,
           boxShadow: "0 2px 20px rgba(0,0,0,0.08)",
         }}>
           {[
@@ -498,8 +507,8 @@ export default function Home() {
           ].map((f, i) => (
             <div key={f.title} style={{
               display: "flex", flexDirection: "column", gap: 7,
-              paddingLeft: i > 0 ? 28 : 0,
-              borderLeft: i > 0 ? `1px solid ${BORDER}` : "none",
+              paddingLeft: isDesktop && i > 0 ? 28 : 0,
+              borderLeft: isDesktop && i > 0 ? `1px solid ${BORDER}` : "none",
             }}>
               <div style={{
                 width: 40, height: 40, borderRadius: 10,
