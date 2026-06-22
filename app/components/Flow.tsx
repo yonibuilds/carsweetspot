@@ -701,7 +701,8 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
     return () => window.removeEventListener("popstate", onPop);
   }, [onReset]);
 
-  const fixProblems = [result.biggest_problem, ...(result.also_hurting ?? [])].filter(p => p?.title && p?.after);
+  // Include all issues with a title — needs_seller_input issues have empty after but are still valid fixes
+  const fixProblems = [result.biggest_problem, ...(result.also_hurting ?? [])].filter(p => p?.title);
 
   if (!isDesktop) {
     return (
