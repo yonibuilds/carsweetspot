@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v14";
+const CACHE_VERSION = "v15";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -166,9 +166,18 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no extra
   ],
   "improved_draft": "<A unified rewrite of the full listing using ONLY structured_facts and explicit_listing_facts. seller_claims attributed as 'Seller states X'. Aim for 80–150 words. Plain text only — no markdown, no headers, no bullets. Make it compelling and specific. Even if facts are sparse, write the best possible version from what you have. This is the main copyable output for the seller.>",
   "seller_questions": [
-    "<First question — specific to this vehicle's biggest trust gap. For a manual: 'How is the clutch/transmission?'. For high mileage: ask about service history. Be specific, not generic.>",
-    "<Second question — about a concrete detail missing from this listing that buyers would want to know. Never repeat a topic from the first question.>",
-    "<Third question — ownership duration, reason for sale, or a vehicle-specific angle. Skip if already in the listing.>"
+    {
+      "question": "<First question — specific to this vehicle's biggest trust gap>",
+      "options": ["<short ready answer 1, 3-7 words>", "<short ready answer 2>", "<short ready answer 3>"]
+    },
+    {
+      "question": "<Second question — different topic from first>",
+      "options": ["<short ready answer 1>", "<short ready answer 2>", "<short ready answer 3>"]
+    },
+    {
+      "question": "<Third question — ownership, reason for sale, or vehicle-specific angle>",
+      "options": ["<short ready answer 1>", "<short ready answer 2>", "<short ready answer 3>"]
+    }
   ]
 }
 
@@ -295,7 +304,7 @@ NEVER write in after_copy without explicit documentation:
 - suggested_additions deduplication: do NOT repeat topics already covered in biggest_problem or also_hurting. Do not mention ownership duration or reason for sale more than once across the entire report. If either is already an issue card, drop it from suggested_additions entirely.
 - Do not pad the report. A thin listing with real content for only 2 suggestions should return 2, not 3. Quality over quantity.
 - improved_draft: always generate this — even for sparse listings. Use every fact from structured_facts and explicit_listing_facts. seller_claims go in as "Seller states X." This is the seller's main takeaway — make it worth copying. Plain text only.
-- seller_questions: generate exactly 3. Be specific to this vehicle — year, make, model, mileage, features. Do not ask about something already stated in the listing. Prefer concrete, answerable questions over vague ones. Good: "How is the clutch feel and shift quality?" Bad: "Any additional details?" Fallback only if no vehicle-specific angle exists: "How long have you owned it?", "Why are you selling?", "Any recent maintenance?"
+- seller_questions: generate exactly 3 objects, each with "question" and "options". Be specific to this vehicle. Do not ask about something already stated in the listing. For each question, generate 3 short ready-to-click answer options (3-7 words each) that cover the most common true answers a seller might give. Good question: "How is the clutch feel and shift quality?" with options ["Feels tight and responsive", "Normal wear for the mileage", "Recently adjusted or replaced"]. Bad: "Any additional details?" Fallback only if no vehicle-specific angle: question "How long have you owned it?" options ["Less than a year", "1–3 years", "3+ years"].
 - "title in hand" rule: never write "title in hand" or "clean title in hand" in after_copy or whats_working unless the seller explicitly used the phrase "in hand" in their listing. Craigslist metadata showing title status: clean only justifies "clean title stated in listing" — nothing more.
 - issue_type and can_generate_after_copy rules:
   - Set issue_type to "needs_seller_input" when the fix requires the seller to provide NEW information they have not stated anywhere in the listing (e.g., ownership duration, reason for selling, service history they have not mentioned, condition details they have not described). These issues cannot produce safe after_copy.

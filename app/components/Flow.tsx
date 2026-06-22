@@ -26,7 +26,7 @@ export type AnalysisResult = {
   whats_working: string[];
   suggested_additions?: string[];
   improved_draft?: string;
-  seller_questions?: string[];
+  seller_questions?: ({ question: string; options: string[] } | string)[];
   // V3 fact inventory fields (passed to /api/strengthen)
   structured_facts?: string[];
   explicit_listing_facts?: string[];
@@ -332,27 +332,36 @@ function ImprovedDraft({ draft }: { draft: string }) {
 }
 
 // ── Make it Stronger ──────────────────────────────────────────────
-function MakeItStronger({ questions, result }: { questions: string[]; result: AnalysisResult }) {
+function MakeItStronger({ questions, result }: { questions: ({ question: string; options: string[] } | string)[]; result: AnalysisResult }) {
+  const [open, setOpen] = useState(false);
   const [answers, setAnswers] = useState(["", "", ""]);
   const [loading, setLoading] = useState(false);
   const [strongerDraft, setStrongerDraft] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const displayQuestions = (questions.length > 0 ? questions : [
-    "How long have you owned this car?",
-    "Any recent maintenance or repairs?",
-    "Why are you selling?",
-  ]).slice(0, 3);
+  const defaultQs = [
+    { question: "How long have you owned this car?", options: ["Less than a year", "1–3 years", "3+ years"] },
+    { question: "Any recent maintenance or repairs?", options: ["Oil change recently", "New tires recently", "Nothing recent"] },
+    { question: "Why are you selling?", options: ["Upgrading to newer car", "No longer need it", "Relocating"] },
+  ];
 
-  const canSubmit = answers.some(a => a.trim().length > 3) && !loading;
+  const displayQuestions = (questions.length > 0 ? questions : defaultQs).slice(0, 3).map(q =>
+    typeof q === "string" ? { question: q, options: [] } : q
+  );
+
+  const setAnswer = (i: number, val: string) => {
+    const next = [...answers]; next[i] = val; setAnswers(next);
+  };
+
+  const canSubmit = answers.some(a => a.trim().length > 2) && !loading;
 
   const submit = async () => {
     setLoading(true);
     setError(null);
     try {
       const filledAnswers = answers
-        .map((a, i) => a.trim() ? `${displayQuestions[i]}: ${a.trim()}` : null)
+        .map((a, i) => a.trim() ? `${displayQuestions[i].question}: ${a.trim()}` : null)
         .filter(Boolean);
       const resp = await fetch("/api/strengthen", {
         method: "POST",
@@ -377,68 +386,107 @@ function MakeItStronger({ questions, result }: { questions: string[]; result: An
   const copy = () => { navigator.clipboard.writeText(strongerDraft!); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
   return (
-    <Card>
-      <div style={{ padding: "20px 24px" }}>
-        <div style={{ marginBottom: 18 }}>
-          <p style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px" }}>Make it Stronger</p>
-          <p style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY, margin: "0 0 4px" }}>Answer 3 quick questions</p>
-          <p style={{ ...B, fontSize: 13, color: NAVY_MUT, margin: 0 }}>We&apos;ll build a stronger version of your listing using your answers.</p>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {displayQuestions.map((q, i) => (
-            <div key={i}>
-              <label style={{ ...B, fontSize: 13, fontWeight: 600, color: NAVY, display: "block", marginBottom: 6 }}>{q}</label>
-              <textarea
-                value={answers[i]}
-                onChange={e => { const next = [...answers]; next[i] = e.target.value; setAnswers(next); }}
-                placeholder="Your answer..."
-                rows={2}
-                style={{
-                  ...B, width: "100%", fontSize: 13, color: NAVY,
-                  background: PAGE_BG, border: `1px solid ${BORDER}`,
-                  borderRadius: 8, padding: "10px 12px",
-                  resize: "vertical", boxSizing: "border-box",
-                  outline: "none", lineHeight: 1.5,
-                }}
-              />
-            </div>
-          ))}
-        </div>
-        <button
-          onClick={submit}
-          disabled={!canSubmit}
-          style={{
-            ...B, marginTop: 18, width: "100%", padding: "13px",
-            background: canSubmit ? BRAND : "#E2E8F0",
-            color: canSubmit ? WHITE : NAVY_MUT,
-            border: "none", borderRadius: 10,
-            fontSize: 14, fontWeight: 600,
-            cursor: canSubmit ? "pointer" : "not-allowed",
-            transition: "all 0.2s",
-          }}
-        >
-          {loading ? "Building stronger draft..." : "Build stronger draft →"}
-        </button>
-        {error && <p style={{ ...B, fontSize: 12, color: DANGER, margin: "10px 0 0" }}>{error}</p>}
-        {strongerDraft && (
-          <div style={{ marginTop: 22 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <span style={{ ...H, fontSize: 15, fontWeight: 700, color: NAVY }}>Stronger version</span>
-              <button onClick={copy} style={{
-                ...B, fontSize: 11, fontWeight: 600, cursor: "pointer",
-                background: copied ? SUCCESS : WHITE, color: copied ? WHITE : SUCCESS,
-                border: `1px solid ${SUCCESS}`, borderRadius: 6, padding: "5px 12px",
-                transition: "all 0.2s",
-              }}>
-                {copied ? "✓ Copied" : "Copy"}
-              </button>
-            </div>
-            <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, borderRadius: 10, padding: "16px 18px" }}>
-              <p style={{ ...B, fontSize: 14, color: SUCC_FG, lineHeight: 1.75, margin: 0, whiteSpace: "pre-wrap" }}>{strongerDraft}</p>
-            </div>
+    <Card style={{ overflow: "hidden" }}>
+      {/* Header — always visible, click to open */}
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", cursor: "pointer", borderBottom: open ? `1px solid ${BORDER}` : "none" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 13, color: BRAND }}>✦</span>
           </div>
-        )}
+          <div>
+            <p style={{ ...H, fontSize: 15, fontWeight: 700, color: NAVY, margin: 0 }}>Make it stronger</p>
+            <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "2px 0 0" }}>Answer 3 questions — get a stronger draft</p>
+          </div>
+        </div>
+        <span style={{ fontSize: 11, color: NAVY_MUTED2, transform: open ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
       </div>
+
+      {open && (
+        <div style={{ padding: "20px 22px 22px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {displayQuestions.map((q, i) => (
+              <div key={i}>
+                <label style={{ ...B, fontSize: 13, fontWeight: 600, color: NAVY, display: "block", marginBottom: 10 }}>{q.question}</label>
+                {q.options.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                    {q.options.map((opt, j) => {
+                      const selected = answers[i] === opt;
+                      return (
+                        <button
+                          key={j}
+                          onClick={() => setAnswer(i, selected ? "" : opt)}
+                          style={{
+                            ...B, fontSize: 12, fontWeight: 500,
+                            padding: "6px 14px", borderRadius: 20, cursor: "pointer",
+                            border: `1.5px solid ${selected ? BRAND : BORDER}`,
+                            background: selected ? "#EFF6FF" : WHITE,
+                            color: selected ? BRAND : NAVY_MUT,
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={answers[i]}
+                  onChange={e => setAnswer(i, e.target.value)}
+                  placeholder="Or type your own answer..."
+                  style={{
+                    ...B, width: "100%", fontSize: 13, color: NAVY,
+                    background: PAGE_BG, border: `1px solid ${BORDER}`,
+                    borderRadius: 8, padding: "9px 12px",
+                    boxSizing: "border-box", outline: "none",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={submit}
+            disabled={!canSubmit}
+            style={{
+              ...B, marginTop: 20, width: "100%", padding: "13px",
+              background: canSubmit ? BRAND : "#E2E8F0",
+              color: canSubmit ? WHITE : NAVY_MUT,
+              border: "none", borderRadius: 10,
+              fontSize: 14, fontWeight: 600,
+              cursor: canSubmit ? "pointer" : "not-allowed",
+              transition: "all 0.2s",
+            }}
+          >
+            {loading ? "Building stronger draft..." : "Build stronger draft →"}
+          </button>
+
+          {error && <p style={{ ...B, fontSize: 12, color: DANGER, margin: "10px 0 0" }}>{error}</p>}
+
+          {strongerDraft && (
+            <div style={{ marginTop: 22 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <span style={{ ...H, fontSize: 15, fontWeight: 700, color: NAVY }}>Stronger version</span>
+                <button onClick={copy} style={{
+                  ...B, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  background: copied ? SUCCESS : WHITE, color: copied ? WHITE : SUCCESS,
+                  border: `1px solid ${SUCCESS}`, borderRadius: 6, padding: "5px 12px",
+                  transition: "all 0.2s",
+                }}>
+                  {copied ? "✓ Copied" : "Copy"}
+                </button>
+              </div>
+              <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, borderRadius: 10, padding: "16px 18px" }}>
+                <p style={{ ...B, fontSize: 14, color: SUCC_FG, lineHeight: 1.75, margin: 0, whiteSpace: "pre-wrap" }}>{strongerDraft}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
@@ -701,12 +749,6 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
         <ImprovedDraft draft={result.improved_draft} />
       )}
 
-      {/* Make it Stronger */}
-      <MakeItStronger
-        questions={result.seller_questions ?? []}
-        result={result}
-      />
-
       {/* Issues header */}
       <div style={{ paddingTop: 8, paddingBottom: 8 }}>
         <p style={{ ...B, fontSize: 10, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Why Buyers May Hesitate</p>
@@ -799,6 +841,12 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
           );
         })}
       </div>
+
+      {/* Make it Stronger — collapsed, below issues */}
+      <MakeItStronger
+        questions={result.seller_questions ?? []}
+        result={result}
+      />
 
       {/* Buyer Reach card */}
       {calcMo > 0 && <BuyerReachCard askingPrice={result.asking_price} calcMo={calcMo} isMobile={isMobile} />}
