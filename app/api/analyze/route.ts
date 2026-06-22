@@ -5,6 +5,8 @@ export const maxDuration = 60;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// Bump this version on any prompt or post-processing change to invalidate in-memory cache
+const CACHE_VERSION = "v5";
 const cache = new Map<string, unknown>();
 
 const SYSTEM_PROMPT = `You are CarSweetSpot AI — an expert at analyzing private car listings and telling sellers exactly why buyers are not contacting them.
@@ -87,6 +89,8 @@ Use these ranges as anchors. Score based on what is actually present — do not 
 - 92+ (Exceptional): Reserve for listings that do almost everything right — verified service history with receipts, odometer photo, all key angles, complete description, reason for selling, CARFAX, honest flaw disclosure.
 
 Description quality is a real score factor. Strong trust signals cannot compensate for a 4-line description on a $15,000+ vehicle. A listing that earns trust but fails to inform scores 68–74, not 75+.
+
+Score differentiation is required. Do not default to 72 for all average listings. Apply the 9-factor model rigorously: a listing with 15 photos should score higher on photo coverage than one with 5, even if both are "adequate." A listing with no ownership duration AND no reason for sale AND no maintenance evidence should score lower than one missing only one of those. Scores in the 60–75 range should span that full range based on actual signal count — 62, 65, 68, 71, 74 are all valid. Reserve 72–74 for listings that are genuinely close to "above average" but fall short in one clear area.
 
 ## Scoring Dimensions (9-factor model)
 
@@ -228,7 +232,9 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 - Rebuilt/salvage title: the disclosure itself is not the problem — do not penalize the score for it. The problem is missing explanation, missing repair details, missing inspection status, or missing documentation. Flag those gaps as issues or opportunities. If the listing discloses rebuilt title with explanation, repairs, and inspection, treat it as a trust signal. Never say hail/flood/collision unless the seller explicitly stated it. Safe language: "Rebuilt title disclosed. Consider adding the damage type, repairs completed, inspection status, and any available documentation." Rebuilt titles typically price at 60–70% of clean-title equivalent — suggest this if price is not explained.
 - biggest_problem: the single most damaging issue hurting buyer contact rate — must be something the seller CAN fix (copy, photos, missing info). Never use title status as a problem.
 - also_hurting: exactly 2 additional problems, different categories — must be actionable
-- before/after: ONLY use facts the seller actually stated. Never invent features, maintenance history, or ownership details. "after" must be paste-ready copy the seller can use immediately, built only from confirmed facts. PROHIBITED in after unless explicitly stated in listing: "clean interior", "clean inside", "well maintained", "garage kept", "highway miles", "one owner", "non-smoker", "no accidents". Target 30–80 words — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
+- before/after: ONLY use facts the seller actually stated. Never invent features, maintenance history, or ownership details. "after" must be paste-ready copy the seller can use immediately, built only from confirmed facts. PROHIBITED in after unless explicitly stated in listing: "clean interior", "clean inside", "well maintained", "garage kept", "highway miles", "local driving", "one owner", "non-smoker", "no accidents", "no issues", "runs great", "runs and drives great", "drives great". Target 30–80 words — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
+- Cliché replacement rule: if the original listing uses vague emotional language ("beautiful", "must see", "fully loaded", "spotless", "very clean", "perfect condition", "like new", "immaculate"), do NOT copy those phrases into the after field. Replace them with specific facts from the listing (year, mileage, title status, features, maintenance events). If no specific facts are available to replace a cliché, omit the sentence entirely. After copy that repeats clichés is worse than no rewrite at all.
+- Inferred condition rule: NEVER write "no accidents", "no issues", "no problems", "runs great", "drives well", "highway miles", "local miles", or any condition statement in the after field unless the seller explicitly stated those exact facts. Absence of a problem in the listing text does NOT mean the seller stated it. These phrases appear in original listings — do not add them if missing.
 - Spelling errors in the listing: always flag this — 42% of listings have them and buyers notice. It signals carelessness about the car, not just the ad.
 - If the listing omits how long the seller has owned it: flag this. "I've owned this since 2019" is one sentence that eliminates the #1 buyer suspicion ("what's wrong with it?").
 - If reason for selling is missing: flag this. Silence triggers suspicion. "Upgrading to a truck" takes 4 words and converts skeptics.
@@ -266,8 +272,9 @@ export async function POST(req: NextRequest) {
   try {
     const { url, images, text } = await req.json();
 
-    if (url && cache.has(url)) {
-      return NextResponse.json(cache.get(url));
+    const cacheKey = url ? `${CACHE_VERSION}:${url}` : null;
+    if (cacheKey && cache.has(cacheKey)) {
+      return NextResponse.json(cache.get(cacheKey));
     }
 
     const messageContent: Anthropic.MessageParam["content"] = [];
@@ -619,8 +626,8 @@ export async function POST(req: NextRequest) {
       const cleanAfterCopy = (text: string): string => {
         const lines = text.split('\n');
         const filtered = lines.filter(l => {
-          // Remove financing / monthly payment lines
-          if (/financing available|est\.\s*\$[\d,]+\/mo|\$\d+\/mo/i.test(l)) return false;
+          // Remove any financing / payment / affordability content
+          if (/financing|\/mo\b|APR|OAC|monthly payment|estimated payment|buyer payment|bring your own|cash or fin/i.test(l)) return false;
           // Remove "Example:" lines
           if (/^\s*[\*\-]?\s*example:/i.test(l)) return false;
           // Remove lines that are questions directed at the seller
@@ -641,7 +648,7 @@ export async function POST(req: NextRequest) {
     if (firstImgSrc) result.listing_image = firstImgSrc;
     if (!result.listing_image && images && images.length > 0) result.listing_image = images[0];
 
-    if (url) cache.set(url, result);
+    if (cacheKey) cache.set(cacheKey, result);
     return NextResponse.json(result);
   } catch (err) {
     console.error(err);
