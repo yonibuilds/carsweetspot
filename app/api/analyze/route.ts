@@ -259,7 +259,8 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 - Keyword spam rule: if the listing contains 3 or more competitor brand names (Ford, Chevy, Honda, Toyota, etc.) listed consecutively without context, flag this under category "text". Title: "Keyword list at bottom hurts credibility." These are added to game search filters and read as spam to buyers.
 - suggested_additions: return 2–4 coaching tips for what the seller could add IF TRUE. Format: "If you have X, consider adding Y." These are not copy to paste — they are prompts for the seller. Examples: "If you have service records, mention it — one sentence about maintenance can significantly increase contact rate." / "If you know your reason for selling, add it — even 4 words eliminates the #1 buyer suspicion."
 - Use benchmark language, not emotional language. Never write "kills buyer trust," "destroys credibility," "red flag," or similar charged phrases. Instead, use neutral, data-driven framing: "At 18 words, this description is well below the 150–250 word range typical of listings that generate strong contact rates." / "Listings with 4 or fewer photos receive 40% fewer inquiries on average." / "42% of listings contain spelling errors — buyers consistently cite this as a signal of how a seller cares for their car."
-- Be specific with counts and benchmarks, not vague. "Description is thin" is useless. "18 words vs. the 150–250 range typical of high-contact listings" is useful. Always include the actual number from the listing alongside the benchmark.`;
+- Be specific with counts and benchmarks, not vague. "Description is thin" is useless. "18 words vs. the 150–250 range typical of high-contact listings" is useful. Always include the actual number from the listing alongside the benchmark.
+- Seller-claim vs. verified proof: Use "Seller states…" or "Seller reports…" for anything the seller wrote but cannot be independently verified (e.g. "Seller states all services were performed at Sands Chevrolet"). Only use "verified," "confirmed," or "documented" if the listing explicitly mentions records, receipts, CARFAX, or documentation being available. Never upgrade a seller claim into a verified fact in whats_working, after copy, or suggested_additions.`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -274,6 +275,7 @@ export async function POST(req: NextRequest) {
     let detectedPrice: number | null = null;
     let mileageRateNote = "";
     let parserPhotoCount = 0;
+    let descriptionWordCount = 0;
 
     if (images && images.length > 0) {
       for (const img of images as string[]) {
@@ -390,6 +392,19 @@ export async function POST(req: NextRequest) {
           .replace(/\s+/g, " ")
           .trim()
           .slice(0, 12000);
+
+        // Extract word count from the listing body only (not full page)
+        // Craigslist uses <section id="postingbody">, Facebook and others use similar containers
+        const bodyMatch = html.match(/<section[^>]+id=["']postingbody["'][^>]*>([\s\S]*?)<\/section>/i)
+          ?? html.match(/<div[^>]+id=["']postingbody["'][^>]*>([\s\S]*?)<\/div>/i);
+        if (bodyMatch) {
+          const bodyText = bodyMatch[1]
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+          descriptionWordCount = bodyText.split(/\s+/).filter(Boolean).length;
+        }
+
         // Extract price from cleaned plain text — the AI can read it so we can too
         const allPrices = [...cleaned.matchAll(/\$\s*([\d,]+)/g)]
           .map(m => parseInt(m[1].replace(/,/g, ""), 10))
@@ -597,6 +612,7 @@ export async function POST(req: NextRequest) {
 
     // Expose photo count for UI bar calibration
     result.photo_count = parserPhotoCount;
+    if (descriptionWordCount > 0) result.description_word_count = descriptionWordCount;
 
     // Post-processing: strip financing and unsafe content from all issue after fields
     {

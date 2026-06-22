@@ -26,6 +26,7 @@ export type AnalysisResult = {
   unsafe_to_claim?: string[];
   listing_image?: string;
   photo_count?: number;
+  description_word_count?: number;
 };
 
 // ── Tokens ────────────────────────────────────────────────────────
@@ -562,10 +563,10 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
                   ) : null}
 
                   {/* Word count badge for text issues */}
-                  {prob.category === "text" && prob.before && (
+                  {prob.category === "text" && (result.description_word_count ?? wordCount(prob.before)) > 0 && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                       <span style={{ ...B, fontSize: 11, color: NAVY_MUT }}>Current description:</span>
-                      <span style={{ ...B, fontSize: 11, fontWeight: 700, color: DANGER, background: DANG_SOFT, borderRadius: 6, padding: "2px 8px" }}>~{wordCount(prob.before)} words</span>
+                      <span style={{ ...B, fontSize: 11, fontWeight: 700, color: DANGER, background: DANG_SOFT, borderRadius: 6, padding: "2px 8px" }}>~{result.description_word_count ?? wordCount(prob.before)} words</span>
                       <span style={{ ...B, fontSize: 11, color: NAVY_MUT }}>Strong listings: 150–250 words</span>
                     </div>
                   )}
