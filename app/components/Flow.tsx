@@ -29,20 +29,20 @@ export type AnalysisResult = {
 };
 
 // ── Tokens ────────────────────────────────────────────────────────
-const PAGE_BG     = "#F8FAFC";
+const PAGE_BG     = "#F0F4F8";
 const WHITE       = "#FFFFFF";
 const NAVY        = "#0F172A";
 const NAVY_MUT    = "#64748B";
-const BORDER      = "#E2E8F0";
+const BORDER      = "#E4EAF2";
 const BRAND       = "#2563EB";
 const SUCCESS     = "#16A34A";
-const SUCC_SOFT   = "#F0FDF4";
-const SUCC_FG     = "#14532D";
-const SUCC_BOR    = "#BBF7D0";
-const DANGER      = "#EF4444";
-const DANG_SOFT   = "#FEF2F2";
-const DANG_FG     = "#991B1B";
-const DANG_BOR    = "#FECACA";
+const SUCC_SOFT   = "#F2FBF5";
+const SUCC_FG     = "#15532E";
+const SUCC_BOR    = "#C6EDD4";
+const DANGER      = "#E53E3E";
+const DANG_SOFT   = "#FFF5F5";
+const DANG_FG     = "#9B2C2C";
+const DANG_BOR    = "#FED7D7";
 
 const H: React.CSSProperties = { fontFamily: "var(--font-jakarta)" };
 const B: React.CSSProperties = { fontFamily: "var(--font-inter)" };
@@ -54,9 +54,9 @@ const CAT: Record<string, { label: string }> = {
 };
 
 const IMPACTS = [
-  { label: "High",   color: "#B91C1C", bg: "#FEF2F2" },
-  { label: "Medium", color: "#B45309", bg: "#FFFBEB" },
-  { label: "Low",    color: "#374151", bg: "#F3F4F6" },
+  { label: "High",   color: "#B91C1C", bg: "#FEF2F2", border: "#FECACA" },
+  { label: "Medium", color: "#92400E", bg: "#FFFBEB", border: "#FDE68A" },
+  { label: "Low",    color: "#374151", bg: "#F3F4F6", border: "#E5E7EB" },
 ];
 
 function scoreBadge(score: number) {
@@ -82,7 +82,7 @@ function calcMonthly(askingPrice: number, monthlyPayment: number): number {
 // ── Card ──────────────────────────────────────────────────────────
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, ...style }}>
+    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 18, boxShadow: "0 1px 4px rgba(15,23,42,0.05)", ...style }}>
       {children}
     </div>
   );
@@ -433,9 +433,9 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
   const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {/* Analysis summary card */}
-      <Card style={{ padding: "18px 22px", borderLeft: `3px solid ${SUCCESS}` }}>
+      <Card style={{ padding: "22px 24px", borderTop: `3px solid ${SUCCESS}`, borderRadius: "0 0 18px 18px" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
@@ -488,11 +488,11 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
             <span style={{ fontSize: 11, color: SUCCESS, transform: showWorking ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▲</span>
           </div>
           {showWorking && (
-            <div style={{ padding: "16px 20px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "10px 24px" }}>
+            <div style={{ padding: "16px 22px 20px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px 28px" }}>
               {result.whats_working.map((w, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                  <span style={{ color: SUCCESS, fontSize: 14, marginTop: 1, flexShrink: 0 }}>✓</span>
-                  <p style={{ ...B, fontSize: 13, color: SUCC_FG, margin: 0, lineHeight: 1.5 }}>{w}</p>
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <span style={{ ...B, fontSize: 11, fontWeight: 700, color: SUCCESS, background: SUCC_BOR, borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>✓</span>
+                  <p style={{ ...B, fontSize: 13, color: "#334155", margin: 0, lineHeight: 1.55 }}>{w}</p>
                 </div>
               ))}
             </div>
@@ -501,15 +501,15 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
       )}
 
       {/* Issues header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-        <span style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY }}>{totalImprovements} Ways to Improve This Listing</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, paddingBottom: 4 }}>
+        <span style={{ ...H, fontSize: 15, fontWeight: 700, color: NAVY, letterSpacing: "-0.01em" }}>{totalImprovements} Ways to Improve This Listing</span>
         <span style={{ ...B, fontSize: 12, color: NAVY_MUT }}>
           Fix all to reach a <strong style={{ color: SUCCESS }}>Strong</strong> score
         </span>
       </div>
 
       {/* Issue cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {fixProblems.map((prob, idx) => {
           const cat = prob?.category ?? "trust";
           const isOpen = expandedSet.has(idx);
@@ -520,31 +520,31 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
               <div
                 onClick={() => toggle(idx)}
                 style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  padding: "14px 18px", cursor: "pointer", background: WHITE,
+                  display: "flex", alignItems: "center", gap: 14,
+                  padding: "16px 20px", cursor: "pointer", background: WHITE,
                   borderBottom: isOpen ? `1px solid ${BORDER}` : "none",
                 }}
               >
-                <div style={{ width: 22, height: 22, borderRadius: "50%", background: DANG_SOFT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: 24, height: 24, borderRadius: 8, background: DANG_SOFT, border: `1px solid ${DANG_BOR}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontSize: 10, color: DANGER, fontWeight: 700 }}>✕</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...B, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0 }}>{CAT[cat]?.label ?? cat}</p>
-                  {prob && <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{prob.title}</p>}
+                  <p style={{ ...B, fontSize: 13, fontWeight: 600, color: NAVY, margin: 0, letterSpacing: "-0.01em" }}>{CAT[cat]?.label ?? cat}</p>
+                  {prob && <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{prob.title}</p>}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                  <span style={{ ...B, fontSize: 11, fontWeight: 600, color: impact.color, background: impact.bg, borderRadius: 20, padding: "3px 10px" }}>
-                    Impact: {impact.label}
+                  <span style={{ ...B, fontSize: 10, fontWeight: 600, color: impact.color, background: impact.bg, border: `1px solid ${impact.border}`, borderRadius: 20, padding: "2px 9px", letterSpacing: "0.01em" }}>
+                    {impact.label}
                   </span>
-                  <span style={{ fontSize: 11, color: NAVY_MUT, transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+                  <span style={{ fontSize: 12, color: "#94A3B8", transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▾</span>
                 </div>
               </div>
 
               {isOpen && prob && (
-                <div style={{ padding: "20px 20px 16px", background: PAGE_BG }}>
+                <div style={{ padding: "20px 22px 18px", background: PAGE_BG }}>
                   {/* why_buyers_care: always visible for first issue, toggleable for rest */}
                   {idx === 0 ? (
-                    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
+                    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "14px 18px", marginBottom: 16 }}>
                       <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: 0, lineHeight: 1.6 }}>{prob.why_buyers_care}</p>
                       {prob.seller_insight && (
                         <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "8px 0 0", lineHeight: 1.5, fontStyle: "italic" }}>{prob.seller_insight}</p>
@@ -599,7 +599,7 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
         <Card style={{ overflow: "hidden" }}>
           <div
             onClick={() => setShowSuggested(s => !s)}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", cursor: "pointer", background: showSuggested ? "#F8FAFC" : WHITE, borderBottom: showSuggested ? `1px solid ${BORDER}` : "none" }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", cursor: "pointer", background: showSuggested ? PAGE_BG : WHITE, borderBottom: showSuggested ? `1px solid ${BORDER}` : "none" }}
           >
             <div>
               <p style={{ ...H, fontSize: 14, fontWeight: 700, color: BRAND, margin: "0 0 2px" }}>Add a few details to reach 90+</p>
@@ -657,7 +657,7 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
           <span style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY }}>CarSweetSpot</span>
           <span style={{ ...B, fontSize: 12, color: NAVY_MUT }}>{result.overall_score}/100</span>
         </nav>
-        <div style={{ paddingTop: 66, padding: "66px 16px 32px", boxSizing: "border-box", maxWidth: "100vw", overflowX: "hidden" }}>
+        <div style={{ paddingTop: 66, padding: "66px 16px 40px", boxSizing: "border-box", maxWidth: "100vw", overflowX: "hidden" }}>
           <Fade>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <LeftSidebar result={result} fixProblems={fixProblems} onReset={onReset} />
