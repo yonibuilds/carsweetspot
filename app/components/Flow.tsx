@@ -142,7 +142,7 @@ function ScoreRingDark({ score }: { score: number }) {
 }
 
 // ── Before / After ────────────────────────────────────────────────
-function BeforeAfterGrid({ problem }: { problem: Problem }) {
+function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: boolean }) {
   const [copied, setCopied] = useState(false);
   const afterText = stripMd(problem.after);
   const copy = () => {
@@ -151,7 +151,7 @@ function BeforeAfterGrid({ problem }: { problem: Problem }) {
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
       <div style={{ background: DANG_SOFT, border: `1px solid ${DANG_BOR}`, borderRadius: 12, padding: "14px 16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
           <span style={{ color: DANGER, fontSize: 12, fontWeight: 700 }}>✕</span>
@@ -357,8 +357,8 @@ function LeftSidebar({ result, fixProblems, onReset }: {
 }
 
 // ── Main content ──────────────────────────────────────────────────
-function MainContent({ result, fixProblems, onReset }: {
-  result: AnalysisResult; fixProblems: Problem[]; onReset: () => void;
+function MainContent({ result, fixProblems, onReset, isMobile }: {
+  result: AnalysisResult; fixProblems: Problem[]; onReset: () => void; isMobile?: boolean;
 }) {
   const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
   const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
@@ -424,7 +424,7 @@ function MainContent({ result, fixProblems, onReset }: {
             <span style={{ fontSize: 11, color: SUCCESS, transform: showWorking ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▲</span>
           </div>
           {showWorking && (
-            <div style={{ padding: "16px 20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" }}>
+            <div style={{ padding: "16px 20px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "10px 24px" }}>
               {result.whats_working.map((w, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                   <span style={{ color: SUCCESS, fontSize: 14, marginTop: 1, flexShrink: 0 }}>✓</span>
@@ -483,7 +483,7 @@ function MainContent({ result, fixProblems, onReset }: {
 
               {isOpen && prob && (
                 <div style={{ padding: "20px 20px 16px", background: PAGE_BG }}>
-                  <BeforeAfterGrid problem={prob} />
+                  <BeforeAfterGrid problem={prob} isMobile={isMobile} />
 
                   <button
                     onClick={() => setShowWhy(w => ({ ...w, [idx]: !w[idx] }))}
@@ -511,7 +511,7 @@ function MainContent({ result, fixProblems, onReset }: {
                       <p style={{ ...B, fontSize: 12, color: "#BFDBFE", margin: "0 0 10px", lineHeight: 1.5 }}>
                         Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
                       </p>
-                      <div style={{ background: "#1e3a8a", borderRadius: 8, padding: "8px 12px", fontFamily: "monospace", fontSize: 11, color: "#E0F2FE", lineHeight: 1.6 }}>
+                      <div style={{ background: "#1e3a8a", borderRadius: 8, padding: "8px 12px", fontFamily: "monospace", fontSize: 11, color: "#E0F2FE", lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "break-word" }}>
                         &quot;Financing available OAC — est. ${calcMo}/mo at 7% APR, 60 months.&quot;
                       </div>
                     </div>
@@ -577,11 +577,11 @@ export default function Flow({ result, onReset }: { result: AnalysisResult; onRe
           <span style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY }}>CarSweetSpot</span>
           <span style={{ ...B, fontSize: 12, color: NAVY_MUT }}>{result.overall_score}/100</span>
         </nav>
-        <div style={{ paddingTop: 66, padding: "66px 16px 32px" }}>
+        <div style={{ paddingTop: 66, padding: "66px 16px 32px", boxSizing: "border-box", maxWidth: "100vw", overflowX: "hidden" }}>
           <Fade>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <LeftSidebar result={result} fixProblems={fixProblems} onReset={onReset} />
-              <MainContent result={result} fixProblems={fixProblems} onReset={onReset} />
+              <MainContent result={result} fixProblems={fixProblems} onReset={onReset} isMobile={true} />
             </div>
           </Fade>
         </div>
