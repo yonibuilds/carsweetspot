@@ -215,7 +215,8 @@ function BuyerReachCard({ askingPrice, calcMo, isMobile }: { askingPrice: number
 // ── Before / After ────────────────────────────────────────────────
 function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: boolean }) {
   const [copied, setCopied] = useState(false);
-  const afterText = stripMd(problem.after);
+  const afterText = stripMd(problem.after ?? "");
+  const hasAfter = afterText.trim().length > 0;
   const copy = () => {
     navigator.clipboard.writeText(afterText);
     setCopied(true);
@@ -232,27 +233,42 @@ function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: b
           {problem.before || "No text currently in the listing."}
         </p>
       </div>
-      <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ color: SUCCESS, fontSize: 12, fontWeight: 700 }}>✓</span>
-            <span style={{ ...B, fontSize: 10, fontWeight: 700, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.09em" }}>After</span>
+      {hasAfter ? (
+        <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: SUCCESS, fontSize: 12, fontWeight: 700 }}>✓</span>
+              <span style={{ ...B, fontSize: 10, fontWeight: 700, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.09em" }}>After</span>
+            </div>
+            <button onClick={copy} style={{
+              ...B, fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: copied ? SUCCESS : WHITE,
+              color: copied ? WHITE : SUCCESS,
+              border: `1px solid ${SUCCESS}`,
+              borderRadius: 6, padding: "3px 10px",
+              transition: "all 0.2s", whiteSpace: "nowrap",
+            }}>
+              {copied ? "✓ Copied" : "Copy"}
+            </button>
           </div>
-          <button onClick={copy} style={{
-            ...B, fontSize: 11, fontWeight: 600, cursor: "pointer",
-            background: copied ? SUCCESS : WHITE,
-            color: copied ? WHITE : SUCCESS,
-            border: `1px solid ${SUCCESS}`,
-            borderRadius: 6, padding: "3px 10px",
-            transition: "all 0.2s", whiteSpace: "nowrap",
-          }}>
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
+          <p style={{ ...B, fontSize: 13, color: SUCC_FG, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap", flex: 1 }}>
+            {afterText}
+          </p>
         </div>
-        <p style={{ ...B, fontSize: 13, color: SUCC_FG, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap", flex: 1 }}>
-          {afterText}
-        </p>
-      </div>
+      ) : (
+        <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 12 }}>⚠</span>
+            <span style={{ ...B, fontSize: 10, fontWeight: 700, color: "#92400E", textTransform: "uppercase", letterSpacing: "0.09em" }}>Copy not available</span>
+          </div>
+          <p style={{ ...B, fontSize: 13, color: "#78350F", lineHeight: 1.6, margin: 0 }}>
+            Not enough verified information to create safe copy for this issue.
+          </p>
+          <p style={{ ...B, fontSize: 12, color: "#92400E", lineHeight: 1.55, margin: 0 }}>
+            Add one or two verified details — such as ownership history, recent maintenance, reason for sale, or a known issue explanation — and this section will update.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -621,24 +621,96 @@ export async function POST(req: NextRequest) {
     result.photo_count = parserPhotoCount;
     if (descriptionWordCount > 0) result.description_word_count = descriptionWordCount;
 
-    // Post-processing: strip financing and unsafe content from all issue after fields
+    // Post-processing: sentence-level safety sanitizer on all issue after fields
     {
-      const cleanAfterCopy = (text: string): string => {
-        const lines = text.split('\n');
-        const filtered = lines.filter(l => {
-          // Remove any financing / payment / affordability content
-          if (/financing|\/mo\b|APR|OAC|monthly payment|estimated payment|buyer payment|bring your own|cash or fin/i.test(l)) return false;
-          // Remove "Example:" lines
-          if (/^\s*[\*\-]?\s*example:/i.test(l)) return false;
-          // Remove lines that are questions directed at the seller
-          if (/^\s*[\*\-]?\s*(do you|did you|have you|are you|when did|how long|why are you)/i.test(l)) return false;
-          return true;
-        });
-        return filtered.join('\n').trim();
+      // Vague sales clichés — strip the phrase but try to keep the rest of the sentence
+      const CLICHE_PHRASES = [
+        /\bbeautiful\b/gi,
+        /\bmust[\s-]see\b/gi,
+        /\bfully[\s-]loaded\b/gi,
+        /\bspotless\b/gi,
+        /\bvery\s+clean\b/gi,
+        /\bperfect\s+condition\b/gi,
+        /\blike[\s-]new\b/gi,
+        /\bimmaculate\b/gi,
+      ];
+
+      // Mechanical/trust claims — remove the whole sentence unless it can be reframed
+      const TRUST_CLAIM_PATTERNS = [
+        /no\s+mechanical\s+issues?/i,
+        /no\s+issues?\b/i,
+        /no\s+problems?\b/i,
+        /well[\s-]maintained/i,
+        /runs\s+and\s+drives\s+(great|well|perfect|fine|smooth)/i,
+        /runs\s+great/i,
+        /drives\s+great/i,
+        /drives\s+like\s+new/i,
+        /no\s+accidents?\b/i,
+        /highway\s+miles/i,
+        /local\s+(miles|driving)/i,
+      ];
+
+      // These trust claims can be kept if rephrased as a seller statement
+      const REFRAMEABLE = [
+        { pattern: /runs\s+and\s+drives\s+(great|well|perfect|fine|smooth)/i, claim: "runs and drives well" },
+        { pattern: /no\s+mechanical\s+issues?/i,                              claim: "no mechanical issues" },
+        { pattern: /no\s+accidents?\b/i,                                      claim: "no accidents" },
+      ];
+
+      const splitSentences = (text: string): string[] =>
+        text.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+
+      const cleanSentence = (s: string): string => {
+        // 1. Strip financing / payment content
+        if (/financing|\/mo\b|APR|OAC|monthly\s+payment|estimated\s+payment|buyer\s+payment|bring\s+your\s+own|cash\s+or\s+fin/i.test(s)) return "";
+        // 2. Strip "Example:" lines
+        if (/^\s*[\*\-]?\s*example:/i.test(s)) return "";
+        // 3. Strip seller-directed questions
+        if (/^\s*[\*\-]?\s*(do you|did you|have you|are you|when did|how long|why are you)/i.test(s)) return "";
+
+        // 4. Check trust claim patterns — try to reframe, else drop
+        for (const { pattern, claim } of REFRAMEABLE) {
+          if (pattern.test(s)) {
+            // If the sentence is only the claim (nothing else useful), reframe it
+            const stripped = s.replace(pattern, "").replace(/[,.\s]+/g, " ").trim();
+            if (stripped.length < 10) {
+              // Entire sentence was the claim — reframe
+              return `Seller states ${claim}.`;
+            }
+            // Sentence has other content — drop just the claim phrase
+            return s.replace(pattern, "").replace(/\s{2,}/g, " ").replace(/^[,\s]+|[,\s]+$/g, "").trim() + ".";
+          }
+        }
+        // Other trust claims: drop the whole sentence
+        for (const pat of TRUST_CLAIM_PATTERNS) {
+          if (pat.test(s)) return "";
+        }
+
+        // 5. Strip cliché phrases in-place (keep the rest of the sentence)
+        let cleaned = s;
+        for (const pat of CLICHE_PHRASES) {
+          cleaned = cleaned.replace(pat, "").replace(/\s{2,}/g, " ").trim();
+        }
+        // If stripping left a near-empty sentence, drop it
+        const wordCount = cleaned.split(/\s+/).filter(Boolean).length;
+        if (wordCount < 3) return "";
+
+        return cleaned;
       };
+
+      const cleanAfterCopy = (text: string): string => {
+        const sentences = splitSentences(text);
+        const cleaned = sentences
+          .map(cleanSentence)
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+        return cleaned;
+      };
+
       const processIssue = (issue: { after?: string } | null) => {
-        if (!issue?.after) return;
-        issue.after = cleanAfterCopy(issue.after);
+        if (!issue) return;
+        issue.after = issue.after ? cleanAfterCopy(issue.after) : "";
       };
       processIssue(result.biggest_problem);
       for (const issue of result.also_hurting ?? []) processIssue(issue);
