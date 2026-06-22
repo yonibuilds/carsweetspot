@@ -511,12 +511,8 @@ export async function POST(req: NextRequest) {
       const hasVerifiedCarfax = vf.some(f => /carfax|autocheck|vehicle history report/.test(f));
       const hasVerifiedServiceRecords = vf.some(f => /service records? (available|on hand|provided)|maintenance records? available/.test(f));
 
-      // Patterns that are UNSAFE in after unless verified
-      const carfaxPatterns = [
-        /carfax\s+available/i, /autocheck\s+available/i, /history\s+report\s+available/i,
-        /available\s+upon\s+request/i, /no\s+accidents?\s+per\s+carfax/i,
-        /one\s+owner\s+per\s+carfax/i, /clean\s+history\s+confirmed/i,
-      ];
+      // Any sentence mentioning carfax/autocheck is unsafe unless CARFAX is in verified_facts
+      const carfaxPatterns = [/carfax/i, /autocheck/i];
       const servicePatterns = [
         /service\s+records?\s+available/i, /maintenance\s+records?\s+available/i,
         /records?\s+available\s+upon\s+request/i,
