@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v9";
+const CACHE_VERSION = "v11";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -278,7 +278,10 @@ NEVER write in after_copy without explicit documentation:
 - Mileage per year: if [MILEAGE RATE] note provided, flag >20,000 miles/year as high usage with benchmark language. Never say "highway miles" unless seller explicitly stated it.
 - PPV / Fleet / Commercial use: flag as context-needed if unexplained.
 - Keyword spam: 3+ competitor brand names consecutively → flag under "text".
-- suggested_additions: 2–4 coaching tips. Format: "If you have X, consider adding Y." Never use bracket placeholders like [X years] or [reason] — write plain guidance instead. Bad: "Add 'Owned for [X years].'" Good: "Add how long you've owned it — even one sentence builds credibility."
+- suggested_additions: return 2–3 coaching tips maximum. Format: "If you have X, consider adding Y." Never use bracket placeholders like [X years] or [reason] — write plain guidance instead. Bad: "Add 'Owned for [X years].'" Good: "Add how long you've owned it — even one sentence builds credibility."
+- suggested_additions must be vehicle-specific: look at the actual car — its type, features, mileage, and known buyer concerns — and tailor the tips. Examples: for a manual transmission car → clutch condition; for a performance car with Brembo brakes → brake service history or track use; for a high-mileage car → recent service events; for a truck → towing/payload use; for a hybrid → battery health. Generic tips (ownership duration, reason for sale) should only appear if they are NOT already covered in the issue cards AND if no more specific tip applies.
+- suggested_additions deduplication: do NOT repeat topics already covered in biggest_problem or also_hurting. Do not mention ownership duration or reason for sale more than once across the entire report. If either is already an issue card, drop it from suggested_additions entirely.
+- Do not pad the report. A thin listing with real content for only 2 suggestions should return 2, not 3. Quality over quantity.
 - "title in hand" rule: never write "title in hand" or "clean title in hand" in after_copy or whats_working unless the seller explicitly used the phrase "in hand" in their listing. Craigslist metadata showing `title status: clean` only justifies "clean title stated in listing" — nothing more.
 - Use benchmark language, not emotional language. Be specific with counts and benchmarks.
 - Short description title rule: if the description is under 50 words and you flag it as a text issue, the problem title MUST reflect the word count — not the writing style. Use titles like "Description is 24 words — buyers need more" or "24-word description leaves buyers guessing." Never use "reads like a spec sheet," "lacks a story," or similar style critiques when the real problem is length. Style critiques apply only when the description is 80+ words but poorly written or vague.
