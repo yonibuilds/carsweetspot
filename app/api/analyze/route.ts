@@ -88,15 +88,69 @@ Use these ranges as anchors. Score based on what is actually present — do not 
 
 Description quality is a real score factor. Strong trust signals cannot compensate for a 4-line description on a $15,000+ vehicle. A listing that earns trust but fails to inform scores 68–74, not 75+.
 
-overall_score weights:
-- Vehicle History Signals: 35% — number of previous owners mentioned, service/maintenance history, how long seller has owned it, reason for selling, CARFAX or history report offered
-- Photos & Visual Proof: 20% — evaluate based on what is available:
-  - If actual photos were provided by the user: analyze content directly (see Photo Analysis Rules below)
-  - If only HTML/text: use photo count benchmarks (1–3: poor, 4–7: average, 8–12: strong, 13+: excellent) and any angles mentioned in the description
-- Description Quality: 15% — word count benchmarks (<50: very short, 50–100: short, 100–150: average, 150–250: strong, 250+: detailed), spelling errors, trim level specified, mileage stated, tire/brake condition mentioned, VIN available
-- Trust & Title Transparency: 15% — title in hand stated, lien-free stated, rebuilt/salvage explained with repair details and inspection status, honest disclosure of known flaws
-- Pricing: 10% — only flag if price appears extreme. Do NOT penalize without market data. If price seems high, note it gently and suggest KBB check.
-- Payment & Flexibility: 5% — cash-only restricts buyer pool, OBO signals flexibility, payment method stated
+## Scoring Dimensions (9-factor model)
+
+Score each dimension 0–10, then apply weights to produce overall_score (0–100).
+
+1. Photo coverage / visual merchandising (20 pts)
+   - Parser provides photo count — trust it, do not re-estimate
+   - Count benchmarks: 0–3 = 0–4 pts | 4–7 = 5–7 pts | 8–12 = 8–9 pts | 13+ = 10 pts
+   - If photos uploaded by user: evaluate angle coverage (3/4 front, rear, side, dashboard, odometer, interior, engine bay, trunk) and quality (lighting, cleanliness, warning lights)
+   - Hero image quality: clear, well-lit exterior shot = +1; dark/blurry/no car visible = −1
+
+2. Service proof specificity (18 pts)
+   - Evidence (receipts, dates, shops named, records stated): 15–18 pts
+   - Claims only ("well maintained," "runs great"): 6–9 pts
+   - Nothing mentioned: 0–5 pts
+   - Specific recent service event (e.g., "new timing belt at 90k"): +2 pts bonus
+
+3. Stacked trust signals (17 pts)
+   - Each confirmed: clean title (+3), no accidents (+3), CARFAX/AutoCheck offered (+3), lien-free/title in hand (+2), emissions pass (+2), registration current (+2), VIN provided (+2)
+   - Claims only (not verifiable): half value
+   - Score all confirmed signals, cap at 17
+
+4. Title clarity / transfer readiness (13 pts)
+   - Clean title, in hand, lien-free: 11–13 pts
+   - Clean title stated but no "in hand" or lien status: 7–9 pts
+   - Title status not mentioned: 3–5 pts
+   - Rebuilt/salvage disclosed WITH explanation, repairs, and inspection: 8–10 pts
+   - Rebuilt/salvage disclosed WITHOUT explanation: 2–4 pts (triggers score cap — see caps below)
+   - Salvage/rebuilt never mentioned despite structural evidence: 0–2 pts
+
+5. Ownership / reason / seller context (12 pts)
+   - Ownership duration stated: +4 pts
+   - Reason for sale stated: +4 pts
+   - Number of previous owners stated: +2 pts
+   - Seller background adds credibility (e.g., "I bought it new," "family car since 2018"): +2 pts
+   - None of the above: 0–2 pts
+
+6. Writing cleanliness (8 pts)
+   - Clear, readable, no errors, good formatting: 7–8 pts
+   - Minor errors or thin but readable: 4–6 pts
+   - Spelling errors, all-caps, keyword spam, wall of text, excessive emojis: 1–3 pts
+
+7. Known-issues transparency (6 pts)
+   - Seller proactively discloses a known flaw (cosmetic or mechanical) and explains it: 5–6 pts
+   - No known issues mentioned, no obvious problems: 4 pts (neutral)
+   - Obvious problems visible/implied but not mentioned: 0–2 pts
+
+8. Conditional price justification (4 pts)
+   - Rebuilt/salvage: seller explains the price accounts for title status: +4 pts
+   - High mileage: seller explains the usage (fleet, highway, commute): +3 pts
+   - Price vs condition unexplained but not clearly extreme: 2 pts
+   - Price appears high with no supporting trust details: 0–1 pts
+
+9. Bonus proof signals (up to +2 pts over base, capped at 100)
+   - Odometer photo included: +1 pt
+   - Service records photo included: +1 pt
+   - Pre-purchase inspection offered or completed: +1 pt
+   - Honest flaw photographed and disclosed: +1 pt
+
+## Score caps (enforced by post-processing — do not override these)
+
+- Rebuilt/salvage title disclosed WITHOUT explanation of damage, repairs, or inspection: HARD CAP at 58
+- High mileage (>20,000 miles/year per [MILEAGE RATE] note) WITHOUT any service or usage explanation: HARD CAP at 65
+- Both conditions present: HARD CAP at 55
 
 ## Evidence vs Claims
 
@@ -217,6 +271,8 @@ export async function POST(req: NextRequest) {
     const messageContent: Anthropic.MessageParam["content"] = [];
     let firstImgSrc: string | null = null;
     let detectedPrice: number | null = null;
+    let mileageRateNote = "";
+    let parserPhotoCount = 0;
 
     if (images && images.length > 0) {
       for (const img of images as string[]) {
@@ -309,7 +365,7 @@ export async function POST(req: NextRequest) {
           if (!upgradedSeen.has(upgraded)) { upgradedSeen.add(upgraded); upgradedImgs.push(upgraded); }
         }
 
-        const photoCount = upgradedImgs.length;
+        parserPhotoCount = upgradedImgs.length;
         firstImgSrc = upgradedImgs[0] ?? null;
 
 
@@ -339,8 +395,8 @@ export async function POST(req: NextRequest) {
           .filter(n => !isNaN(n) && n >= 1000 && n <= 300000);
         if (allPrices.length > 0) detectedPrice = allPrices[0];
 
-        const photoNote = photoCount > 0
-          ? `\n\n[PHOTO COUNT DETECTED FROM HTML: ${photoCount} listing photos found. Do NOT flag photos as missing or low-count.]`
+        const photoNote = parserPhotoCount > 0
+          ? `\n\n[PHOTO COUNT DETECTED FROM HTML: ${parserPhotoCount} listing photos found. Do NOT flag photos as missing or low-count.]`
           : `\n\n[PHOTO COUNT: Could not detect photos from HTML — evaluate based on description only.]`;
         const priceNote = detectedPrice
           ? `\n\n[PRICE DETECTED FROM HTML: $${detectedPrice.toLocaleString()} — set asking_price to ${detectedPrice}]`
@@ -352,7 +408,7 @@ export async function POST(req: NextRequest) {
           .filter(n => !isNaN(n) && n >= 1000 && n <= 500000)[0] ?? null;
         const detectedYear = cleaned.match(/\b(19[89]\d|20[012]\d)\b/)?.[1]
           ? parseInt(cleaned.match(/\b(19[89]\d|20[012]\d)\b/)![1], 10) : null;
-        let mileageRateNote = "";
+        mileageRateNote = "";
         if (detectedMileage && detectedYear) {
           const yearsOld = new Date().getFullYear() - detectedYear;
           if (yearsOld > 0) {
@@ -411,7 +467,6 @@ export async function POST(req: NextRequest) {
     const vf: string[] = (result.verified_facts ?? []).map((f: string) => f.toLowerCase());
     const hasOwnershipDuration = vf.some(f => /owned.*\d|\d.*year.*own|\d.*month.*own|ownership.*duration/.test(f));
     const hasReasonForSale = vf.some(f => /reason.*sell|selling.*because|downsize|upgrad|relocat|moving|retire/.test(f));
-    const parserPhotoCount = photoCount; // from HTML parser — authoritative
     const isValidIssue = (issue: { title?: string; category?: string } | null | undefined): boolean => {
       if (!issue) return false;
       const t = (issue.title ?? "").toLowerCase();
@@ -427,6 +482,21 @@ export async function POST(req: NextRequest) {
       result.also_hurting = (result.also_hurting ?? []).filter((i: unknown) => i !== next);
     }
     result.also_hurting = (result.also_hurting ?? []).filter(isValidIssue);
+
+    // Post-processing: score caps
+    // Rebuilt/salvage without explanation: cap at 58
+    // High mileage without service explanation: cap at 65
+    const allText = [...(result.verified_facts ?? []), ...(result.unsafe_to_claim ?? []), result.biggest_problem?.why_buyers_care ?? ""].join(" ").toLowerCase();
+    const hasRebuiltTitle = vf.some(f => /rebuilt|salvage/.test(f));
+    const hasRebuiltExplanation = vf.some(f => /repair|inspection|damage.*was|rebuilt.*after|rebuilt.*follow/.test(f));
+    const isMileageHigh = mileageRateNote.includes("HIGH usage") || mileageRateNote.includes("EXTREME usage");
+    const hasServiceExplanation = vf.some(f => /service|maintenance|oil|timing|record|inspect|highway|commute|fleet/.test(f)) || allText.includes("highway") || allText.includes("service record");
+
+    let scoreCap = 100;
+    if (hasRebuiltTitle && !hasRebuiltExplanation) scoreCap = Math.min(scoreCap, 58);
+    if (isMileageHigh && !hasServiceExplanation) scoreCap = Math.min(scoreCap, 65);
+    if (hasRebuiltTitle && !hasRebuiltExplanation && isMileageHigh && !hasServiceExplanation) scoreCap = Math.min(scoreCap, 55);
+    if (result.overall_score > scoreCap) result.overall_score = scoreCap;
 
     // If AI failed to extract price but we detected it from HTML, use it
     if (!result.asking_price && detectedPrice) {
