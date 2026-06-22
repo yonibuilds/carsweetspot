@@ -399,7 +399,7 @@ export default function Home() {
                   <p style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE, margin: "10px 0 0" }}>2018 Toyota Camry SE</p>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={CAR_IMG} alt="2018 Toyota Camry" style={{ width: "100%", height: 120, objectFit: "cover", display: "block", filter: "grayscale(25%) brightness(0.85) saturate(0.8)" }} />
+                <img src={CAR_IMG} alt="2018 Toyota Camry" style={{ width: "100%", height: 120, objectFit: "cover", objectPosition: "65% center", display: "block", filter: "brightness(0.68) contrast(0.82) saturate(0.55) grayscale(20%)" }} />
                 <div style={{ padding: "12px 16px 16px" }}>
                   <p style={{ ...B, fontSize: 12, color: "#94A3B8", lineHeight: 1.55, margin: "0 0 12px", fontStyle: "italic" }}>
                     &quot;Runs great. Clean title. Call for details.&quot;
@@ -443,7 +443,7 @@ export default function Home() {
                     <p style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE, margin: "10px 0 0" }}>2018 Toyota Camry SE</p>
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={CAR_IMG} alt="2018 Toyota Camry" style={{ width: "100%", height: 120, objectFit: "cover", display: "block", filter: "brightness(1.05) saturate(1.1)" }} />
+                  <img src={CAR_IMG} alt="2018 Toyota Camry" style={{ width: "100%", height: 120, objectFit: "cover", objectPosition: "40% center", display: "block", filter: "brightness(1.1) contrast(1.08) saturate(1.2)" }} />
                 </div>
                 <div style={{ padding: "12px 16px 16px" }}>
                   <p style={{ ...B, fontSize: 12, color: "#94A3B8", lineHeight: 1.55, margin: "0 0 12px", fontStyle: "italic" }}>
