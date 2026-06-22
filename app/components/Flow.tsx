@@ -508,11 +508,10 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
       )}
 
       {/* Issues header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, paddingTop: 8, paddingBottom: 6 }}>
-        <span style={{ ...H, fontSize: 18, fontWeight: 700, color: NAVY, letterSpacing: "-0.02em" }}>{totalImprovements} Ways to Improve This Listing</span>
-        <span style={{ ...B, fontSize: 12, color: NAVY_MUT }}>
-          Fix all to reach a <strong style={{ color: SUCCESS }}>Strong</strong> score
-        </span>
+      <div style={{ paddingTop: 16, paddingBottom: 8 }}>
+        <p style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Next Steps</p>
+        <p style={{ ...H, fontSize: 20, fontWeight: 800, color: NAVY, letterSpacing: "-0.02em", margin: "0 0 5px" }}>{totalImprovements} Ways to Improve This Listing</p>
+        <p style={{ ...B, fontSize: 13, color: NAVY_MUTED2, margin: 0 }}>Start with the first fix — it has the biggest buyer impact.</p>
       </div>
 
       {/* Issue cards */}
