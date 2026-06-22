@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v6";
+const CACHE_VERSION = "v7";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -277,7 +277,8 @@ NEVER write in after_copy without explicit documentation:
 - Keyword spam: 3+ competitor brand names consecutively → flag under "text".
 - suggested_additions: 2–4 coaching tips. Format: "If you have X, consider adding Y."
 - Use benchmark language, not emotional language. Be specific with counts and benchmarks.
-- Seller-claim vs verified proof: "Seller states…" for anything from seller_claims. Only use "verified," "confirmed," "documented" if records/receipts/CARFAX are explicitly in explicit_listing_facts.`;
+- Seller-claim vs verified proof: "Seller states…" for anything from seller_claims. Only use "verified," "confirmed," "documented" if records/receipts/CARFAX are explicitly in explicit_listing_facts.
+- CARFAX in after_copy: if CARFAX is in explicit_listing_facts, you may write "CARFAX report available" or "CARFAX on file." Do NOT write specific CARFAX findings ("CARFAX shows X service records", "CARFAX shows no accidents", "CARFAX confirms one owner") unless those exact numbers and findings appear verbatim in explicit_listing_facts. A seller saying "CARFAX available" does not authorize you to describe what the CARFAX contains.`;
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types
@@ -601,6 +602,11 @@ ${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || 
     {
       const hasVerifiedCarfax = allFacts.some(f => /carfax|autocheck|vehicle history report/.test(f));
       const hasVerifiedServiceRecords = allFacts.some(f => /service records? (available|on hand|provided)|maintenance records? available/.test(f));
+      // "CARFAX shows/indicates/confirms [specific claim]" — strip even when CARFAX is verified,
+      // because the specific finding was derived by the AI, not stated verbatim by the seller.
+      // Only "CARFAX available" / "CARFAX on file" / "CARFAX report available" are safe.
+      const carfaxDerivedPattern = /carfax\s+(shows|indicates|confirms|reports|reveals|found|has|lists)/i;
+
       const carfaxPatterns = [/carfax/i, /autocheck/i];
       const servicePatterns = [
         /service\s+records?\s+available/i, /maintenance\s+records?\s+available/i,
@@ -623,6 +629,8 @@ ${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || 
           return parts.filter(s => {
             if (!hasVerifiedCarfax && carfaxPatterns.some(p => p.test(s))) { addCarfaxSuggestion = true; return false; }
             if (!hasVerifiedServiceRecords && servicePatterns.some(p => p.test(s))) { addCarfaxSuggestion = true; return false; }
+            // Strip specific CARFAX-derived claims even when CARFAX is verified — AI cannot know report contents
+            if (carfaxDerivedPattern.test(s)) { return false; }
             if (placeholderPattern.test(s)) return false;
             return true;
           }).join(' ').trim();
