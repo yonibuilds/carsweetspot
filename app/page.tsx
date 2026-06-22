@@ -25,18 +25,14 @@ function AnalyzingScreen({ pendingResult }: { pendingResult: AnalysisResult | nu
   const [visibleSteps, setVisibleSteps] = useState(0);
   const [showCard, setShowCard] = useState(false);
 
+  // Show the affordability card frame early (at step 3, ~2.7s), regardless of API
   useEffect(() => {
     STEPS.forEach((_, i) => {
       setTimeout(() => setVisibleSteps(i + 1), (i + 1) * 900);
     });
+    const t = setTimeout(() => setShowCard(true), 2700);
+    return () => clearTimeout(t);
   }, []);
-
-  useEffect(() => {
-    if (pendingResult && pendingResult.asking_price > 0) {
-      const t = setTimeout(() => setShowCard(true), 350);
-      return () => clearTimeout(t);
-    }
-  }, [pendingResult]);
 
   const calcMo = (() => {
     if (!pendingResult || pendingResult.asking_price < 8000) return 0;
@@ -45,7 +41,7 @@ function AnalyzingScreen({ pendingResult }: { pendingResult: AnalysisResult | nu
     return Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
   })();
 
-  const hasAffordability = pendingResult && pendingResult.asking_price > 0 && calcMo > 0;
+  const hasPrice = !!(pendingResult && pendingResult.asking_price > 0 && calcMo > 0);
 
   return (
     <div style={{ minHeight: "100vh", background: NAVY, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
@@ -75,40 +71,50 @@ function AnalyzingScreen({ pendingResult }: { pendingResult: AnalysisResult | nu
           })}
         </div>
 
-        {/* Affordability reveal */}
-        {hasAffordability && (
-          <div style={{
-            marginTop: 36,
-            opacity: showCard ? 1 : 0,
-            transform: showCard ? "translateY(0)" : "translateY(14px)",
-            transition: "opacity 0.55s ease, transform 0.55s ease",
-          }}>
-            <div style={{ height: 1, background: "rgba(255,255,255,0.07)", marginBottom: 28 }} />
-            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 16, padding: "22px 24px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-                {/* Asking price */}
-                <div style={{ flex: 1 }}>
-                  <p style={{ ...B, fontSize: 10, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Asking Price</p>
-                  <p style={{ ...H, fontSize: 22, fontWeight: 700, color: WHITE, margin: 0 }}>${pendingResult!.asking_price.toLocaleString()}</p>
+        {/* Affordability card — appears at step 3, updates when API returns */}
+        <div style={{
+          marginTop: 36,
+          opacity: showCard ? 1 : 0,
+          transform: showCard ? "translateY(0)" : "translateY(14px)",
+          transition: "opacity 0.55s ease, transform 0.55s ease",
+          pointerEvents: "none",
+        }}>
+          <div style={{ height: 1, background: "rgba(255,255,255,0.07)", marginBottom: 28 }} />
+          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 16, padding: "22px 24px" }}>
+            {hasPrice ? (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ ...B, fontSize: 10, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Asking Price</p>
+                    <p style={{ ...H, fontSize: 22, fontWeight: 700, color: WHITE, margin: 0 }}>${pendingResult!.asking_price.toLocaleString()}</p>
+                  </div>
+                  <div style={{ ...B, fontSize: 18, color: "#334155" }}>→</div>
+                  <div style={{ flex: 1, textAlign: "right" }}>
+                    <p style={{ ...B, fontSize: 10, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Est. Buyer Payment</p>
+                    <p style={{ ...H, fontSize: 22, fontWeight: 700, color: "#60A5FA", margin: 0 }}>${calcMo}/mo</p>
+                  </div>
                 </div>
-                {/* Arrow */}
-                <div style={{ ...B, fontSize: 18, color: "#334155" }}>→</div>
-                {/* Monthly */}
-                <div style={{ flex: 1, textAlign: "right" }}>
-                  <p style={{ ...B, fontSize: 10, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Est. Buyer Payment</p>
-                  <p style={{ ...H, fontSize: 22, fontWeight: 700, color: "#60A5FA", margin: 0 }}>${calcMo}/mo</p>
-                </div>
+                <p style={{ ...B, fontSize: 12, color: "#64748B", margin: 0, lineHeight: 1.65, textAlign: "center" }}>
+                  Most buyers don&apos;t think only in this number.<br />
+                  <span style={{ color: "#94A3B8" }}>One reason buyers respond is affordability — how the price feels month to month.</span>
+                </p>
+              </>
+            ) : (
+              <div style={{ textAlign: "center" }}>
+                <p style={{ ...B, fontSize: 13, color: "#94A3B8", margin: "0 0 6px" }}>Calculating buyer affordability…</p>
+                <p style={{ ...B, fontSize: 11, color: "#475569", margin: 0, lineHeight: 1.6 }}>
+                  Many buyers compare cars by monthly payment, not just total price.<br />
+                  We&apos;ll show you how buyers may see your asking price.
+                </p>
               </div>
-              <p style={{ ...B, fontSize: 12, color: "#64748B", margin: 0, lineHeight: 1.65, textAlign: "center" }}>
-                Most buyers don&apos;t think only in this number.<br />
-                <span style={{ color: "#94A3B8" }}>One reason buyers respond is affordability — how the price feels month to month.</span>
-              </p>
-            </div>
+            )}
+          </div>
+          {hasPrice && (
             <p style={{ ...B, fontSize: 11, color: "#334155", textAlign: "center", margin: "20px 0 0", letterSpacing: "0.02em" }}>
               Finalizing your report…
             </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
