@@ -247,20 +247,18 @@ function LeftSidebar({ result, fixProblems, onReset }: {
   result: AnalysisResult; fixProblems: Problem[]; onReset: () => void;
 }) {
   const badge = scoreBadge(result.overall_score);
-  const potentialScore = Math.min(100, result.overall_score + fixProblems.length * 4);
-  const pointsGain = potentialScore - result.overall_score;
+  const quickFixScore = Math.min(100, result.overall_score + fixProblems.length * 4);
   const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
-  const [copied, setCopied] = useState(false);
 
-  const muted   = "#64748B";
-  const dimBor  = "rgba(255,255,255,0.09)";
-  const lbl: React.CSSProperties = { ...B, fontSize: 10, fontWeight: 600, color: muted, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" };
+  const muted  = "#64748B";
+  const dimBor = "rgba(255,255,255,0.08)";
+  const lbl: React.CSSProperties = { ...B, fontSize: 10, fontWeight: 600, color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" };
+  const divider = <div style={{ height: 1, background: dimBor, margin: "18px 0" }} />;
 
-  // Score breakdown per category
-  const catColors: Record<string, { fill: string; bg: string }> = {
-    ok:     { fill: "#22C55E", bg: "rgba(34,197,94,0.15)" },
-    medium: { fill: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
-    bad:    { fill: "#EF4444", bg: "rgba(239,68,68,0.15)" },
+  const catColors: Record<string, { fill: string }> = {
+    ok:     { fill: "#22C55E" },
+    medium: { fill: "#F59E0B" },
+    bad:    { fill: "#EF4444" },
   };
   function catLevel(cat: string) {
     if (result.biggest_problem?.category === cat) return "bad";
@@ -283,28 +281,20 @@ function LeftSidebar({ result, fixProblems, onReset }: {
     score: c === "photos" ? photoBarScore : catLevel(c) === "bad" ? 38 : catLevel(c) === "medium" ? 62 : 91,
   }));
 
-  const copyFinancing = () => {
-    const t = calcMo > 0
-      ? `Financing available OAC — est. $${calcMo}/mo at 7% APR, 60 months.`
-      : `Financing available OAC — ask me about monthly options.`;
-    navigator.clipboard.writeText(t);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div style={{ background: NAVY, borderRadius: 18, padding: "20px 18px", display: "flex", flexDirection: "column" }}>
+
       {/* Logo + back */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <span style={{ ...H, fontSize: 14, fontWeight: 700, color: WHITE }}>CarSweetSpot</span>
         <button onClick={onReset} style={{
-          ...B, fontSize: 11, color: muted, background: "rgba(255,255,255,0.07)", border: `1px solid ${dimBor}`,
+          ...B, fontSize: 11, color: muted, background: "rgba(255,255,255,0.06)", border: `1px solid ${dimBor}`,
           borderRadius: 7, padding: "4px 9px", cursor: "pointer",
         }}>← Back</button>
       </div>
 
       {/* Vehicle photo */}
-      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 10, overflow: "hidden", border: `1px solid ${dimBor}`, marginBottom: 18, background: "rgba(255,255,255,0.04)", position: "relative", flexShrink: 0 }}>
+      <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 10, overflow: "hidden", border: `1px solid ${dimBor}`, marginBottom: 20, background: "rgba(255,255,255,0.04)", position: "relative", flexShrink: 0 }}>
         {result.listing_image ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -325,9 +315,9 @@ function LeftSidebar({ result, fixProblems, onReset }: {
         )}
       </div>
 
-      {/* Score */}
+      {/* Sweet Spot Score */}
       <p style={lbl}>Sweet Spot Score</p>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
         <ScoreRingDark score={result.overall_score} />
         <div>
           <div style={{ display: "inline-block", background: badge.bg, color: badge.color, fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px", marginBottom: 6 }}>
@@ -337,17 +327,39 @@ function LeftSidebar({ result, fixProblems, onReset }: {
         </div>
       </div>
 
-      {/* Score breakdown */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 16 }}>
+      {/* Potential Score — 3-step */}
+      <p style={lbl}>Potential Score</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#60A5FA", flexShrink: 0 }} />
+          <span style={{ ...H, fontSize: 20, fontWeight: 700, color: WHITE, lineHeight: 1 }}>{result.overall_score}</span>
+          <span style={{ ...B, fontSize: 11, color: muted }}>now</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FBBF24", flexShrink: 0 }} />
+          <span style={{ ...H, fontSize: 20, fontWeight: 700, color: WHITE, lineHeight: 1 }}>{quickFixScore}</span>
+          <span style={{ ...B, fontSize: 11, color: muted }}>quick fixes</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4ADE80", flexShrink: 0 }} />
+          <span style={{ ...H, fontSize: 20, fontWeight: 700, color: WHITE, lineHeight: 1 }}>90+</span>
+          <span style={{ ...B, fontSize: 11, color: muted }}>with added details</span>
+        </div>
+      </div>
+
+      {divider}
+
+      {/* Category breakdown */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 4 }}>
         {breakdown.map(({ label, level, score }) => {
           const c = catColors[level];
           return (
             <div key={label}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ ...B, fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{label}</span>
+                <span style={{ ...B, fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{label}</span>
                 <span style={{ ...B, fontSize: 11, color: c.fill }}>{score}%</span>
               </div>
-              <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
+              <div style={{ height: 3, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: `${score}%`, background: c.fill, borderRadius: 2, transition: "width 1s ease-out" }} />
               </div>
             </div>
@@ -355,59 +367,38 @@ function LeftSidebar({ result, fixProblems, onReset }: {
         })}
       </div>
 
-      <div style={{ height: 1, background: dimBor, margin: "0 0 14px" }} />
+      {divider}
 
-      {/* Potential score */}
-      <p style={lbl}>Potential Score</p>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 3 }}>
-        <span style={{ ...H, fontSize: 26, fontWeight: 700, color: WHITE }}>{potentialScore}</span>
-        <span style={{ fontSize: 14, color: "#4ADE80" }}>↑</span>
-      </div>
-      <p style={{ ...B, fontSize: 11, fontWeight: 600, color: "#4ADE80", margin: "0 0 3px" }}>+{pointsGain} points available</p>
-      <p style={{ ...B, fontSize: 11, color: muted, margin: "0 0 14px", lineHeight: 1.5 }}>Fix the issues below to increase your score.</p>
-
-      <div style={{ height: 1, background: dimBor, margin: "0 0 14px" }} />
-
-      {/* Monthly payment */}
+      {/* Buyer Affordability */}
       {calcMo > 0 && (
         <>
-          <p style={lbl}>Estimated Monthly Payment</p>
-          <p style={{ ...H, fontSize: 24, fontWeight: 700, color: "#60A5FA", margin: "0 0 5px" }}>
-            ${calcMo}<span style={{ fontSize: 12, fontWeight: 400, color: muted }}>/mo est.</span>
+          <p style={lbl}>Buyer Affordability</p>
+          <p style={{ ...H, fontSize: 26, fontWeight: 700, color: "#60A5FA", margin: "0 0 6px", lineHeight: 1 }}>
+            ${calcMo}<span style={{ ...B, fontSize: 12, fontWeight: 400, color: muted }}>/mo</span>
           </p>
-          <p style={{ ...B, fontSize: 11, color: muted, margin: "0 0 10px", lineHeight: 1.5 }}>
-            Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
+          <p style={{ ...B, fontSize: 11, color: muted, margin: 0, lineHeight: 1.55 }}>
+            Shows how the asking price may feel month to month.<br />
+            Estimated for qualified buyers. OAC. 7% APR, 60 months.
           </p>
-          <button onClick={copyFinancing} style={{
-            width: "100%", background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.28)`,
-            borderRadius: 9, padding: "8px 11px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14,
-          }}>
-            <span style={{ fontFamily: "monospace", fontSize: 11, color: "#93C5FD", lineHeight: 1.5, textAlign: "left" }}>
-              Financing available OAC — est. ${calcMo}/mo
-            </span>
-            <span style={{ ...B, fontSize: 10, color: "#60A5FA", marginLeft: 8, whiteSpace: "nowrap", fontWeight: 600 }}>
-              {copied ? "✓" : "Copy"}
-            </span>
-          </button>
-          <div style={{ height: 1, background: dimBor, margin: "0 0 14px" }} />
+          {divider}
         </>
       )}
 
       {/* Data points */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
-        <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.22)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: `1px solid ${dimBor}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
         </div>
         <div>
-          <p style={{ ...H, fontSize: 11, fontWeight: 600, color: "#60A5FA", margin: "0 0 2px" }}>Score based on 30+ data points</p>
+          <p style={{ ...B, fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", margin: "0 0 2px" }}>Score based on 30+ data points</p>
           <p style={{ ...B, fontSize: 10, color: muted, margin: 0, lineHeight: 1.5 }}>
             Benchmarked against thousands of strong private-party listings.
           </p>
         </div>
       </div>
+
     </div>
   );
 }
