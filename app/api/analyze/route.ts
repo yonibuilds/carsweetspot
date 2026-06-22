@@ -228,7 +228,7 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 - Rebuilt/salvage title: the disclosure itself is not the problem — do not penalize the score for it. The problem is missing explanation, missing repair details, missing inspection status, or missing documentation. Flag those gaps as issues or opportunities. If the listing discloses rebuilt title with explanation, repairs, and inspection, treat it as a trust signal. Never say hail/flood/collision unless the seller explicitly stated it. Safe language: "Rebuilt title disclosed. Consider adding the damage type, repairs completed, inspection status, and any available documentation." Rebuilt titles typically price at 60–70% of clean-title equivalent — suggest this if price is not explained.
 - biggest_problem: the single most damaging issue hurting buyer contact rate — must be something the seller CAN fix (copy, photos, missing info). Never use title status as a problem.
 - also_hurting: exactly 2 additional problems, different categories — must be actionable
-- before/after: ONLY use facts the seller actually stated. Never invent features, maintenance history, or ownership details. "after" must be paste-ready copy the seller can use immediately, built only from confirmed facts. Target 30–80 words — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
+- before/after: ONLY use facts the seller actually stated. Never invent features, maintenance history, or ownership details. "after" must be paste-ready copy the seller can use immediately, built only from confirmed facts. PROHIBITED in after unless explicitly stated in listing: "clean interior", "clean inside", "well maintained", "garage kept", "highway miles", "one owner", "non-smoker", "no accidents". Target 30–80 words — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
 - Spelling errors in the listing: always flag this — 42% of listings have them and buyers notice. It signals carelessness about the car, not just the ad.
 - If the listing omits how long the seller has owned it: flag this. "I've owned this since 2019" is one sentence that eliminates the #1 buyer suspicion ("what's wrong with it?").
 - If reason for selling is missing: flag this. Silence triggers suspicion. "Upgrading to a truck" takes 4 words and converts skeptics.
@@ -500,7 +500,8 @@ export async function POST(req: NextRequest) {
       }
       result.also_hurting = keptAlso;
       for (const issue of demoted) {
-        const tip = `${issue.title}. ${issue.seller_insight ?? ""}`.trim().slice(0, 180);
+        const raw = `${issue.title}. ${issue.seller_insight ?? ""}`.trim();
+        const tip = raw.length > 180 ? raw.slice(0, raw.lastIndexOf(" ", 180)) + "…" : raw;
         result.suggested_additions = [...(result.suggested_additions ?? []), tip];
       }
     }
@@ -595,6 +596,20 @@ export async function POST(req: NextRequest) {
       const r = 0.07 / 12;
       const n = 60;
       result.monthly_payment = Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+    }
+
+    // Expose photo count for UI bar calibration
+    result.photo_count = parserPhotoCount;
+
+    // Post-processing: fix financing amounts in after fields to match calculated monthly_payment
+    if (result.monthly_payment) {
+      const mo = result.monthly_payment;
+      const fixFinancing = (text: string): string =>
+        text.replace(/est\.\s*\$[\d,]+\/mo\b[^.]*/gi, `est. $${mo}/mo at 7% APR, 60 months`);
+      if (result.biggest_problem?.after) result.biggest_problem.after = fixFinancing(result.biggest_problem.after);
+      for (const issue of result.also_hurting ?? []) {
+        if (issue.after) issue.after = fixFinancing(issue.after);
+      }
     }
 
     // Attach listing image if available

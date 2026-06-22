@@ -25,6 +25,7 @@ export type AnalysisResult = {
   verified_facts?: string[];
   unsafe_to_claim?: string[];
   listing_image?: string;
+  photo_count?: number;
 };
 
 // ── Tokens ────────────────────────────────────────────────────────
@@ -210,10 +211,20 @@ function LeftSidebar({ result, fixProblems, onReset }: {
     if (result.also_hurting?.some(p => p?.category === cat)) return "medium";
     return "ok";
   }
+  const photoBarScore = (() => {
+    const level = catLevel("photos");
+    if (level === "bad") return 38;
+    if (level === "medium") return 62;
+    const n = result.photo_count ?? 0;
+    if (n >= 12) return 91;
+    if (n >= 8) return 75;
+    if (n >= 4) return 62;
+    return 38;
+  })();
   const breakdown = (["trust", "text", "photos"] as const).map(c => ({
     label: c === "trust" ? "Trust" : c === "text" ? "Text" : "Photos",
     level: catLevel(c),
-    score: catLevel(c) === "bad" ? 38 : catLevel(c) === "medium" ? 62 : 91,
+    score: c === "photos" ? photoBarScore : catLevel(c) === "bad" ? 38 : catLevel(c) === "medium" ? 62 : 91,
   }));
 
   const copyFinancing = () => {
