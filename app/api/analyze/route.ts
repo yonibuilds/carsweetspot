@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v7";
+const CACHE_VERSION = "v8";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -277,6 +277,7 @@ NEVER write in after_copy without explicit documentation:
 - Keyword spam: 3+ competitor brand names consecutively → flag under "text".
 - suggested_additions: 2–4 coaching tips. Format: "If you have X, consider adding Y."
 - Use benchmark language, not emotional language. Be specific with counts and benchmarks.
+- Short description title rule: if the description is under 50 words and you flag it as a text issue, the problem title MUST reflect the word count — not the writing style. Use titles like "Description is 24 words — buyers need more" or "24-word description leaves buyers guessing." Never use "reads like a spec sheet," "lacks a story," or similar style critiques when the real problem is length. Style critiques apply only when the description is 80+ words but poorly written or vague.
 - Seller-claim vs verified proof: "Seller states…" for anything from seller_claims. Only use "verified," "confirmed," "documented" if records/receipts/CARFAX are explicitly in explicit_listing_facts.
 - CARFAX in after_copy: if CARFAX is in explicit_listing_facts, you may write "CARFAX report available" or "CARFAX on file." Do NOT write specific CARFAX findings ("CARFAX shows X service records", "CARFAX shows no accidents", "CARFAX confirms one owner") unless those exact numbers and findings appear verbatim in explicit_listing_facts. A seller saying "CARFAX available" does not authorize you to describe what the CARFAX contains.`;
 
