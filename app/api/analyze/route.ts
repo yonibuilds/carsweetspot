@@ -532,7 +532,7 @@ export async function POST(req: NextRequest) {
           const parts: string[] = [];
           let remaining = line;
           while (remaining.length > 0) {
-            const match = remaining.match(/^(.*?[.!?])\s*/s);
+            const match = remaining.match(/^(.*?[.!?])\s*/);
             if (match) {
               parts.push(match[1]);
               remaining = remaining.slice(match[0].length);
