@@ -25,7 +25,9 @@ export type AnalysisResult = {
   opportunities: Opportunity[];
   whats_working: string[];
   suggested_additions?: string[];
-  // V3 fact inventory fields (not rendered in UI — used for debugging/QA)
+  improved_draft?: string;
+  seller_questions?: string[];
+  // V3 fact inventory fields (passed to /api/strengthen)
   structured_facts?: string[];
   explicit_listing_facts?: string[];
   seller_claims?: string[];
@@ -297,6 +299,150 @@ function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: b
   );
 }
 
+// ── Improved Draft ────────────────────────────────────────────────
+function ImprovedDraft({ draft }: { draft: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => { navigator.clipboard.writeText(draft); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  return (
+    <Card style={{ borderLeft: `4px solid ${BRAND}` }}>
+      <div style={{ padding: "20px 24px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 14 }}>
+          <div>
+            <p style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px" }}>Improved Draft</p>
+            <p style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY, margin: 0 }}>Better version — ready to copy</p>
+          </div>
+          <button onClick={copy} style={{
+            ...B, fontSize: 12, fontWeight: 600, cursor: "pointer",
+            background: copied ? SUCCESS : BRAND, color: WHITE,
+            border: "none", borderRadius: 8, padding: "8px 18px",
+            whiteSpace: "nowrap", transition: "all 0.2s", flexShrink: 0,
+          }}>
+            {copied ? "✓ Copied!" : "Copy Draft"}
+          </button>
+        </div>
+        <div style={{ background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "16px 18px" }}>
+          <p style={{ ...B, fontSize: 14, color: NAVY, lineHeight: 1.75, margin: 0, whiteSpace: "pre-wrap" }}>{draft}</p>
+        </div>
+        <p style={{ ...B, fontSize: 11, color: NAVY_MUTED2, margin: "10px 0 0" }}>
+          Built from the facts in your listing. Answer the questions below to unlock a stronger version.
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+// ── Make it Stronger ──────────────────────────────────────────────
+function MakeItStronger({ questions, result }: { questions: string[]; result: AnalysisResult }) {
+  const [answers, setAnswers] = useState(["", "", ""]);
+  const [loading, setLoading] = useState(false);
+  const [strongerDraft, setStrongerDraft] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const displayQuestions = (questions.length > 0 ? questions : [
+    "How long have you owned this car?",
+    "Any recent maintenance or repairs?",
+    "Why are you selling?",
+  ]).slice(0, 3);
+
+  const canSubmit = answers.some(a => a.trim().length > 3) && !loading;
+
+  const submit = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const filledAnswers = answers
+        .map((a, i) => a.trim() ? `${displayQuestions[i]}: ${a.trim()}` : null)
+        .filter(Boolean);
+      const resp = await fetch("/api/strengthen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          structured_facts: result.structured_facts ?? [],
+          explicit_listing_facts: result.explicit_listing_facts ?? [],
+          seller_claims: result.seller_claims ?? [],
+          seller_answers: filledAnswers,
+        }),
+      });
+      const data = await resp.json();
+      if (data.error) { setError(data.error); return; }
+      setStrongerDraft(data.stronger_draft);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copy = () => { navigator.clipboard.writeText(strongerDraft!); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+
+  return (
+    <Card>
+      <div style={{ padding: "20px 24px" }}>
+        <div style={{ marginBottom: 18 }}>
+          <p style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px" }}>Make it Stronger</p>
+          <p style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY, margin: "0 0 4px" }}>Answer 3 quick questions</p>
+          <p style={{ ...B, fontSize: 13, color: NAVY_MUT, margin: 0 }}>We&apos;ll build a stronger version of your listing using your answers.</p>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {displayQuestions.map((q, i) => (
+            <div key={i}>
+              <label style={{ ...B, fontSize: 13, fontWeight: 600, color: NAVY, display: "block", marginBottom: 6 }}>{q}</label>
+              <textarea
+                value={answers[i]}
+                onChange={e => { const next = [...answers]; next[i] = e.target.value; setAnswers(next); }}
+                placeholder="Your answer..."
+                rows={2}
+                style={{
+                  ...B, width: "100%", fontSize: 13, color: NAVY,
+                  background: PAGE_BG, border: `1px solid ${BORDER}`,
+                  borderRadius: 8, padding: "10px 12px",
+                  resize: "vertical", boxSizing: "border-box",
+                  outline: "none", lineHeight: 1.5,
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={submit}
+          disabled={!canSubmit}
+          style={{
+            ...B, marginTop: 18, width: "100%", padding: "13px",
+            background: canSubmit ? BRAND : "#E2E8F0",
+            color: canSubmit ? WHITE : NAVY_MUT,
+            border: "none", borderRadius: 10,
+            fontSize: 14, fontWeight: 600,
+            cursor: canSubmit ? "pointer" : "not-allowed",
+            transition: "all 0.2s",
+          }}
+        >
+          {loading ? "Building stronger draft..." : "Build stronger draft →"}
+        </button>
+        {error && <p style={{ ...B, fontSize: 12, color: DANGER, margin: "10px 0 0" }}>{error}</p>}
+        {strongerDraft && (
+          <div style={{ marginTop: 22 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <span style={{ ...H, fontSize: 15, fontWeight: 700, color: NAVY }}>Stronger version</span>
+              <button onClick={copy} style={{
+                ...B, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                background: copied ? SUCCESS : WHITE, color: copied ? WHITE : SUCCESS,
+                border: `1px solid ${SUCCESS}`, borderRadius: 6, padding: "5px 12px",
+                transition: "all 0.2s",
+              }}>
+                {copied ? "✓ Copied" : "Copy"}
+              </button>
+            </div>
+            <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, borderRadius: 10, padding: "16px 18px" }}>
+              <p style={{ ...B, fontSize: 14, color: SUCC_FG, lineHeight: 1.75, margin: 0, whiteSpace: "pre-wrap" }}>{strongerDraft}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 // ── Left sidebar (dark) ───────────────────────────────────────────
 function LeftSidebar({ result, fixProblems, onReset }: {
   result: AnalysisResult; fixProblems: Problem[]; onReset: () => void;
@@ -550,11 +696,22 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
         </Card>
       )}
 
+      {/* Improved Draft */}
+      {result.improved_draft && (
+        <ImprovedDraft draft={result.improved_draft} />
+      )}
+
+      {/* Make it Stronger */}
+      <MakeItStronger
+        questions={result.seller_questions ?? []}
+        result={result}
+      />
+
       {/* Issues header */}
-      <div style={{ paddingTop: 16, paddingBottom: 8 }}>
-        <p style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Next Steps</p>
-        <p style={{ ...H, fontSize: 20, fontWeight: 800, color: NAVY, letterSpacing: "-0.02em", margin: "0 0 5px" }}>{totalImprovements} Ways to Improve This Listing</p>
-        <p style={{ ...B, fontSize: 13, color: NAVY_MUTED2, margin: 0 }}>Start with the first fix — it has the biggest buyer impact.</p>
+      <div style={{ paddingTop: 8, paddingBottom: 8 }}>
+        <p style={{ ...B, fontSize: 10, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Why Buyers May Hesitate</p>
+        <p style={{ ...H, fontSize: 18, fontWeight: 700, color: NAVY, letterSpacing: "-0.01em", margin: "0 0 4px" }}>{fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} to fix</p>
+        <p style={{ ...B, fontSize: 13, color: NAVY_MUTED2, margin: 0 }}>Each one reduces buyer confidence. Fix what you can.</p>
       </div>
 
       {/* Issue cards */}

@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v13";
+const CACHE_VERSION = "v14";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -163,6 +163,12 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no extra
   "suggested_additions": [
     "<coaching tip — format: 'If you have X, consider adding Y'>",
     "<another coaching tip>"
+  ],
+  "improved_draft": "<A unified rewrite of the full listing using ONLY structured_facts and explicit_listing_facts. seller_claims attributed as 'Seller states X'. Aim for 80–150 words. Plain text only — no markdown, no headers, no bullets. Make it compelling and specific. Even if facts are sparse, write the best possible version from what you have. This is the main copyable output for the seller.>",
+  "seller_questions": [
+    "<First question — specific to this vehicle's biggest trust gap. For a manual: 'How is the clutch/transmission?'. For high mileage: ask about service history. Be specific, not generic.>",
+    "<Second question — about a concrete detail missing from this listing that buyers would want to know. Never repeat a topic from the first question.>",
+    "<Third question — ownership duration, reason for sale, or a vehicle-specific angle. Skip if already in the listing.>"
   ]
 }
 
@@ -288,6 +294,8 @@ NEVER write in after_copy without explicit documentation:
 - suggested_additions must be vehicle-specific: look at the actual car — its type, features, mileage, and known buyer concerns — and tailor the tips. Examples: for a manual transmission car → clutch condition; for a performance car with Brembo brakes → brake service history or track use; for a high-mileage car → recent service events; for a truck → towing/payload use; for a hybrid → battery health. Generic tips (ownership duration, reason for sale) should only appear if they are NOT already covered in the issue cards AND if no more specific tip applies.
 - suggested_additions deduplication: do NOT repeat topics already covered in biggest_problem or also_hurting. Do not mention ownership duration or reason for sale more than once across the entire report. If either is already an issue card, drop it from suggested_additions entirely.
 - Do not pad the report. A thin listing with real content for only 2 suggestions should return 2, not 3. Quality over quantity.
+- improved_draft: always generate this — even for sparse listings. Use every fact from structured_facts and explicit_listing_facts. seller_claims go in as "Seller states X." This is the seller's main takeaway — make it worth copying. Plain text only.
+- seller_questions: generate exactly 3. Be specific to this vehicle — year, make, model, mileage, features. Do not ask about something already stated in the listing. Prefer concrete, answerable questions over vague ones. Good: "How is the clutch feel and shift quality?" Bad: "Any additional details?" Fallback only if no vehicle-specific angle exists: "How long have you owned it?", "Why are you selling?", "Any recent maintenance?"
 - "title in hand" rule: never write "title in hand" or "clean title in hand" in after_copy or whats_working unless the seller explicitly used the phrase "in hand" in their listing. Craigslist metadata showing title status: clean only justifies "clean title stated in listing" — nothing more.
 - issue_type and can_generate_after_copy rules:
   - Set issue_type to "needs_seller_input" when the fix requires the seller to provide NEW information they have not stated anywhere in the listing (e.g., ownership duration, reason for selling, service history they have not mentioned, condition details they have not described). These issues cannot produce safe after_copy.
@@ -559,7 +567,7 @@ ${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || 
 
     const writerResp = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2800,
+      max_tokens: 3400,
       temperature: 0,
       system: WRITER_PROMPT,
       messages: [{ role: "user", content: writerContent }],
