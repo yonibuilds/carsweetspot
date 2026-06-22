@@ -94,7 +94,7 @@ Score each dimension 0–10, then apply weights to produce overall_score (0–10
 
 1. Photo coverage / visual merchandising (20 pts)
    - Parser provides photo count — trust it, do not re-estimate
-   - Count benchmarks: 0–3 = 0–4 pts | 4–7 = 5–7 pts | 8–12 = 8–9 pts | 13+ = 10 pts
+   - Count benchmarks: 0–3 = 0–4 pts | 4–7 = 5–6 pts | 8–11 = 7–8 pts | 12–16 = 9 pts | 17+ = 10 pts
    - If photos uploaded by user: evaluate angle coverage (3/4 front, rear, side, dashboard, odometer, interior, engine bay, trunk) and quality (lighting, cleanliness, warning lights)
    - Hero image quality: clear, well-lit exterior shot = +1; dark/blurry/no car visible = −1
 

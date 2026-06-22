@@ -95,7 +95,7 @@ function IssueCard({ problem, idx }: { problem: { title: string; before: string;
   );
 }
 
-function EngineColumn({ result, engine, duration }: { result: EngineResult | null; engine: "Claude V2.2" | "OpenAI GPT-4o-mini"; duration: number }) {
+function EngineColumn({ result, engine, duration }: { result: EngineResult | null; engine: "Claude V2.3" | "OpenAI GPT-4o-mini"; duration: number }) {
   const isOpenAI = engine.startsWith("OpenAI");
   const accentColor = isOpenAI ? "#10B981" : BRAND;
 
@@ -205,7 +205,7 @@ export default function ComparePage() {
             <Badge text="Internal testing only" color={AMBER} />
           </div>
           <p style={{ ...B, fontSize: 13, color: "#64748B", margin: 0 }}>
-            Claude V2.2 vs OpenAI GPT-4o-mini — same listing, both engines in parallel.
+            Claude V2.3 vs OpenAI GPT-4o-mini — same listing, both engines in parallel.
           </p>
         </div>
 
@@ -254,7 +254,7 @@ export default function ComparePage() {
 
         {results && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
-            <EngineColumn result={results.claude} engine="Claude V2.2" duration={results.durationClaude} />
+            <EngineColumn result={results.claude} engine="Claude V2.3" duration={results.durationClaude} />
             <EngineColumn result={results.openai} engine="OpenAI GPT-4o-mini" duration={results.durationOpenai} />
           </div>
         )}
