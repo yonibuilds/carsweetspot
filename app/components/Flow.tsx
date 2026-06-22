@@ -233,18 +233,15 @@ function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: b
 
   if (needsInput) {
     return (
-      <div style={{ background: "#F8FAFC", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ background: "#F8FAFC", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 22, height: 22, borderRadius: 6, background: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={{ fontSize: 11, color: BRAND, fontWeight: 700 }}>i</span>
+          <div style={{ width: 20, height: 20, borderRadius: 5, background: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 10, color: BRAND, fontWeight: 700 }}>i</span>
           </div>
-          <span style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em" }}>Seller detail needed</span>
+          <span style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em" }}>Seller detail needed</span>
         </div>
-        <p style={{ ...B, fontSize: 13, color: NAVY, lineHeight: 1.6, margin: 0 }}>
-          This issue needs information only the seller can provide. Add the missing detail first, then CarSweetSpot can help turn it into safe listing copy.
-        </p>
         {problem.seller_insight && (
-          <p style={{ ...B, fontSize: 12, color: NAVY_MUT, lineHeight: 1.55, margin: 0, borderLeft: `3px solid ${BORDER}`, paddingLeft: 10 }}>
+          <p style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.6, margin: 0 }}>
             {problem.seller_insight}
           </p>
         )}
@@ -305,7 +302,8 @@ function LeftSidebar({ result, fixProblems, onReset }: {
   result: AnalysisResult; fixProblems: Problem[]; onReset: () => void;
 }) {
   const badge = scoreBadge(result.overall_score);
-  const quickFixScore = Math.min(100, result.overall_score + fixProblems.length * 4);
+  const copyImprovements = fixProblems.filter(p => p.can_generate_after_copy === true).length;
+  const quickFixScore = Math.min(100, result.overall_score + copyImprovements * 4);
   const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
 
   const muted  = "#64748B";
@@ -477,7 +475,8 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
     return next;
   });
 
-  const quickFixScore = Math.min(100, result.overall_score + fixProblems.length * 4);
+  const copyImprovements = fixProblems.filter(p => p.can_generate_after_copy === true).length;
+  const quickFixScore = Math.min(100, result.overall_score + copyImprovements * 4);
   const topIssue = fixProblems[0];
   const totalImprovements = fixProblems.length + (calcMo > 0 ? 1 : 0);
   const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;

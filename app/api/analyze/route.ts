@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v12";
+const CACHE_VERSION = "v13";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -262,7 +262,7 @@ NEVER write in after_copy without explicit documentation:
 - If CARFAX not mentioned: suggest it in opportunities.
 - opportunities: return 2–4 relevant items only.
   - "financing": if asking_price > 0
-  - "carfax": if no CARFAX mentioned
+  - "carfax": if no CARFAX mentioned — use this exact framing: "If you already have a CARFAX, AutoCheck, or service records, mention that they are available." Do not pitch the cost or make it sound like a sales recommendation.
   - "inspection": if mechanical unknowns, high mileage, or trust gaps
   - "title": if salvage/rebuilt
   - "photos": if few photos
@@ -546,9 +546,13 @@ forbidden_or_unverified_claims (NEVER copy these into after_copy):
 ${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || "- (none)"}`;
 
     const writerContent: Anthropic.MessageParam["content"] = [...imageContent];
+    const wordCountNote = descriptionWordCount > 0
+      ? `\n\n[DESCRIPTION WORD COUNT: ${descriptionWordCount} words — use this exact number in any word count reference. Do not re-count words yourself.]`
+      : "";
+
     const listingText = url
-      ? `Listing URL: ${url}\n\n${factBlock}\n\nFull listing content (for context — fact inventory above is authoritative):\n${cleanedHtml}${photoNote}${formattingNote}${priceNote}${mileageRateNote}`
-      : `${factBlock}\n\nListing text (for context):\n${cleanedHtml}`;
+      ? `Listing URL: ${url}\n\n${factBlock}\n\nFull listing content (for context — fact inventory above is authoritative):\n${cleanedHtml}${photoNote}${formattingNote}${priceNote}${mileageRateNote}${wordCountNote}`
+      : `${factBlock}\n\nListing text (for context):\n${cleanedHtml}${wordCountNote}`;
 
     writerContent.push({ type: "text", text: listingText });
     writerContent.push({ type: "text", text: "Analyze this car listing using the fact inventory above and return the JSON assessment." });
