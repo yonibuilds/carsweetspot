@@ -146,8 +146,11 @@ function ScoreRingDark({ score }: { score: number }) {
 function BuyerReachCard({ askingPrice, calcMo, isMobile }: { askingPrice: number; calcMo: number; isMobile?: boolean }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedCoop, setCopiedCoop] = useState(false);
   const line = `Estimated buyer payment around $${calcMo}/mo for qualified buyers. OAC.`;
+  const coopLine = `Third-party buyer financing is OK. I can cooperate with the buyer's lender on standard paperwork.`;
   const copy = () => { navigator.clipboard.writeText(line); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const copyCoop = () => { navigator.clipboard.writeText(coopLine); setCopiedCoop(true); setTimeout(() => setCopiedCoop(false), 2000); };
   return (
     <Card style={{ overflow: "hidden" }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", cursor: "pointer", background: WHITE, borderBottom: open ? `1px solid ${BORDER}` : "none" }}>
@@ -188,8 +191,19 @@ function BuyerReachCard({ askingPrice, calcMo, isMobile }: { askingPrice: number
               {copied ? "✓ Copied" : "Copy"}
             </button>
           </div>
-          <p style={{ ...B, fontSize: 11, color: "#94A3B8", margin: "10px 0 0", lineHeight: 1.5 }}>
-            Based on 7% APR, 60-month term. For buyer reference only — this does not mean the seller offers financing.
+          {/* Optional seller cooperation line */}
+          <div style={{ marginTop: 16, padding: "14px 16px", background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10 }}>
+            <p style={{ ...B, fontSize: 11, fontWeight: 600, color: NAVY_MUT, margin: "0 0 8px" }}>Optional — only if you&apos;re open to buyer financing:</p>
+            <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: 10 }}>
+              <p style={{ ...B, fontSize: 13, color: NAVY, margin: 0, lineHeight: 1.5, flex: 1 }}>&quot;{coopLine}&quot;</p>
+              <button onClick={copyCoop} style={{ ...B, fontSize: 11, fontWeight: 600, cursor: "pointer", background: copiedCoop ? SUCCESS : WHITE, color: copiedCoop ? WHITE : BRAND, border: `1px solid ${copiedCoop ? SUCCESS : BRAND}`, borderRadius: 6, padding: "5px 12px", whiteSpace: "nowrap", transition: "all 0.2s", flexShrink: 0 }}>
+                {copiedCoop ? "✓ Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+
+          <p style={{ ...B, fontSize: 11, color: NAVY_MUTED2, margin: "12px 0 0", lineHeight: 1.5 }}>
+            Based on 7% APR, 60-month term. Estimate only — the seller is not offering financing. This refers to third-party buyer financing only.
           </p>
         </div>
       )}
