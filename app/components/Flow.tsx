@@ -301,32 +301,45 @@ function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: b
 
 // ── Improved Draft ────────────────────────────────────────────────
 function ImprovedDraft({ draft }: { draft: string }) {
+  const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const copy = () => { navigator.clipboard.writeText(draft); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const copy = (e: React.MouseEvent) => { e.stopPropagation(); navigator.clipboard.writeText(draft); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   return (
-    <Card style={{ borderLeft: `4px solid ${BRAND}` }}>
-      <div style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 14 }}>
-          <div>
-            <p style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px" }}>Improved Draft</p>
-            <p style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY, margin: 0 }}>Better version — ready to copy</p>
+    <Card style={{ overflow: "hidden" }}>
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", cursor: "pointer", borderBottom: open ? `1px solid ${BORDER}` : "none" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 13, color: BRAND }}>✎</span>
           </div>
-          <button onClick={copy} style={{
-            ...B, fontSize: 12, fontWeight: 600, cursor: "pointer",
-            background: copied ? SUCCESS : BRAND, color: WHITE,
-            border: "none", borderRadius: 8, padding: "8px 18px",
-            whiteSpace: "nowrap", transition: "all 0.2s", flexShrink: 0,
-          }}>
-            {copied ? "✓ Copied!" : "Copy Draft"}
-          </button>
+          <div>
+            <p style={{ ...H, fontSize: 15, fontWeight: 700, color: NAVY, margin: 0 }}>Improved draft</p>
+            <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "2px 0 0" }}>Better version built from your listing facts</p>
+          </div>
         </div>
-        <div style={{ background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "16px 18px" }}>
-          <p style={{ ...B, fontSize: 14, color: NAVY, lineHeight: 1.75, margin: 0, whiteSpace: "pre-wrap" }}>{draft}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {open && (
+            <button onClick={copy} style={{
+              ...B, fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: copied ? SUCCESS : BRAND, color: WHITE,
+              border: "none", borderRadius: 6, padding: "5px 14px",
+              whiteSpace: "nowrap", transition: "all 0.2s",
+            }}>
+              {copied ? "✓ Copied!" : "Copy"}
+            </button>
+          )}
+          <span style={{ fontSize: 11, color: NAVY_MUTED2, transform: open ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
         </div>
-        <p style={{ ...B, fontSize: 11, color: NAVY_MUTED2, margin: "10px 0 0" }}>
-          Built from the facts in your listing. Answer the questions below to unlock a stronger version.
-        </p>
       </div>
+      {open && (
+        <div style={{ padding: "18px 22px 22px" }}>
+          <div style={{ background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "16px 18px" }}>
+            <p style={{ ...B, fontSize: 14, color: NAVY, lineHeight: 1.75, margin: 0, whiteSpace: "pre-wrap" }}>{draft}</p>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
