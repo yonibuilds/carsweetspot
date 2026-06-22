@@ -757,11 +757,6 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
         </Card>
       )}
 
-      {/* Improved Draft */}
-      {result.improved_draft && (
-        <ImprovedDraft draft={result.improved_draft} />
-      )}
-
       {/* Issues header */}
       <div style={{ paddingTop: 8, paddingBottom: 8 }}>
         <p style={{ ...B, fontSize: 10, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Why Buyers May Hesitate</p>
@@ -854,6 +849,11 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
           );
         })}
       </div>
+
+      {/* Improved Draft — collapsed, below issues */}
+      {result.improved_draft && (
+        <ImprovedDraft draft={result.improved_draft} />
+      )}
 
       {/* Make it Stronger — collapsed, below issues */}
       <MakeItStronger
