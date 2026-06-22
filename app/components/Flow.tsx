@@ -21,6 +21,9 @@ export type AnalysisResult = {
   also_hurting: Problem[];
   opportunities: Opportunity[];
   whats_working: string[];
+  suggested_additions?: string[];
+  verified_facts?: string[];
+  unsafe_to_claim?: string[];
   listing_image?: string;
 };
 
@@ -508,6 +511,23 @@ function MainContent({ result, fixProblems, onReset }: {
           );
         })}
       </div>
+
+      {/* Suggested additions */}
+      {result.suggested_additions && result.suggested_additions.length > 0 && (
+        <Card style={{ padding: "18px 20px" }}>
+          <p style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>
+            Optional additions
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {result.suggested_additions.map((tip, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <span style={{ color: BRAND, fontSize: 12, marginTop: 1, flexShrink: 0 }}>→</span>
+                <span style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.5 }}>{tip}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <button onClick={onReset} style={{
         ...B, width: "100%", padding: "13px", background: WHITE,

@@ -69,18 +69,24 @@ The fields MUST appear in this order. You fill in verified_facts and unsafe_to_c
     "<specific strength from the listing>",
     "<specific strength>",
     "<specific strength>"
+  ],
+  "suggested_additions": [
+    "<coaching tip for what seller could add IF TRUE — use format: 'If you have X, consider adding Y'>",
+    "<another coaching tip — never invented, never paste-ready, never a copy prompt>"
   ]
 }
 
 ## Scoring Calibration
 
-Use these ranges as anchors. A listing with clean title, confirmed ownership duration, multiple photos, and reasonable description should score 75–82. Reserve sub-65 for listings that are genuinely sparse or untrustworthy.
+Use these ranges as anchors. Score based on what is actually present — do not inflate for what might be true.
 
 - 45–60 (Poor): Missing most trust signals. No ownership duration, no reason for selling, no CARFAX, thin description (<50 words), few or no photos.
-- 60–75 (Average): Some trust signals present but key gaps remain. Description exists but missing important details. Photo count adequate but angles incomplete. Mainly claims with little evidence.
-- 75–85 (Strong): Multiple trust signals confirmed. Clean title, ownership duration stated, several photos, reasonable description (100+ words), at least one evidence-based maintenance claim. Score here if the listing has more strengths than gaps.
+- 60–75 (Average): Some trust signals present but key gaps remain. Description exists but missing important details. Photo count adequate but angles incomplete. Mainly claims with little evidence. A listing with strong trust signals but fewer than 60 words of description should land in this range (68–74).
+- 75–85 (Strong): Multiple trust signals confirmed. Clean title, ownership duration stated, 8+ photos, description 100+ words, at least one evidence-based maintenance claim.
 - 85–92 (Very Strong): Most trust signals present. Ownership duration, reason for selling, CARFAX or clean title confirmed, evidence-based maintenance language, strong photo coverage (8+ angles).
 - 92+ (Exceptional): Reserve for listings that do almost everything right — verified service history with receipts, odometer photo, all key angles, complete description, reason for selling, CARFAX, honest flaw disclosure.
+
+Description quality is a real score factor. Strong trust signals cannot compensate for a 4-line description on a $15,000+ vehicle. A listing that earns trust but fails to inform scores 68–74, not 75+.
 
 overall_score weights:
 - Vehicle History Signals: 35% — number of previous owners mentioned, service/maintenance history, how long seller has owned it, reason for selling, CARFAX or history report offered
@@ -88,7 +94,7 @@ overall_score weights:
   - If actual photos were provided by the user: analyze content directly (see Photo Analysis Rules below)
   - If only HTML/text: use photo count benchmarks (1–3: poor, 4–7: average, 8–12: strong, 13+: excellent) and any angles mentioned in the description
 - Description Quality: 15% — word count benchmarks (<50: very short, 50–100: short, 100–150: average, 150–250: strong, 250+: detailed), spelling errors, trim level specified, mileage stated, tire/brake condition mentioned, VIN available
-- Trust & Title Transparency: 15% — title in hand stated, lien-free stated, salvage/rebuilt explained with cause (hail/flood/collision), honest disclosure of known flaws
+- Trust & Title Transparency: 15% — title in hand stated, lien-free stated, rebuilt/salvage explained with repair details and inspection status, honest disclosure of known flaws
 - Pricing: 10% — only flag if price appears extreme. Do NOT penalize without market data. If price seems high, note it gently and suggest KBB check.
 - Payment & Flexibility: 5% — cash-only restricts buyer pool, OBO signals flexibility, payment method stated
 
@@ -113,11 +119,16 @@ NEVER invent facts not stated in the listing. These are absolute prohibitions:
 
 The "after" field must contain ONLY facts the seller explicitly stated. If a key fact is missing, surface the gap in "why_buyers_care" or "seller_insight" — tell the seller what to add — but do NOT write it yourself.
 
+SELF-CHECK before writing any "after" field: read each sentence you are about to write and ask "Is this fact in verified_facts?" If no — remove it. Do this sentence by sentence, not as a general review.
+
 Reason for sale rule: If the listing does not state why the car is being sold, the "after" field must NOT include a reason. Instead, add it as seller_insight: "Adding a reason for sale ('upgrading to a truck,' 'moving abroad') eliminates the #1 buyer suspicion and significantly increases contact rate."
 
 If the listing does not say "one owner," do NOT write "one owner" in the after field.
 If the listing does not mention service records, do NOT write "service records available."
 If the listing does not mention garage storage, do NOT write "garage kept."
+If the listing does not mention CARFAX, do NOT write "CARFAX available upon request."
+If the listing does not mention a certified mechanic or shop, do NOT write "installed by certified mechanic."
+If the listing does not mention receipts, do NOT write "receipts available."
 
 No questions in the "after" field: the "after" field is copy-ready text the seller can paste directly. Never write questions inside it ("How long have you owned it?" / "Any service records?"). Questions and suggestions belong only in "seller_insight". The after field should be a clean rewrite of what the seller CAN say now — nothing more.
 
@@ -160,7 +171,7 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
 
 ## Critical Rules
 
-- NEVER penalize for salvage/rebuilt title in the score — the seller cannot change title status. If salvage/rebuilt, treat as opportunity: "Rebuilt titles typically sell at 60–70% of clean-title value. If your price reflects this, say so explicitly: 'Rebuilt after hail damage — priced accordingly at $X below market.'"
+- Rebuilt/salvage title: the disclosure itself is not the problem — do not penalize the score for it. The problem is missing explanation, missing repair details, missing inspection status, or missing documentation. Flag those gaps as issues or opportunities. If the listing discloses rebuilt title with explanation, repairs, and inspection, treat it as a trust signal. Never say hail/flood/collision unless the seller explicitly stated it. Safe language: "Rebuilt title disclosed. Consider adding the damage type, repairs completed, inspection status, and any available documentation." Rebuilt titles typically price at 60–70% of clean-title equivalent — suggest this if price is not explained.
 - biggest_problem: the single most damaging issue hurting buyer contact rate — must be something the seller CAN fix (copy, photos, missing info). Never use title status as a problem.
 - also_hurting: exactly 2 additional problems, different categories — must be actionable
 - before/after: ONLY use facts the seller actually stated. Never invent features, maintenance history, or ownership details. "after" must be paste-ready copy the seller can use immediately, built only from confirmed facts. Target 30–80 words — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
@@ -182,12 +193,16 @@ Missing shots = unanswered buyer questions = negative assumptions. Frame as "buy
   - "formatting": include ONLY if the FORMATTING signal says wall of text. Suggest breaking the listing into short lines or bullet points. Show a before/after example.
 - category: assign each problem to exactly one of: "trust" (ownership history, reason for selling, CARFAX, title status, how long owned), "text" (description quality, word count, formatting, tone, spelling, missing details), "photos" (photo count, angles, odometer missing, quality, warning lights, dirty car). CRITICAL: biggest_problem and the two also_hurting items MUST each have a DIFFERENT category. No two of the three problems may share the same category. If your natural picks collide, demote the weaker one to a different category or replace it with the next-most-impactful issue from a different category.
 - whats_working: genuine strengths only. If fewer than 3 exist, return only what's real. Strong listings typically include: stated ownership duration, reason for selling, CARFAX or clean title confirmation, evidence-based maintenance language (not just claims), odometer photo, all key exterior and interior angles.
-- Language: NEVER flag language as a problem under any circumstances. This rule overrides everything else.
+- Language: Never flag vague tone, writing style, or language choice as a problem. Only flag specific detectable issues: keyword spam (3+ competitor brand names listed without context), excessive emojis (6+), all-caps sections, spelling errors, grammar errors, wall-of-text formatting, or clearly aggressive wording.
 - Phone numbers written as words or letter-number combos (e.g. "48Zer. 78Eight -799Seven") are standard Craigslist anti-spam practice. NEVER flag this as a problem.
 - Plain text only in "after" field: do NOT use markdown formatting like **bold** or ## headers. Craigslist does not render markdown. Use plain sentences and line breaks only.
 - Emoji overuse rule: if the listing contains 6 or more emoji characters, flag this as a problem under category "text". Title: "Too many emojis hurt credibility". Explain that 6+ emoji reads as dealer-style marketing and reduces buyer trust — private sellers should use 0–2 max. The ✅ checkmark next to negatives (e.g. "✅ Salvage title") is especially damaging: it signals approval of a problem, creating cognitive dissonance. The "after" should be a clean plain-text version of the listing without emoji overuse, using only confirmed facts from the listing.
-- Financing line rule: if asking_price >= 8000, the "after" field of the problem most related to the description or text MUST end with a financing line on its own line, e.g. "Financing available OAC — est. $X/mo at 7% APR, 60 months." Calculate X using the monthly_payment formula below. This line expands the buyer pool by reframing the price as a monthly number.
+- Financing line rule: if asking_price >= 8000, the "after" field of the problem most related to the description or text MUST end with a financing line on its own line. Use: "Financing available OAC — est. $X/mo at 7% APR, 60 months." Calculate X using the monthly_payment formula. This is presented as an estimated buyer payment — do NOT phrase it as if the seller personally offers financing. Never write "I offer financing" or "seller financing available."
 - monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
+- Mileage per year rule: if a [MILEAGE RATE] note is provided, use it. Flag >20,000 miles/year as high usage, >30,000 miles/year as extreme usage. Use benchmark language: "At X miles/year, this vehicle was driven significantly above the 12,000–15,000 mile annual average. Buyers will likely ask about the nature of that use." Never say "highway miles" or explain the mileage cause unless the seller stated it.
+- PPV / Fleet / Commercial use: if the listing mentions PPV, police package, fleet, rental, taxi, commercial, or government use — flag as context-needed if the use history is not explained. Generate an issue only if unexplained. If explained clearly, treat as opportunity. Never invent the vehicle's history.
+- Keyword spam rule: if the listing contains 3 or more competitor brand names (Ford, Chevy, Honda, Toyota, etc.) listed consecutively without context, flag this under category "text". Title: "Keyword list at bottom hurts credibility." These are added to game search filters and read as spam to buyers.
+- suggested_additions: return 2–4 coaching tips for what the seller could add IF TRUE. Format: "If you have X, consider adding Y." These are not copy to paste — they are prompts for the seller. Examples: "If you have service records, mention it — one sentence about maintenance can significantly increase contact rate." / "If you know your reason for selling, add it — even 4 words eliminates the #1 buyer suspicion."
 - Use benchmark language, not emotional language. Never write "kills buyer trust," "destroys credibility," "red flag," or similar charged phrases. Instead, use neutral, data-driven framing: "At 18 words, this description is well below the 150–250 word range typical of listings that generate strong contact rates." / "Listings with 4 or fewer photos receive 40% fewer inquiries on average." / "42% of listings contain spelling errors — buyers consistently cite this as a signal of how a seller cares for their car."
 - Be specific with counts and benchmarks, not vague. "Description is thin" is useless. "18 words vs. the 150–250 range typical of high-contact listings" is useful. Always include the actual number from the listing alongside the benchmark.`;
 
@@ -330,9 +345,26 @@ export async function POST(req: NextRequest) {
         const priceNote = detectedPrice
           ? `\n\n[PRICE DETECTED FROM HTML: $${detectedPrice.toLocaleString()} — set asking_price to ${detectedPrice}]`
           : "";
+
+        // Mileage per year calculation
+        const detectedMileage = [...cleaned.matchAll(/(\d[\d,]+)\s*(?:miles?|mi\b)/gi)]
+          .map(m => parseInt(m[1].replace(/,/g, ""), 10))
+          .filter(n => !isNaN(n) && n >= 1000 && n <= 500000)[0] ?? null;
+        const detectedYear = cleaned.match(/\b(19[89]\d|20[012]\d)\b/)?.[1]
+          ? parseInt(cleaned.match(/\b(19[89]\d|20[012]\d)\b/)![1], 10) : null;
+        let mileageRateNote = "";
+        if (detectedMileage && detectedYear) {
+          const yearsOld = new Date().getFullYear() - detectedYear;
+          if (yearsOld > 0) {
+            const milesPerYear = Math.round(detectedMileage / yearsOld);
+            const rateLabel = milesPerYear > 30000 ? "EXTREME usage (>30k/yr)" : milesPerYear > 20000 ? "HIGH usage (>20k/yr)" : milesPerYear > 15000 ? "above average" : "normal";
+            mileageRateNote = `\n\n[MILEAGE RATE: ${milesPerYear.toLocaleString()} miles/year (${detectedMileage.toLocaleString()} miles ÷ ${yearsOld} years = ${rateLabel}). Apply mileage per year rule if above 20k.]`;
+          }
+        }
+
         messageContent.push({
           type: "text",
-          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}${formattingNote}${priceNote}`,
+          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}${formattingNote}${priceNote}${mileageRateNote}`,
         });
       } catch {
         return NextResponse.json(
@@ -360,7 +392,7 @@ export async function POST(req: NextRequest) {
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 2800,
       temperature: 0,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: messageContent }],
@@ -373,6 +405,28 @@ export async function POST(req: NextRequest) {
     }
 
     const result = JSON.parse(jsonMatch[0]);
+
+    // Post-processing: contradiction validator
+    // Anything confirmed in verified_facts cannot be flagged as missing in issues
+    const vf: string[] = (result.verified_facts ?? []).map((f: string) => f.toLowerCase());
+    const hasOwnershipDuration = vf.some(f => /owned.*\d|\d.*year.*own|\d.*month.*own|ownership.*duration/.test(f));
+    const hasReasonForSale = vf.some(f => /reason.*sell|selling.*because|downsize|upgrad|relocat|moving|retire/.test(f));
+    const parserPhotoCount = photoCount; // from HTML parser — authoritative
+    const isValidIssue = (issue: { title?: string; category?: string } | null | undefined): boolean => {
+      if (!issue) return false;
+      const t = (issue.title ?? "").toLowerCase();
+      if (hasOwnershipDuration && /ownership|how long|duration/.test(t)) return false;
+      if (hasReasonForSale && /reason.*sell|why.*sell/.test(t)) return false;
+      if (parserPhotoCount >= 8 && issue.category === "photos") return false;
+      return true;
+    };
+    // If biggest_problem is contradicted, promote first valid also_hurting item
+    if (!isValidIssue(result.biggest_problem)) {
+      const next = (result.also_hurting ?? []).find(isValidIssue);
+      result.biggest_problem = next ?? null;
+      result.also_hurting = (result.also_hurting ?? []).filter((i: unknown) => i !== next);
+    }
+    result.also_hurting = (result.also_hurting ?? []).filter(isValidIssue);
 
     // If AI failed to extract price but we detected it from HTML, use it
     if (!result.asking_price && detectedPrice) {
