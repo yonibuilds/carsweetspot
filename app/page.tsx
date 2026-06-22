@@ -133,6 +133,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const isFacebookUrl = url.trim().length > 0 && /facebook\.com|fb\.com/i.test(url);
   const [isDesktop, setIsDesktop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -265,7 +266,7 @@ export default function Home() {
           </h1>
 
           <p style={{ ...B, fontSize: 17, color: "#CBD5E1", lineHeight: 1.6, margin: "0 0 28px" }}>
-            Paste your listing and get a score + 3 specific fixes that help you sell faster.
+            Paste your Craigslist listing and get a score, buyer-trust issues, and copy-ready fixes you can use right away.
           </p>
 
           {/* Input card */}
@@ -273,7 +274,7 @@ export default function Home() {
             <input
               type="text" value={url} onChange={e => setUrl(e.target.value)}
               onKeyDown={e => e.key === "Enter" && canSubmit && handleSubmit()}
-              placeholder="Paste your Craigslist or Facebook listing URL"
+              placeholder="Paste your Craigslist listing URL"
               style={{
                 ...B, width: "100%", boxSizing: "border-box",
                 border: `1.5px solid ${BORDER}`, borderRadius: 10,
@@ -281,6 +282,16 @@ export default function Home() {
                 background: STAGE, outline: "none", marginBottom: 10,
               }}
             />
+
+            <p style={{ ...B, fontSize: 12, color: "#94A3B8", margin: "-4px 0 10px", lineHeight: 1.5 }}>
+              Works best with Craigslist private-party listings. Facebook Marketplace support coming soon.
+            </p>
+
+            {isFacebookUrl && (
+              <div style={{ ...B, fontSize: 13, color: "#92400E", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 14px", marginBottom: 10 }}>
+                Facebook Marketplace is not fully supported yet. For best results, paste a Craigslist listing URL.
+              </div>
+            )}
 
             {error && (
               <div style={{ ...B, fontSize: 13, color: "#DC2626", background: "#FFF5F5", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 10 }}>
@@ -306,19 +317,22 @@ export default function Home() {
             </button>
 
             {/* Trust row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, marginBottom: 8 }}>
               {["No signup", "Takes 60 seconds", "100% free"].map(t => (
                 <span key={t} style={{ ...B, fontSize: 12, color: "#6B7280", display: "flex", alignItems: "center", gap: 4 }}>
                   <span style={{ color: "#16A34A", fontWeight: 700 }}>✓</span> {t}
                 </span>
               ))}
             </div>
+            <p style={{ ...B, fontSize: 11, color: "#9CA3AF", textAlign: "center", margin: "0 0 4px" }}>
+              Beta tool. Review all suggested text before posting.
+            </p>
 
             {/* Photo upload */}
             <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
               {!showPhotoUpload ? (
                 <button onClick={() => setShowPhotoUpload(true)} style={{ ...B, background: "none", border: "none", cursor: "pointer", fontSize: 12, color: NAVY_M, width: "100%", textAlign: "center" }}>
-                  📸 Have photos? <span style={{ color: BRAND, fontWeight: 600 }}>Add them for a deeper analysis →</span>
+                  📸 <span style={{ color: BRAND, fontWeight: 600 }}>Add your photos for photo-specific feedback →</span>
                 </button>
               ) : (
                 <div
@@ -361,20 +375,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Social proof — tight to form */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4 }}>
-            <div style={{ display: "flex" }}>
-              {[0,1,2].map(i => (
-                <div key={i} style={{ width: 30, height: 30, borderRadius: "50%", background: ["#475569","#334155","#1E293B"][i], border: "2px solid #0F172A", marginLeft: i > 0 ? -10 : 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
-                  {["👩","👨","🧑"][i]}
-                </div>
-              ))}
-            </div>
-            <div>
-              <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: 0 }}>247+ listings analyzed this month</p>
-              <p style={{ ...B, fontSize: 12, color: "#94A3B8", margin: 0 }}>Join sellers getting more calls</p>
-            </div>
-          </div>
+          {/* Positioning note */}
+          <p style={{ ...B, fontSize: 13, color: "#64748B", margin: "8px 0 0" }}>
+            Built for private-party car sellers.
+          </p>
         </div>
 
         {/* RIGHT — 58% — BEFORE / AFTER (desktop only) */}
@@ -499,7 +503,7 @@ export default function Home() {
                   <path d="M12 6v2m0 8v2m-3.5-7h7M9 10a3 3 0 0 1 6 0c0 1.5-1.5 2-3 3"/>
                 </svg>
               ),
-              title: "Price & Positioning", desc: "We check if your price matches the market and your car's value.",
+              title: "Buyer Reach", desc: "We show how your price may feel to buyers month to month.",
             },
             {
               icon: (
