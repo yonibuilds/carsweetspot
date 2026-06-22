@@ -415,8 +415,8 @@ function LeftSidebar({ result, fixProblems, onReset }: {
 function MainContent({ result, fixProblems, onReset, isMobile }: {
   result: AnalysisResult; fixProblems: Problem[]; onReset: () => void; isMobile?: boolean;
 }) {
-  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set([0]));
-  const [showWhy, setShowWhy] = useState<Record<number, boolean>>({ 0: true });
+  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
+  const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
   const [showWorking, setShowWorking] = useState(true);
   const [showSuggested, setShowSuggested] = useState(false);
   const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
