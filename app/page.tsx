@@ -260,13 +260,13 @@ export default function Home() {
           </div>
 
           {/* Headline */}
-          <h1 style={{ ...H, fontSize: isDesktop ? 56 : 38, fontWeight: 800, lineHeight: 1.04, letterSpacing: "-0.04em", margin: "0 0 20px" }}>
-            <span style={{ color: WHITE }}>Why isn&apos;t your car </span>
-            <span style={{ color: BRAND }}>getting calls?</span>
+          <h1 style={{ ...H, fontSize: isDesktop ? 54 : 36, fontWeight: 800, lineHeight: 1.06, letterSpacing: "-0.04em", margin: "0 0 20px" }}>
+            <span style={{ color: WHITE }}>Fix your car listing before </span>
+            <span style={{ color: BRAND }}>buyers scroll past.</span>
           </h1>
 
-          <p style={{ ...B, fontSize: 17, color: "#CBD5E1", lineHeight: 1.6, margin: "0 0 28px" }}>
-            Paste your Craigslist listing and get a score, buyer-trust issues, and copy-ready fixes you can use right away.
+          <p style={{ ...B, fontSize: 16, color: "#CBD5E1", lineHeight: 1.65, margin: "0 0 28px" }}>
+            Paste your Craigslist listing. CarSweetSpot shows what hurts buyer trust and gives you copy-ready fixes in about 60 seconds.
           </p>
 
           {/* Input card */}
@@ -387,7 +387,7 @@ export default function Home() {
           <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: `radial-gradient(ellipse, ${BRAND}18 0%, transparent 70%)`, filter: "blur(80px)", pointerEvents: "none" }} />
 
           <div style={{ position: "relative", zIndex: 1 }}>
-            <p style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: "0.12em", textAlign: "center", margin: "0 0 16px" }}>↓ REAL EXAMPLE</p>
+            <p style={{ ...B, fontSize: 11, fontWeight: 700, color: NAVY_M, letterSpacing: "0.12em", textAlign: "center", margin: "0 0 16px" }}>↓ EXAMPLE RESULT</p>
 
             {/* Cards row — relative so +26 badge can overlap */}
             <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10 }}>
@@ -401,16 +401,18 @@ export default function Home() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={CAR_IMG} alt="2018 Toyota Camry" style={{ width: "100%", height: 120, objectFit: "cover", objectPosition: "65% center", display: "block", filter: "brightness(0.68) contrast(0.82) saturate(0.55) grayscale(20%)" }} />
                 <div style={{ padding: "12px 16px 16px" }}>
-                  <p style={{ ...B, fontSize: 12, color: "#94A3B8", lineHeight: 1.55, margin: "0 0 12px", fontStyle: "italic" }}>
-                    &quot;Runs great. Clean title. Call for details.&quot;
-                  </p>
-                  <p style={{ ...B, fontSize: 11, color: NAVY_M, margin: "0 0 5px" }}>Trust Score</p>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
-                    <span style={{ ...H, fontSize: 30, fontWeight: 800, color: "#EF4444", lineHeight: 1 }}>58</span>
-                    <span style={{ ...B, fontSize: 13, color: NAVY_M }}>/100</span>
-                  </div>
-                  <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
-                    <div style={{ height: "100%", width: "58%", background: "#EF4444", borderRadius: 3 }} />
+                  <div style={{ background: "rgba(0,0,0,0.25)", borderRadius: "0 0 0 0", padding: "12px 14px 14px" }}>
+                    <p style={{ ...B, fontSize: 12, color: "#94A3B8", lineHeight: 1.55, margin: "0 0 12px", fontStyle: "italic" }}>
+                      &quot;Runs great. Clean title. Call for details.&quot;
+                    </p>
+                    <p style={{ ...B, fontSize: 10, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>Sweet Spot Score</p>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
+                      <span style={{ ...H, fontSize: 30, fontWeight: 800, color: "#EF4444", lineHeight: 1 }}>58</span>
+                      <span style={{ ...B, fontSize: 13, color: "#475569" }}>/100</span>
+                    </div>
+                    <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 3 }}>
+                      <div style={{ height: "100%", width: "58%", background: "#EF4444", borderRadius: 3 }} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -445,16 +447,16 @@ export default function Home() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={CAR_IMG} alt="2018 Toyota Camry" style={{ width: "100%", height: 120, objectFit: "cover", objectPosition: "40% center", display: "block", filter: "brightness(1.1) contrast(1.08) saturate(1.2)" }} />
                 </div>
-                <div style={{ padding: "12px 16px 16px" }}>
-                  <p style={{ ...B, fontSize: 12, color: "#94A3B8", lineHeight: 1.55, margin: "0 0 12px", fontStyle: "italic" }}>
-                    &quot;One-owner 2018 Camry SE. Dealer maintained. Service records available. Clean title in hand.&quot;
+                <div style={{ background: "rgba(0,0,0,0.25)", padding: "12px 14px 14px" }}>
+                  <p style={{ ...B, fontSize: 12, color: "#CBD5E1", lineHeight: 1.55, margin: "0 0 12px", fontStyle: "italic" }}>
+                    &quot;2018 Toyota Camry SE. Clean title, one-owner, dealer maintained, service records available. Ready for inspection.&quot;
                   </p>
-                  <p style={{ ...B, fontSize: 11, color: NAVY_M, margin: "0 0 5px" }}>Trust Score</p>
+                  <p style={{ ...B, fontSize: 10, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>Sweet Spot Score</p>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
                     <span style={{ ...H, fontSize: 30, fontWeight: 800, color: "#16A34A", lineHeight: 1 }}>84</span>
-                    <span style={{ ...B, fontSize: 13, color: NAVY_M }}>/100</span>
+                    <span style={{ ...B, fontSize: 13, color: "#475569" }}>/100</span>
                   </div>
-                  <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 3 }}>
+                  <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 3 }}>
                     <div style={{ height: "100%", width: "84%", background: "#16A34A", borderRadius: 3 }} />
                   </div>
                 </div>
@@ -482,7 +484,7 @@ export default function Home() {
                   <circle cx="12" cy="13" r="4"/>
                 </svg>
               ),
-              title: "Photos", desc: "We analyze your photos and find what's missing or hurting trust.",
+              title: "Photos", desc: "Spot weak photos and missing buyer-critical shots.",
             },
             {
               icon: (
@@ -494,7 +496,7 @@ export default function Home() {
                   <polyline points="10 9 9 9 8 9"/>
                 </svg>
               ),
-              title: "Description", desc: "We find weak or missing details buyers care about.",
+              title: "Description", desc: "Find missing details buyers care about before they lose interest.",
             },
             {
               icon: (
@@ -503,7 +505,7 @@ export default function Home() {
                   <path d="M12 6v2m0 8v2m-3.5-7h7M9 10a3 3 0 0 1 6 0c0 1.5-1.5 2-3 3"/>
                 </svg>
               ),
-              title: "Buyer Reach", desc: "We show how your price may feel to buyers month to month.",
+              title: "Buyer Reach", desc: "Show how your asking price may feel to buyers month to month.",
             },
             {
               icon: (
@@ -512,7 +514,7 @@ export default function Home() {
                   <polyline points="9 12 11 14 15 10"/>
                 </svg>
               ),
-              title: "Buyer Trust", desc: "We look for signals that build (or break) buyer confidence.",
+              title: "Buyer Trust", desc: "Fix the signals that make buyers hesitate or move on.",
             },
           ].map((f, i) => (
             <div key={f.title} style={{
