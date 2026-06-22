@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────
+type IssueType = "copy_improvement" | "needs_seller_input";
 type Problem = {
   title: string;
   why_buyers_care: string;
@@ -10,6 +11,8 @@ type Problem = {
   before: string;
   after: string;
   category?: "trust" | "text" | "photos";
+  issue_type?: IssueType;
+  can_generate_after_copy?: boolean;
 };
 type Opportunity = { title: string; insight: string; type: string };
 export type AnalysisResult = {
@@ -220,12 +223,35 @@ function BuyerReachCard({ askingPrice, calcMo, isMobile }: { askingPrice: number
 function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: boolean }) {
   const [copied, setCopied] = useState(false);
   const afterText = stripMd(problem.after ?? "");
-  const hasAfter = afterText.trim().length > 0;
+  const canGenerate = problem.can_generate_after_copy !== false && afterText.trim().length > 0;
+  const needsInput = problem.can_generate_after_copy === false || problem.issue_type === "needs_seller_input";
   const copy = () => {
     navigator.clipboard.writeText(afterText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (needsInput) {
+    return (
+      <div style={{ background: "#F8FAFC", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 22, height: 22, borderRadius: 6, background: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 11, color: BRAND, fontWeight: 700 }}>i</span>
+          </div>
+          <span style={{ ...B, fontSize: 11, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em" }}>Seller detail needed</span>
+        </div>
+        <p style={{ ...B, fontSize: 13, color: NAVY, lineHeight: 1.6, margin: 0 }}>
+          This issue needs information only the seller can provide. Add the missing detail first, then CarSweetSpot can help turn it into safe listing copy.
+        </p>
+        {problem.seller_insight && (
+          <p style={{ ...B, fontSize: 12, color: NAVY_MUT, lineHeight: 1.55, margin: 0, borderLeft: `3px solid ${BORDER}`, paddingLeft: 10 }}>
+            {problem.seller_insight}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
       <div style={{ background: DANG_SOFT, border: `1px solid ${DANG_BOR}`, borderRadius: 12, padding: "14px 16px" }}>
@@ -237,7 +263,7 @@ function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: b
           {problem.before || "No text currently in the listing."}
         </p>
       </div>
-      {hasAfter ? (
+      {canGenerate ? (
         <div style={{ background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -267,9 +293,6 @@ function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: b
           </div>
           <p style={{ ...B, fontSize: 13, color: "#78350F", lineHeight: 1.6, margin: 0 }}>
             Not enough verified information to create safe copy for this issue.
-          </p>
-          <p style={{ ...B, fontSize: 12, color: "#92400E", lineHeight: 1.55, margin: 0 }}>
-            Add one or two verified details — such as ownership history, recent maintenance, reason for sale, or a known issue explanation — and this section will update.
           </p>
         </div>
       )}

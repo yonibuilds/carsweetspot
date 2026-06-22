@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v11";
+const CACHE_VERSION = "v12";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ CONDITION CLAIMS (always seller_claims + forbidden_or_unverified_claims):
 - "clean interior", "clean inside" → both buckets
 
 TITLE TYPE:
-- Craigslist metadata `title status: clean` → explicit_listing_facts as "Clean title stated in listing metadata" — do NOT upgrade to "clean title in hand"
+- Craigslist metadata "title status: clean" → explicit_listing_facts as "Clean title stated in listing metadata" — do NOT upgrade to "clean title in hand"
 - Seller writes "clean title" in description → explicit_listing_facts as "Clean title stated by seller"
 - Seller writes "title in hand" → explicit_listing_facts as "Title in hand — stated by seller"
 - Seller writes "lien-free" → explicit_listing_facts as "Lien-free — stated by seller"
@@ -122,7 +122,9 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no extra
     "seller_insight": "<1 sentence — if info is missing, suggest it here, never in after>",
     "before": "<exact quote or description of the flaw as it appears now>",
     "after": "<paste-ready rewrite using only structured_facts and explicit_listing_facts. Seller_claims attributed as 'Seller states X'. Empty string if insufficient safe facts.>",
-    "category": "<one of: trust | text | photos>"
+    "category": "<one of: trust | text | photos>",
+    "issue_type": "<'copy_improvement' if the seller has enough stated facts for improved copy | 'needs_seller_input' if the issue requires the seller to provide new information first>",
+    "can_generate_after_copy": "<true if after is non-empty and safe | false if after must be empty because the seller needs to provide information first>"
   },
   "also_hurting": [
     {
@@ -131,7 +133,9 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no extra
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
       "after": "<paste-ready rewrite — structured/explicit facts only, seller_claims attributed, empty string if insufficient>",
-      "category": "<one of: trust | text | photos>"
+      "category": "<one of: trust | text | photos>",
+      "issue_type": "<'copy_improvement' | 'needs_seller_input'>",
+      "can_generate_after_copy": "<true | false>"
     },
     {
       "title": "<short problem title, max 8 words>",
@@ -139,7 +143,9 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no extra
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
       "after": "<paste-ready rewrite — structured/explicit facts only, seller_claims attributed, empty string if insufficient>",
-      "category": "<one of: trust | text | photos>"
+      "category": "<one of: trust | text | photos>",
+      "issue_type": "<'copy_improvement' | 'needs_seller_input'>",
+      "can_generate_after_copy": "<true | false>"
     }
   ],
   "opportunities": [
@@ -282,7 +288,12 @@ NEVER write in after_copy without explicit documentation:
 - suggested_additions must be vehicle-specific: look at the actual car — its type, features, mileage, and known buyer concerns — and tailor the tips. Examples: for a manual transmission car → clutch condition; for a performance car with Brembo brakes → brake service history or track use; for a high-mileage car → recent service events; for a truck → towing/payload use; for a hybrid → battery health. Generic tips (ownership duration, reason for sale) should only appear if they are NOT already covered in the issue cards AND if no more specific tip applies.
 - suggested_additions deduplication: do NOT repeat topics already covered in biggest_problem or also_hurting. Do not mention ownership duration or reason for sale more than once across the entire report. If either is already an issue card, drop it from suggested_additions entirely.
 - Do not pad the report. A thin listing with real content for only 2 suggestions should return 2, not 3. Quality over quantity.
-- "title in hand" rule: never write "title in hand" or "clean title in hand" in after_copy or whats_working unless the seller explicitly used the phrase "in hand" in their listing. Craigslist metadata showing `title status: clean` only justifies "clean title stated in listing" — nothing more.
+- "title in hand" rule: never write "title in hand" or "clean title in hand" in after_copy or whats_working unless the seller explicitly used the phrase "in hand" in their listing. Craigslist metadata showing title status: clean only justifies "clean title stated in listing" — nothing more.
+- issue_type and can_generate_after_copy rules:
+  - Set issue_type to "needs_seller_input" when the fix requires the seller to provide NEW information they have not stated anywhere in the listing (e.g., ownership duration, reason for selling, service history they have not mentioned, condition details they have not described). These issues cannot produce safe after_copy.
+  - Set issue_type to "copy_improvement" when the seller has stated enough facts in structured_facts or explicit_listing_facts to write an improved version of their existing copy.
+  - Set can_generate_after_copy to false whenever issue_type is "needs_seller_input" OR whenever after would be an empty string. Set it to true only when after contains real, safe, non-empty copy.
+  - Do not set can_generate_after_copy to true and then return an empty after string — these must be consistent.
 - Use benchmark language, not emotional language. Be specific with counts and benchmarks.
 - Short description title rule: if the description is under 50 words and you flag it as a text issue, the problem title MUST reflect the word count — not the writing style. Use titles like "Description is 24 words — buyers need more" or "24-word description leaves buyers guessing." Never use "reads like a spec sheet," "lacks a story," or similar style critiques when the real problem is length. Style critiques apply only when the description is 80+ words but poorly written or vague.
 - Seller-claim vs verified proof: "Seller states…" for anything from seller_claims. Only use "verified," "confirmed," "documented" if records/receipts/CARFAX are explicitly in explicit_listing_facts.
@@ -564,6 +575,31 @@ ${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || 
 
     // ── Post-processing ───────────────────────────────────────────────────────
     // Uses Stage 2 fact inventory — not AI-generated fields — as the truth source.
+
+    // Hard validator: enforce can_generate_after_copy consistency before anything else.
+    // Prompt instructions can be ignored by the model — this layer cannot.
+    const enforceIssueFields = (issue: { after?: string; issue_type?: string; can_generate_after_copy?: boolean } | null) => {
+      if (!issue) return;
+      const hasContent = (issue.after ?? "").trim().length > 0;
+      // If model said can_generate but after is empty — fix the flag
+      if (issue.can_generate_after_copy === true && !hasContent) {
+        issue.can_generate_after_copy = false;
+        issue.issue_type = "needs_seller_input";
+      }
+      // If issue_type is needs_seller_input — enforce empty after regardless of what model wrote
+      if (issue.issue_type === "needs_seller_input") {
+        issue.after = "";
+        issue.can_generate_after_copy = false;
+      }
+      // If after is empty and no explicit flag set — default to needs_seller_input
+      if (!hasContent && issue.can_generate_after_copy == null) {
+        issue.can_generate_after_copy = false;
+        issue.issue_type = "needs_seller_input";
+      }
+    };
+    enforceIssueFields(result.biggest_problem);
+    for (const issue of result.also_hurting ?? []) enforceIssueFields(issue);
+
     const allFacts = [
       ...factInventory.structured_facts,
       ...factInventory.explicit_listing_facts,
@@ -726,6 +762,10 @@ ${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || 
       processIssue(result.biggest_problem);
       for (const issue of result.also_hurting ?? []) processIssue(issue);
     }
+
+    // Re-run hard validator after sanitizer — sanitizer may have emptied an after that was non-empty
+    enforceIssueFields(result.biggest_problem);
+    for (const issue of result.also_hurting ?? []) enforceIssueFields(issue);
 
     // Attach parser data
     result.photo_count = parserPhotoCount;
