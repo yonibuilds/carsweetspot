@@ -5,41 +5,120 @@ export const maxDuration = 60;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// Bump this version on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v5";
+// Bump on any prompt or post-processing change to invalidate in-memory cache
+const CACHE_VERSION = "v6";
 const cache = new Map<string, unknown>();
 
-const SYSTEM_PROMPT = `You are CarSweetSpot AI — an expert at analyzing private car listings and telling sellers exactly why buyers are not contacting them.
+// ────────────────────────────────────────────────────────────────────────────
+// Stage 2 Prompt — Fact Extraction + Classification (Sonnet, no copy writing)
+// ────────────────────────────────────────────────────────────────────────────
+// Deliberately separated from copy writing so the AI cannot confuse
+// "what the seller said" with "what can safely go in buyer-facing copy."
+const EXTRACTION_PROMPT = `You are a structured fact extractor for private car sale listings. Your only job is to read the listing text and classify every claim into the correct bucket. Do not write any copy. Do not summarize the listing. Only classify.
 
-IMPORTANT: Analyze the listing regardless of language. Never flag the listing language as a problem — sellers post in their native language and that is completely normal. Focus only on content quality, not language choice.
+Return ONLY valid JSON. No markdown, no explanation, no extra text.
+
+{
+  "structured_facts": [
+    "Facts from structured fields and metadata: year, make, model, trim, price, mileage, photo count, location",
+    "Example: '2018 Ford F-150 XLT', '$24,500', '87,000 miles', 'Dallas TX', '14 photos'"
+  ],
+  "explicit_listing_facts": [
+    "Specific, concrete facts explicitly stated in the description text — not condition claims",
+    "Example: 'backup camera', 'new tires installed March 2024', 'clean title in hand', 'tow package', 'lien-free', 'two previous owners', 'timing belt replaced at 90k miles', 'passed emissions test', 'CARFAX available'",
+    "Title type (clean/rebuilt/salvage) stated by seller → include here",
+    "Specific maintenance events with dates or details → include here",
+    "Features and equipment → include here"
+  ],
+  "seller_claims": [
+    "Claims the seller makes that cannot be independently verified — prefix each with 'Seller states:'",
+    "Example: 'Seller states: no accidents', 'Seller states: well maintained', 'Seller states: garage kept', 'Seller states: highway miles only', 'Seller states: runs great', 'Seller states: one owner'",
+    "Condition claims without documentation → seller_claims",
+    "'No accidents' with no CARFAX → seller_claims",
+    "'One owner' with no title/CARFAX evidence → seller_claims"
+  ],
+  "missing_signals": [
+    "Important signals absent from the listing that buyers typically want to know",
+    "Example: 'No ownership duration stated', 'Reason for sale not mentioned', 'CARFAX not mentioned', 'Service history not mentioned', 'Title status not mentioned'"
+  ],
+  "forbidden_or_unverified_claims": [
+    "Phrases from the listing that must NEVER be copied verbatim into buyer-facing copy — bare assertions without evidence",
+    "Example: 'no accidents', 'highway miles', 'garage kept', 'runs great', 'well maintained', 'like new', 'clean interior', 'no issues', 'perfect condition', 'one owner' (if unverified)"
+  ]
+}
+
+Classification rules — apply strictly:
+
+CONDITION CLAIMS (always seller_claims + forbidden_or_unverified_claims):
+- "no accidents" → both buckets (seller asserts, cannot verify without CARFAX/documentation)
+- "highway miles" → both buckets
+- "garage kept" → both buckets
+- "well maintained", "meticulously maintained", "babied" → both buckets
+- "runs great", "drives well", "runs and drives great" → both buckets
+- "no mechanical issues", "no problems", "no issues" → both buckets
+- "like new", "perfect condition", "spotless", "immaculate" → both buckets
+- "clean interior", "clean inside" → both buckets
+
+TITLE TYPE (explicit_listing_facts — seller can state their own title status):
+- "clean title" → explicit_listing_facts
+- "rebuilt title" / "salvage title" → explicit_listing_facts
+- "title in hand" / "lien-free" → explicit_listing_facts
+
+OWNERSHIP:
+- "one owner" with no CARFAX/title evidence → seller_claims + forbidden_or_unverified_claims
+- "two owners per title" → explicit_listing_facts (title is documentation)
+- "I bought it new in 2019" → explicit_listing_facts (specific and verifiable)
+
+SERVICE / MAINTENANCE:
+- "service records available" (no documentation shown) → seller_claims
+- "timing belt replaced at 90k miles" (specific) → explicit_listing_facts
+- "new tires in March 2024" (specific with date) → explicit_listing_facts
+- "new tires" (no date/receipt) → seller_claims
+
+CARFAX:
+- "CARFAX available" / "CARFAX report provided" → explicit_listing_facts
+- No mention of CARFAX → missing_signals
+
+When in doubt, use seller_claims, not explicit_listing_facts. Conservative classification protects buyers. The copy writer who receives this inventory will ONLY assert items from structured_facts and explicit_listing_facts. Items in seller_claims will be attributed as "Seller states X." Items in forbidden_or_unverified_claims will not appear at all. This is the safety boundary — be conservative.`;
+
+// ────────────────────────────────────────────────────────────────────────────
+// Stage 3 Prompt — Issue Generation + Copy Writing (Haiku)
+// Receives the fact inventory from Stage 2 — does not re-extract facts.
+// ────────────────────────────────────────────────────────────────────────────
+const WRITER_PROMPT = `You are CarSweetSpot AI — an expert at analyzing private car listings and telling sellers exactly why buyers are not contacting them.
+
+IMPORTANT: Analyze the listing regardless of language. Never flag the listing language as a problem. Focus only on content quality, not language choice.
 
 Private car buyers decide whether to contact a seller within seconds. They are not evaluating the car — they are evaluating: "Can I trust this seller?" Your job is to find what is destroying that trust and give the seller specific, paste-ready fixes.
+
+## Fact Inventory (your only source of facts for after_copy)
+
+You will receive a classified fact inventory. This is your authoritative source. Do not re-derive facts from the listing text — use the inventory.
+
+- **structured_facts** and **explicit_listing_facts**: you MAY assert these directly in after_copy
+- **seller_claims**: you MAY reference these ONLY as "Seller states X" — never as bare assertions
+- **missing_signals**: surface these in seller_insight and suggested_additions — NEVER invent them in after_copy
+- **forbidden_or_unverified_claims**: do NOT copy these into after_copy in any form, even with rewording
+
+SELF-CHECK before writing any "after" field: for every sentence ask "Is this from structured_facts or explicit_listing_facts?" If no — either reframe as "Seller states…" (seller_claims only) or remove entirely. Do this sentence by sentence.
+
+If insufficient safe facts exist for a meaningful after_copy, return an empty string "". An empty after is better than invented copy.
 
 ## Output structure
 
 Return ONLY a valid JSON object with this exact structure (no markdown, no extra text).
 
-The fields MUST appear in this order. You fill in verified_facts and unsafe_to_claim BEFORE writing any after field. The after field for any issue may only contain language sourced from verified_facts or safe generic language. If a fact is not in verified_facts, it cannot appear in after.
-
 {
   "vehicle": "<Year Make Model Trim>",
-  "asking_price": <number in USD, 0 if not found. Convert shorthand: "10K" → 10000, "$15k" → 15000, "15,000" → 15000>,
+  "asking_price": <number in USD, 0 if not found. Convert: "10K" → 10000, "$15k" → 15000, "15,000" → 15000>,
   "overall_score": <0-100>,
   "monthly_payment": <number, calculated from asking_price at 7% APR 60 months, 0 if no price>,
-  "verified_facts": [
-    "<each item is a specific fact explicitly stated in the listing — e.g., 'clean title stated', '96,000 miles', 'second owner', 'passed emissions test', '4 photos'>",
-    "<only include facts you can quote or directly infer from the listing text — no assumptions>"
-  ],
-  "unsafe_to_claim": [
-    "<each item is something NOT stated in the listing that would be risky or false to include in the rewrite — e.g., 'service history not mentioned', 'reason for selling unknown', 'garage storage not stated'>",
-    "<anything that appears here CANNOT appear in any after field>"
-  ],
   "biggest_problem": {
     "title": "<short problem title, max 8 words>",
     "why_buyers_care": "<1-2 sentences using benchmark language, not emotional language>",
     "seller_insight": "<1 sentence — if info is missing, suggest it here, never in after>",
     "before": "<exact quote or description of the flaw as it appears now>",
-    "after": "<paste-ready rewrite using only verified_facts and safe generic language — no invented facts, no placeholders, no questions>",
+    "after": "<paste-ready rewrite using only structured_facts and explicit_listing_facts. Seller_claims attributed as 'Seller states X'. Empty string if insufficient safe facts.>",
     "category": "<one of: trust | text | photos>"
   },
   "also_hurting": [
@@ -48,7 +127,7 @@ The fields MUST appear in this order. You fill in verified_facts and unsafe_to_c
       "why_buyers_care": "<1-2 sentences>",
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
-      "after": "<paste-ready rewrite — verified facts only>",
+      "after": "<paste-ready rewrite — structured/explicit facts only, seller_claims attributed, empty string if insufficient>",
       "category": "<one of: trust | text | photos>"
     },
     {
@@ -56,7 +135,7 @@ The fields MUST appear in this order. You fill in verified_facts and unsafe_to_c
       "why_buyers_care": "<1-2 sentences>",
       "seller_insight": "<1 sentence>",
       "before": "<specific flaw>",
-      "after": "<paste-ready rewrite — verified facts only>",
+      "after": "<paste-ready rewrite — structured/explicit facts only, seller_claims attributed, empty string if insufficient>",
       "category": "<one of: trust | text | photos>"
     }
   ],
@@ -68,19 +147,19 @@ The fields MUST appear in this order. You fill in verified_facts and unsafe_to_c
     }
   ],
   "whats_working": [
-    "<specific strength from the listing>",
+    "<specific strength from the listing — use structured_facts and explicit_listing_facts only>",
     "<specific strength>",
     "<specific strength>"
   ],
   "suggested_additions": [
-    "<coaching tip for what seller could add IF TRUE — use format: 'If you have X, consider adding Y'>",
-    "<another coaching tip — never invented, never paste-ready, never a copy prompt>"
+    "<coaching tip — format: 'If you have X, consider adding Y'>",
+    "<another coaching tip>"
   ]
 }
 
 ## Scoring Calibration
 
-Use these ranges as anchors. Score based on what is actually present — do not inflate for what might be true.
+Score based on what is actually present — do not inflate for what might be true.
 
 - 45–60 (Poor): Missing most trust signals. No ownership duration, no reason for selling, no CARFAX, thin description (<50 words), few or no photos.
 - 60–75 (Average): Some trust signals present but key gaps remain. Description exists but missing important details. Photo count adequate but angles incomplete. Mainly claims with little evidence. A listing with strong trust signals but fewer than 60 words of description should land in this range (68–74).
@@ -90,42 +169,36 @@ Use these ranges as anchors. Score based on what is actually present — do not 
 
 Description quality is a real score factor. Strong trust signals cannot compensate for a 4-line description on a $15,000+ vehicle. A listing that earns trust but fails to inform scores 68–74, not 75+.
 
-Score differentiation is required. Do not default to 72 for all average listings. Apply the 9-factor model rigorously: a listing with 15 photos should score higher on photo coverage than one with 5, even if both are "adequate." A listing with no ownership duration AND no reason for sale AND no maintenance evidence should score lower than one missing only one of those. Scores in the 60–75 range should span that full range based on actual signal count — 62, 65, 68, 71, 74 are all valid. Reserve 72–74 for listings that are genuinely close to "above average" but fall short in one clear area.
+Score differentiation is required. Do not default to 72 for all average listings. Scores in the 60–75 range should span that full range — 62, 65, 68, 71, 74 are all valid. Reserve 72–74 for listings genuinely close to "above average" but falling short in one clear area.
 
 ## Scoring Dimensions (9-factor model)
-
-Score each dimension 0–10, then apply weights to produce overall_score (0–100).
 
 1. Photo coverage / visual merchandising (20 pts)
    - Parser provides photo count — trust it, do not re-estimate
    - Count benchmarks: 0–3 = 0–4 pts | 4–7 = 5–6 pts | 8–11 = 7–8 pts | 12–16 = 9 pts | 17+ = 10 pts
-   - If photos uploaded by user: evaluate angle coverage (3/4 front, rear, side, dashboard, odometer, interior, engine bay, trunk) and quality (lighting, cleanliness, warning lights)
-   - Hero image quality: clear, well-lit exterior shot = +1; dark/blurry/no car visible = −1
 
 2. Service proof specificity (18 pts)
    - Evidence (receipts, dates, shops named, records stated): 15–18 pts
    - Claims only ("well maintained," "runs great"): 6–9 pts
    - Nothing mentioned: 0–5 pts
-   - Specific recent service event (e.g., "new timing belt at 90k"): +2 pts bonus
 
 3. Stacked trust signals (17 pts)
    - Each confirmed: clean title (+3), no accidents (+3), CARFAX/AutoCheck offered (+3), lien-free/title in hand (+2), emissions pass (+2), registration current (+2), VIN provided (+2)
    - Claims only (not verifiable): half value
-   - Score all confirmed signals, cap at 17
+   - Cap at 17
 
 4. Title clarity / transfer readiness (13 pts)
    - Clean title, in hand, lien-free: 11–13 pts
    - Clean title stated but no "in hand" or lien status: 7–9 pts
    - Title status not mentioned: 3–5 pts
    - Rebuilt/salvage disclosed WITH explanation, repairs, and inspection: 8–10 pts
-   - Rebuilt/salvage disclosed WITHOUT explanation: 2–4 pts (triggers score cap — see caps below)
-   - Salvage/rebuilt never mentioned despite structural evidence: 0–2 pts
+   - Rebuilt/salvage disclosed WITHOUT explanation: 2–4 pts
 
 5. Ownership / reason / seller context (12 pts)
    - Ownership duration stated: +4 pts
    - Reason for sale stated: +4 pts
    - Number of previous owners stated: +2 pts
-   - Seller background adds credibility (e.g., "I bought it new," "family car since 2018"): +2 pts
+   - Seller background adds credibility: +2 pts
    - None of the above: 0–2 pts
 
 6. Writing cleanliness (8 pts)
@@ -134,140 +207,92 @@ Score each dimension 0–10, then apply weights to produce overall_score (0–10
    - Spelling errors, all-caps, keyword spam, wall of text, excessive emojis: 1–3 pts
 
 7. Known-issues transparency (6 pts)
-   - Seller proactively discloses a known flaw (cosmetic or mechanical) and explains it: 5–6 pts
-   - No known issues mentioned, no obvious problems: 4 pts (neutral)
-   - Obvious problems visible/implied but not mentioned: 0–2 pts
+   - Seller proactively discloses a known flaw and explains it: 5–6 pts
+   - No known issues mentioned, no obvious problems: 4 pts
+   - Obvious problems implied but not mentioned: 0–2 pts
 
 8. Conditional price justification (4 pts)
-   - Rebuilt/salvage: seller explains the price accounts for title status: +4 pts
-   - High mileage: seller explains the usage (fleet, highway, commute): +3 pts
+   - Rebuilt/salvage with price explanation: +4 pts
+   - High mileage with usage explanation: +3 pts
    - Price vs condition unexplained but not clearly extreme: 2 pts
    - Price appears high with no supporting trust details: 0–1 pts
 
-9. Bonus proof signals (up to +2 pts over base, capped at 100)
-   - Odometer photo included: +1 pt
-   - Service records photo included: +1 pt
-   - Pre-purchase inspection offered or completed: +1 pt
-   - Honest flaw photographed and disclosed: +1 pt
+9. Bonus proof signals (up to +2 pts, capped at 100)
+   - Odometer photo, service records photo, pre-purchase inspection offered, honest flaw photographed: +1 pt each
 
-## Score caps (enforced by post-processing — do not override these)
+## Score caps (enforced by post-processing — do not override)
 
-- Rebuilt/salvage title disclosed WITHOUT explanation of damage, repairs, or inspection: HARD CAP at 58
+- Rebuilt/salvage title WITHOUT explanation of damage, repairs, or inspection: HARD CAP at 58
 - High mileage (>20,000 miles/year per [MILEAGE RATE] note) WITHOUT any service or usage explanation: HARD CAP at 65
-- Both conditions present: HARD CAP at 55
+- Both: HARD CAP at 55
 
 ## Evidence vs Claims
 
-Score evidence-based language higher than unsupported claims. Apply this distinction throughout scoring and feedback:
+- EVIDENCE: "dealer maintained," "service records available," "receipts for new tires in 2023," "passed pre-purchase inspection at [shop]"
+- CLAIMS: "meticulously maintained," "runs great," "well cared for," "like new"
 
-- EVIDENCE (score higher, note as strength): "dealer maintained," "service records available," "one owner per Carfax," "receipts for new tires in 2023," "garage kept since purchased new," "passed pre-purchase inspection at [shop]"
-- CLAIMS (score lower, flag as improvement area): "meticulously maintained," "runs great," "well cared for," "like new," "excellent condition," "babied"
+When a listing uses only claims with no evidence, flag this. In seller_insight: "Strong listings back up every claim with a fact."
 
-When a listing uses only claims with no evidence, flag this. In seller_insight, explain: "Strong listings back up every claim with a fact. Instead of 'well maintained,' say 'oil changed regularly — records available.'"
+## Seller-claim attribution
 
-## Fact Safety Rules
+Never write seller_claims as bare assertions in after_copy or whats_working. Always attribute: "Seller states X."
 
-NEVER invent facts not stated in the listing. These are absolute prohibitions:
-- Do NOT invent maintenance events (oil changes, tire replacements, brake jobs, timing belt service, etc.)
-- Do NOT invent accident history or ownership count beyond what is stated
-- Do NOT invent service records, receipts, or inspections
-- Do NOT invent mechanical condition details not mentioned
-- Do NOT invent a reason for selling — if not stated, do not include one in the rewrite
-- Do NOT invent garage storage, warranty status, or inspection results
-
-The "after" field must contain ONLY facts the seller explicitly stated. If a key fact is missing, surface the gap in "why_buyers_care" or "seller_insight" — tell the seller what to add — but do NOT write it yourself.
-
-SELF-CHECK before writing any "after" field: read each sentence you are about to write and ask "Is this fact in verified_facts?" If no — remove it. Do this sentence by sentence, not as a general review.
-
-Reason for sale rule: If the listing does not state why the car is being sold, the "after" field must NOT include a reason. Instead, add it as seller_insight: "Adding a reason for sale ('upgrading to a truck,' 'moving abroad') eliminates the #1 buyer suspicion and significantly increases contact rate."
-
-If the listing does not say "one owner," do NOT write "one owner" in the after field.
-If the listing does not mention service records, do NOT write "service records available."
-If the listing does not mention garage storage, do NOT write "garage kept."
-If the listing does not mention CARFAX, do NOT write "CARFAX available upon request."
-If the listing does not mention a certified mechanic or shop, do NOT write "installed by certified mechanic."
-If the listing does not mention receipts, do NOT write "receipts available."
-
-No questions in the "after" field: the "after" field is copy-ready text the seller can paste directly. Never write questions inside it ("How long have you owned it?" / "Any service records?"). Questions and suggestions belong only in "seller_insight". The after field should be a clean rewrite of what the seller CAN say now — nothing more.
-
-Missing information belongs in the diagnosis (seller_insight), not the prescription (after).
-
-## Photo Analysis Rules (apply ONLY when actual images are provided)
-
-When the user uploads photos, evaluate each of the following and factor into the score and findings:
-
-**Angle coverage — which of these 8 key shots are present?**
-- 3/4 front exterior (the thumbnail — most critical)
-- 3/4 rear exterior
-- Full side profile
-- Dashboard + driver's seat (no warning lights visible)
-- Odometer closeup (legible mileage — most important trust signal per research)
-- Rear seat
-- Engine bay
-- Trunk/cargo area
-Missing shots = unanswered buyer questions = negative assumptions. Frame as "buyers will wonder about X."
-
-**Red flags to call out immediately:**
-- Dashboard warning lights visible (CEL, TPMS, ABS) — destroys trust instantly
-- Visible damage (dent, scratch, rust) not mentioned in the description — signals dishonesty more than the damage itself
-- Dirty or messy interior — buyers apply broken-windows logic: "if they didn't clean it for photos, they didn't maintain it"
-- No interior photos at all — raises suspicion of hidden damage or smell
-- Dark/blurry photos — pattern-matches to concealment even when nothing is hidden
-- Car visibly dirty or unwashed — signals poor maintenance culture
-
-**Trust builders to recognize:**
-- Odometer clearly legible in frame — validate the mileage claim
-- Clean engine bay — signals maintenance better than any written claim
-- Flaw shown honestly (scratch/dent photographed and mentioned) — counterintuitively increases contact rate
-- Service records visible in a photo
-
-**Scoring impact when photos are provided:**
-- All 8 key shots present, good lighting, clean car: full 20 points
-- Missing 2-3 key shots OR quality issues: deduct 4-8 points
-- Missing odometer OR warning lights visible OR no interior: deduct 8-12 points
-- Dirty car OR visible unmentioned damage: deduct 10-15 points
+NEVER write in after_copy without explicit documentation:
+"No accidents" / "Runs great" / "Well maintained" / "Highway miles" / "Garage kept" / "One owner" / "Clean interior" / "No issues" / "Runs and drives great"
 
 ## Critical Rules
 
-- Rebuilt/salvage title: the disclosure itself is not the problem — do not penalize the score for it. The problem is missing explanation, missing repair details, missing inspection status, or missing documentation. Flag those gaps as issues or opportunities. If the listing discloses rebuilt title with explanation, repairs, and inspection, treat it as a trust signal. Never say hail/flood/collision unless the seller explicitly stated it. Safe language: "Rebuilt title disclosed. Consider adding the damage type, repairs completed, inspection status, and any available documentation." Rebuilt titles typically price at 60–70% of clean-title equivalent — suggest this if price is not explained.
-- biggest_problem: the single most damaging issue hurting buyer contact rate — must be something the seller CAN fix (copy, photos, missing info). Never use title status as a problem.
-- also_hurting: exactly 2 additional problems, different categories — must be actionable
-- before/after: ONLY use facts the seller actually stated. Never invent features, maintenance history, or ownership details. "after" must be paste-ready copy the seller can use immediately, built only from confirmed facts. PROHIBITED in after unless explicitly stated in listing: "clean interior", "clean inside", "well maintained", "garage kept", "highway miles", "local driving", "one owner", "non-smoker", "no accidents", "no issues", "runs great", "runs and drives great", "drives great". Target 30–80 words — enough detail to build trust, short enough to scan in 5 seconds. Use line breaks or short sentences, never a wall of text.
-- Cliché replacement rule: if the original listing uses vague emotional language ("beautiful", "must see", "fully loaded", "spotless", "very clean", "perfect condition", "like new", "immaculate"), do NOT copy those phrases into the after field. Replace them with specific facts from the listing (year, mileage, title status, features, maintenance events). If no specific facts are available to replace a cliché, omit the sentence entirely. After copy that repeats clichés is worse than no rewrite at all.
-- Inferred condition rule: NEVER write "no accidents", "no issues", "no problems", "runs great", "drives well", "highway miles", "local miles", or any condition statement in the after field unless the seller explicitly stated those exact facts. Absence of a problem in the listing text does NOT mean the seller stated it. These phrases appear in original listings — do not add them if missing.
-- Spelling errors in the listing: always flag this — 42% of listings have them and buyers notice. It signals carelessness about the car, not just the ad.
-- If the listing omits how long the seller has owned it: flag this. "I've owned this since 2019" is one sentence that eliminates the #1 buyer suspicion ("what's wrong with it?").
-- If reason for selling is missing: flag this. Silence triggers suspicion. "Upgrading to a truck" takes 4 words and converts skeptics.
-- If CARFAX is not mentioned: suggest it in opportunities. A CARFAX costs ~$40 and can be the difference between 5 inquiries and 50.
-- opportunities: return 2–4 items. Choose ONLY what is relevant to THIS specific listing. Do not include generic opportunities that don't apply.
-  - "financing": include if asking_price > 0 and monthly payment would be meaningful to mention
-  - "carfax": include if no CARFAX was mentioned in the listing
-  - "inspection": include if there are mechanical unknowns, high mileage, or trust gaps
-  - "title": include if salvage/rebuilt — explain the 60-70% value rule and how to frame it
-  - "photos": include if listing has few or no photos described
-  - "description": include if description is very short or missing key facts
-  - "garage": include if garage-kept is not mentioned but would be relevant (newer or lower-mile car)
-  - "warranty": include if vehicle is recent enough (under 5 years) that manufacturer warranty may still apply
-  - "price": include if price appears high relative to mileage/condition but only suggest a KBB check — never state a specific market value
-  - "payment": include if cash-only was stated (restricts buyer pool) or payment method not mentioned
-  - "formatting": include ONLY if the FORMATTING signal says wall of text. Suggest breaking the listing into short lines or bullet points. Show a before/after example.
-- category: assign each problem to exactly one of: "trust" (ownership history, reason for selling, CARFAX, title status, how long owned), "text" (description quality, word count, formatting, tone, spelling, missing details), "photos" (photo count, angles, odometer missing, quality, warning lights, dirty car). CRITICAL: biggest_problem and the two also_hurting items MUST each have a DIFFERENT category. No two of the three problems may share the same category. If your natural picks collide, demote the weaker one to a different category or replace it with the next-most-impactful issue from a different category.
-- whats_working: genuine strengths only. If fewer than 3 exist, return only what's real. Strong listings typically include: stated ownership duration, reason for selling, CARFAX or clean title confirmation, evidence-based maintenance language (not just claims), odometer photo, all key exterior and interior angles.
-- Language: Never flag vague tone, writing style, or language choice as a problem. Only flag specific detectable issues: keyword spam (3+ competitor brand names listed without context), excessive emojis (6+), all-caps sections, spelling errors, grammar errors, wall-of-text formatting, or clearly aggressive wording.
-- Phone numbers written as words or letter-number combos (e.g. "48Zer. 78Eight -799Seven") are standard Craigslist anti-spam practice. NEVER flag this as a problem.
-- Plain text only in "after" field: do NOT use markdown formatting like **bold** or ## headers. Craigslist does not render markdown. Use plain sentences and line breaks only.
-- "after" must be copy-ready text the seller can paste directly. NEVER include: "Example:", example sentences, placeholders in brackets, questions directed at the seller, invented facts, or suggested facts the seller hasn't confirmed. If information is missing (ownership duration, reason for selling, etc.), leave it out of "after" entirely — put a coaching tip in suggested_additions instead.
-- Emoji overuse rule: if the listing contains 6 or more emoji characters, flag this as a problem under category "text". Title: "Too many emojis hurt credibility". Explain that 6+ emoji reads as dealer-style marketing and reduces buyer trust — private sellers should use 0–2 max. The ✅ checkmark next to negatives (e.g. "✅ Salvage title") is especially damaging: it signals approval of a problem, creating cognitive dissonance. The "after" should be a clean plain-text version of the listing without emoji overuse, using only confirmed facts from the listing.
-- Financing: never mention financing, monthly payments, or buyer affordability in any "after" field. This belongs in a separate UI section and must not appear in issue copy.
-- monthly_payment: calculate as (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
-- Mileage per year rule: if a [MILEAGE RATE] note is provided, use it. Flag >20,000 miles/year as high usage, >30,000 miles/year as extreme usage. Use benchmark language: "At X miles/year, this vehicle was driven significantly above the 12,000–15,000 mile annual average. Buyers will likely ask about the nature of that use." Never say "highway miles" or explain the mileage cause unless the seller stated it.
-- PPV / Fleet / Commercial use: if the listing mentions PPV, police package, fleet, rental, taxi, commercial, or government use — flag as context-needed if the use history is not explained. Generate an issue only if unexplained. If explained clearly, treat as opportunity. Never invent the vehicle's history.
-- Keyword spam rule: if the listing contains 3 or more competitor brand names (Ford, Chevy, Honda, Toyota, etc.) listed consecutively without context, flag this under category "text". Title: "Keyword list at bottom hurts credibility." These are added to game search filters and read as spam to buyers.
-- suggested_additions: return 2–4 coaching tips for what the seller could add IF TRUE. Format: "If you have X, consider adding Y." These are not copy to paste — they are prompts for the seller. Examples: "If you have service records, mention it — one sentence about maintenance can significantly increase contact rate." / "If you know your reason for selling, add it — even 4 words eliminates the #1 buyer suspicion."
-- Use benchmark language, not emotional language. Never write "kills buyer trust," "destroys credibility," "red flag," or similar charged phrases. Instead, use neutral, data-driven framing: "At 18 words, this description is well below the 150–250 word range typical of listings that generate strong contact rates." / "Listings with 4 or fewer photos receive 40% fewer inquiries on average." / "42% of listings contain spelling errors — buyers consistently cite this as a signal of how a seller cares for their car."
-- Be specific with counts and benchmarks, not vague. "Description is thin" is useless. "18 words vs. the 150–250 range typical of high-contact listings" is useful. Always include the actual number from the listing alongside the benchmark.
-- Seller-claim vs. verified proof: Use "Seller states…" or "Seller reports…" for anything the seller wrote but cannot be independently verified (e.g. "Seller states all services were performed at Sands Chevrolet"). Only use "verified," "confirmed," or "documented" if the listing explicitly mentions records, receipts, CARFAX, or documentation being available. Never upgrade a seller claim into a verified fact in whats_working, after copy, or suggested_additions.`;
+- Rebuilt/salvage title: the disclosure itself is not the problem — do not penalize the score for it. Problem is missing explanation, missing repair details, missing inspection status. Safe language: "Rebuilt title disclosed. Consider adding the damage type, repairs completed, inspection status, and any available documentation." Rebuilt titles typically price at 60–70% of clean-title equivalent.
+- biggest_problem: the single most damaging issue — must be something the seller CAN fix. Never use title status as a problem.
+- also_hurting: exactly 2 additional problems, different categories — actionable
+- before/after: use only structured_facts and explicit_listing_facts. Empty string is better than invented copy. Target 30–80 words. Plain text, no markdown, no wall of text.
+- Cliché replacement: if listing uses "beautiful", "must see", "fully loaded", "spotless", "very clean", "perfect condition", "like new", "immaculate" — do NOT copy into after. Replace with specific facts. If no facts available, omit the sentence.
+- Spelling errors: always flag this — buyers notice.
+- If ownership duration missing: flag it.
+- If reason for selling missing: flag it.
+- If CARFAX not mentioned: suggest it in opportunities.
+- opportunities: return 2–4 relevant items only.
+  - "financing": if asking_price > 0
+  - "carfax": if no CARFAX mentioned
+  - "inspection": if mechanical unknowns, high mileage, or trust gaps
+  - "title": if salvage/rebuilt
+  - "photos": if few photos
+  - "description": if very short description
+  - "garage": if not mentioned but relevant (newer/lower-mile car)
+  - "warranty": if under 5 years old
+  - "price": if price appears high — suggest KBB check only, never state a specific value
+  - "payment": if cash-only or payment method not mentioned
+  - "formatting": ONLY if [FORMATTING] signal says wall of text
+- category: each of biggest_problem and the two also_hurting items MUST have a DIFFERENT category. No two may share the same.
+- whats_working: genuine strengths only from the fact inventory. If fewer than 3 exist, return only what's real.
+- Language: Never flag language choice. Only flag: keyword spam (3+ brand names consecutively), excessive emojis (6+), all-caps, spelling errors, grammar errors, wall-of-text.
+- Phone numbers written as words or letter-number combos (e.g. "48Zer. 78Eight") are standard Craigslist anti-spam. NEVER flag this.
+- Plain text only in "after": no **bold**, no ## headers. Craigslist does not render markdown.
+- No questions in "after". Questions belong in seller_insight.
+- Emoji overuse: 6+ emoji → flag under category "text". Title: "Too many emojis hurt credibility."
+- Financing: never mention financing, monthly payments, or buyer affordability in any "after" field.
+- monthly_payment: (asking_price * 0.07/12 * (1+0.07/12)^60) / ((1+0.07/12)^60 - 1), round to nearest dollar
+- Mileage per year: if [MILEAGE RATE] note provided, flag >20,000 miles/year as high usage with benchmark language. Never say "highway miles" unless seller explicitly stated it.
+- PPV / Fleet / Commercial use: flag as context-needed if unexplained.
+- Keyword spam: 3+ competitor brand names consecutively → flag under "text".
+- suggested_additions: 2–4 coaching tips. Format: "If you have X, consider adding Y."
+- Use benchmark language, not emotional language. Be specific with counts and benchmarks.
+- Seller-claim vs verified proof: "Seller states…" for anything from seller_claims. Only use "verified," "confirmed," "documented" if records/receipts/CARFAX are explicitly in explicit_listing_facts.`;
 
+// ────────────────────────────────────────────────────────────────────────────
+// Types
+// ────────────────────────────────────────────────────────────────────────────
+type FactInventory = {
+  structured_facts: string[];
+  explicit_listing_facts: string[];
+  seller_claims: string[];
+  missing_signals: string[];
+  forbidden_or_unverified_claims: string[];
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// POST handler
+// ────────────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
     const { url, images, text } = await req.json();
@@ -277,26 +302,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(cache.get(cacheKey));
     }
 
-    const messageContent: Anthropic.MessageParam["content"] = [];
+    // ── Stage 1: Deterministic parser ────────────────────────────────────────
     let firstImgSrc: string | null = null;
     let detectedPrice: number | null = null;
     let mileageRateNote = "";
     let parserPhotoCount = 0;
     let descriptionWordCount = 0;
+    let rawDescription = "";     // postingbody text for Stage 2 extraction
+    let cleanedHtml = "";        // full cleaned listing text for Stage 3 writer
+    let formattingNote = "";
+    let photoNote = "";
+    let priceNote = "";
 
+    const imageContent: Anthropic.MessageParam["content"] = [];
     if (images && images.length > 0) {
       for (const img of images as string[]) {
         const mediaTypeMatch = img.match(/^data:(image\/\w+);base64,/);
-        const mediaType = (mediaTypeMatch?.[1] || "image/jpeg") as
-          | "image/jpeg"
-          | "image/png"
-          | "image/gif"
-          | "image/webp";
+        const mediaType = (mediaTypeMatch?.[1] || "image/jpeg") as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
         const base64Data = img.replace(/^data:image\/\w+;base64,/, "");
-        messageContent.push({
-          type: "image",
-          source: { type: "base64", media_type: mediaType, data: base64Data },
-        });
+        imageContent.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64Data } });
       }
     }
 
@@ -313,7 +337,6 @@ export async function POST(req: NextRequest) {
         });
         const html = await res.text();
 
-        // Detect expired/deleted listings before analysis
         if (
           /this posting has been deleted|this posting has expired|no longer available|posting has been flagged/i.test(html) ||
           res.status === 404
@@ -324,16 +347,14 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        // Strategy 0: Open Graph meta tag — most reliable, works on CL and FB
+        // Image collection
         const ogImg = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1]
           ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1]
           ?? null;
 
         const isListingImage = (src: string) =>
-          /^https?:\/\//i.test(src) &&
-          /\.(jpg|jpeg|png|webp)/i.test(src) &&
-          !/logo|icon|avatar|sprite|pixel|tracking|blank/i.test(src) &&
-          !/1x1|spacer/i.test(src);
+          /^https?:\/\//i.test(src) && /\.(jpg|jpeg|png|webp)/i.test(src) &&
+          !/logo|icon|avatar|sprite|pixel|tracking|blank/i.test(src) && !/1x1|spacer/i.test(src);
 
         const rawImgs: string[] = [];
         const rawSeen = new Set<string>();
@@ -341,18 +362,12 @@ export async function POST(req: NextRequest) {
           if (isListingImage(src) && !rawSeen.has(src)) { rawSeen.add(src); rawImgs.push(src); }
         };
 
-        // Strategy 0: og:image
         if (ogImg) collectImg(ogImg);
-
-        // Strategy 1: JSON blobs in <script> tags — always run (catches CL gallery, FB arrays)
-        const scriptBlobs = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
-        for (const blob of scriptBlobs) {
+        for (const blob of html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || []) {
           for (const m of blob.match(/"(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || []) {
             collectImg(m.replace(/^"|"$/g, ""));
           }
         }
-
-        // Strategy 2: <img> tags — src, data-src, srcset — always run
         for (const tag of html.match(/<img[^>]+>/gi) || []) {
           const src = tag.match(/\bsrc="([^"]+)"/i)?.[1]
             ?? tag.match(/\bdata-src="([^"]+)"/i)?.[1]
@@ -360,14 +375,11 @@ export async function POST(req: NextRequest) {
             ?? null;
           if (src) collectImg(src);
         }
-
-        // Strategy 3: <a href> pointing to image files — always run
         for (const m of html.match(/\bhref="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi) || []) {
           const src = m.match(/href="([^"]+)"/i)?.[1] ?? null;
           if (src) collectImg(src);
         }
 
-        // Upgrade Craigslist thumbnail URLs to full-size, then deduplicate again after upgrade
         const upgradedSeen = new Set<string>();
         const upgradedImgs: string[] = [];
         for (const src of rawImgs) {
@@ -378,21 +390,16 @@ export async function POST(req: NextRequest) {
         parserPhotoCount = upgradedImgs.length;
         firstImgSrc = upgradedImgs[0] ?? null;
 
-
-        // Detect wall-of-text: convert br/p to newlines, count meaningful paragraphs
-        const withBreaks = html
-          .replace(/<br\s*\/?>/gi, "\n")
-          .replace(/<\/p>/gi, "\n")
-          .replace(/<[^>]+>/g, " ");
+        // Formatting detection
+        const withBreaks = html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n").replace(/<[^>]+>/g, " ");
         const paragraphs = withBreaks.split("\n").map(s => s.trim()).filter(s => s.length > 30);
         const longestPara = paragraphs.length > 0 ? Math.max(...paragraphs.map(p => p.length)) : 0;
-        // Wall-of-text = single block over 500 chars AND fewer than 3 paragraph breaks
         const isWallOfText = longestPara > 500 && paragraphs.length < 3;
-        const formattingNote = !isWallOfText
+        formattingNote = !isWallOfText
           ? `\n\n[FORMATTING: listing uses paragraph breaks — do NOT flag formatting as a problem.]`
-          : `\n\n[FORMATTING: wall of text detected — ${longestPara} characters in one block with no paragraph breaks. Flag this under opportunities with type "formatting". Also deduct up to 5 points from Description Quality score.]`;
+          : `\n\n[FORMATTING: wall of text detected — ${longestPara} characters in one block with no paragraph breaks. Flag this under opportunities with type "formatting".]`;
 
-        const cleaned = html
+        cleanedHtml = html
           .replace(/<script[\s\S]*?<\/script>/gi, "")
           .replace(/<style[\s\S]*?<\/style>/gi, "")
           .replace(/<[^>]+>/g, " ")
@@ -400,38 +407,34 @@ export async function POST(req: NextRequest) {
           .trim()
           .slice(0, 12000);
 
-        // Extract word count from the listing body only (not full page)
-        // Craigslist uses <section id="postingbody">, Facebook and others use similar containers
+        // Extract description body for Stage 2 (more focused than full HTML)
         const bodyMatch = html.match(/<section[^>]+id=["']postingbody["'][^>]*>([\s\S]*?)<\/section>/i)
           ?? html.match(/<div[^>]+id=["']postingbody["'][^>]*>([\s\S]*?)<\/div>/i);
         if (bodyMatch) {
-          const bodyText = bodyMatch[1]
-            .replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim();
+          const bodyText = bodyMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
           descriptionWordCount = bodyText.split(/\s+/).filter(Boolean).length;
+          rawDescription = bodyText.slice(0, 4000);
         }
 
-        // Extract price from cleaned plain text — the AI can read it so we can too
-        const allPrices = [...cleaned.matchAll(/\$\s*([\d,]+)/g)]
+        // Price detection
+        const allPrices = [...cleanedHtml.matchAll(/\$\s*([\d,]+)/g)]
           .map(m => parseInt(m[1].replace(/,/g, ""), 10))
           .filter(n => !isNaN(n) && n >= 1000 && n <= 300000);
         if (allPrices.length > 0) detectedPrice = allPrices[0];
 
-        const photoNote = parserPhotoCount > 0
-          ? `\n\n[PHOTO COUNT DETECTED FROM HTML: ${parserPhotoCount} listing photos found. Do NOT flag photos as missing or low-count.]`
+        photoNote = parserPhotoCount > 0
+          ? `\n\n[PHOTO COUNT DETECTED FROM HTML: ${parserPhotoCount} listing photos found. Trust this count — do NOT flag photos as missing or low-count.]`
           : `\n\n[PHOTO COUNT: Could not detect photos from HTML — evaluate based on description only.]`;
-        const priceNote = detectedPrice
+        priceNote = detectedPrice
           ? `\n\n[PRICE DETECTED FROM HTML: $${detectedPrice.toLocaleString()} — set asking_price to ${detectedPrice}]`
           : "";
 
-        // Mileage per year calculation
-        const detectedMileage = [...cleaned.matchAll(/(\d[\d,]+)\s*(?:miles?|mi\b)/gi)]
+        // Mileage rate
+        const detectedMileage = [...cleanedHtml.matchAll(/(\d[\d,]+)\s*(?:miles?|mi\b)/gi)]
           .map(m => parseInt(m[1].replace(/,/g, ""), 10))
           .filter(n => !isNaN(n) && n >= 1000 && n <= 500000)[0] ?? null;
-        const detectedYear = cleaned.match(/\b(19[89]\d|20[012]\d)\b/)?.[1]
-          ? parseInt(cleaned.match(/\b(19[89]\d|20[012]\d)\b/)![1], 10) : null;
-        mileageRateNote = "";
+        const detectedYearMatch = cleanedHtml.match(/\b(19[89]\d|20[012]\d)\b/);
+        const detectedYear = detectedYearMatch ? parseInt(detectedYearMatch[1], 10) : null;
         if (detectedMileage && detectedYear) {
           const yearsOld = new Date().getFullYear() - detectedYear;
           if (yearsOld > 0) {
@@ -440,11 +443,6 @@ export async function POST(req: NextRequest) {
             mileageRateNote = `\n\n[MILEAGE RATE: ${milesPerYear.toLocaleString()} miles/year (${detectedMileage.toLocaleString()} miles ÷ ${yearsOld} years = ${rateLabel}). Apply mileage per year rule if above 20k.]`;
           }
         }
-
-        messageContent.push({
-          type: "text",
-          text: `Listing URL: ${url}\n\nListing content:\n${cleaned}${photoNote}${formattingNote}${priceNote}${mileageRateNote}`,
-        });
       } catch {
         return NextResponse.json(
           { error: "Could not fetch this URL. Facebook listings require login — try the Screenshots tab instead." },
@@ -454,42 +452,117 @@ export async function POST(req: NextRequest) {
     }
 
     if (text) {
-      messageContent.push({ type: "text", text: `Listing text:\n${text}` });
+      rawDescription = text.slice(0, 4000);
+      cleanedHtml = text;
     }
 
-    if (messageContent.length === 0) {
+    if (!cleanedHtml && imageContent.length === 0) {
+      return NextResponse.json({ error: "Please provide a URL, screenshots, or listing text." }, { status: 400 });
+    }
+
+    // ── Stage 2: Fact extraction + classification (Sonnet) ───────────────────
+    // Fail closed — no fallback to unsafe single-call behavior.
+    let factInventory: FactInventory;
+    try {
+      const extractionInput = rawDescription
+        ? `Listing description (primary source):\n${rawDescription}\n\nFull listing text (for context only — description above takes priority):\n${cleanedHtml.slice(0, 5000)}`
+        : `Full listing text:\n${cleanedHtml.slice(0, 6000)}`;
+
+      const extractionResp = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        temperature: 0,
+        system: EXTRACTION_PROMPT,
+        messages: [{ role: "user", content: extractionInput }],
+      });
+
+      const extractionText = extractionResp.content[0].type === "text" ? extractionResp.content[0].text : "";
+      const extractionJson = extractionText.match(/\{[\s\S]*\}/);
+      if (!extractionJson) {
+        return NextResponse.json(
+          { error: "Could not safely analyze this listing. Please try again or paste the listing text." },
+          { status: 500 }
+        );
+      }
+
+      const parsed = JSON.parse(extractionJson[0]) as Partial<FactInventory>;
+      // Validate required buckets exist
+      if (!Array.isArray(parsed.structured_facts) || !Array.isArray(parsed.explicit_listing_facts) || !Array.isArray(parsed.seller_claims)) {
+        return NextResponse.json(
+          { error: "Could not safely analyze this listing. Please try again or paste the listing text." },
+          { status: 500 }
+        );
+      }
+      factInventory = {
+        structured_facts: parsed.structured_facts ?? [],
+        explicit_listing_facts: parsed.explicit_listing_facts ?? [],
+        seller_claims: parsed.seller_claims ?? [],
+        missing_signals: parsed.missing_signals ?? [],
+        forbidden_or_unverified_claims: parsed.forbidden_or_unverified_claims ?? [],
+      };
+    } catch {
       return NextResponse.json(
-        { error: "Please provide a URL, screenshots, or listing text." },
-        { status: 400 }
+        { error: "Could not safely analyze this listing. Please try again or paste the listing text." },
+        { status: 500 }
       );
     }
 
-    messageContent.push({
-      type: "text",
-      text: "Analyze this car listing and return the JSON assessment.",
-    });
+    // ── Stage 3: Issue generation + copy writing (Haiku) ─────────────────────
+    const factBlock = `## Classified Fact Inventory (your only source of facts for after_copy)
 
-    const response = await client.messages.create({
+structured_facts (may assert directly in after_copy):
+${factInventory.structured_facts.map(f => `- ${f}`).join("\n") || "- (none detected)"}
+
+explicit_listing_facts (may assert directly in after_copy):
+${factInventory.explicit_listing_facts.map(f => `- ${f}`).join("\n") || "- (none detected)"}
+
+seller_claims (attribute as "Seller states X" — never bare assertions):
+${factInventory.seller_claims.map(f => `- ${f}`).join("\n") || "- (none)"}
+
+missing_signals (surface in seller_insight and suggested_additions only):
+${factInventory.missing_signals.map(f => `- ${f}`).join("\n") || "- (none)"}
+
+forbidden_or_unverified_claims (NEVER copy these into after_copy):
+${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || "- (none)"}`;
+
+    const writerContent: Anthropic.MessageParam["content"] = [...imageContent];
+    const listingText = url
+      ? `Listing URL: ${url}\n\n${factBlock}\n\nFull listing content (for context — fact inventory above is authoritative):\n${cleanedHtml}${photoNote}${formattingNote}${priceNote}${mileageRateNote}`
+      : `${factBlock}\n\nListing text (for context):\n${cleanedHtml}`;
+
+    writerContent.push({ type: "text", text: listingText });
+    writerContent.push({ type: "text", text: "Analyze this car listing using the fact inventory above and return the JSON assessment." });
+
+    const writerResp = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2800,
       temperature: 0,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: messageContent }],
+      system: WRITER_PROMPT,
+      messages: [{ role: "user", content: writerContent }],
     });
 
-    const rawText = response.content[0].type === "text" ? response.content[0].text : "";
+    const rawText = writerResp.content[0].type === "text" ? writerResp.content[0].text : "";
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return NextResponse.json({ error: "Analysis failed. Please try again." }, { status: 500 });
+      return NextResponse.json(
+        { error: "Could not safely analyze this listing. Please try again or paste the listing text." },
+        { status: 500 }
+      );
     }
 
-    const result = JSON.parse(jsonMatch[0]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result: any = JSON.parse(jsonMatch[0]);
 
-    // Post-processing: contradiction validator
-    // Anything confirmed in verified_facts cannot be flagged as missing in issues
-    const vf: string[] = (result.verified_facts ?? []).map((f: string) => f.toLowerCase());
-    const hasOwnershipDuration = vf.some(f => /owned.*\d|\d.*year.*own|\d.*month.*own|ownership.*duration/.test(f));
-    const hasReasonForSale = vf.some(f => /reason.*sell|selling.*because|downsize|upgrad|relocat|moving|retire/.test(f));
+    // ── Post-processing ───────────────────────────────────────────────────────
+    // Uses Stage 2 fact inventory — not AI-generated fields — as the truth source.
+    const allFacts = [
+      ...factInventory.structured_facts,
+      ...factInventory.explicit_listing_facts,
+    ].map(f => f.toLowerCase());
+
+    // Contradiction validator: suppress issues that contradict known facts
+    const hasOwnershipDuration = allFacts.some(f => /owned.*\d|\d.*year.*own|\d.*month.*own|ownership.*duration|bought.*\d{4}|since.*\d{4}/.test(f));
+    const hasReasonForSale = allFacts.some(f => /reason.*sell|selling.*because|downsize|upgrad|relocat|moving|retire/.test(f));
     const isValidIssue = (issue: { title?: string; category?: string } | null | undefined): boolean => {
       if (!issue) return false;
       const t = (issue.title ?? "").toLowerCase();
@@ -498,7 +571,6 @@ export async function POST(req: NextRequest) {
       if (parserPhotoCount >= 8 && issue.category === "photos") return false;
       return true;
     };
-    // If biggest_problem is contradicted, promote first valid also_hurting item
     if (!isValidIssue(result.biggest_problem)) {
       const next = (result.also_hurting ?? []).find(isValidIssue);
       result.biggest_problem = next ?? null;
@@ -506,20 +578,15 @@ export async function POST(req: NextRequest) {
     }
     result.also_hurting = (result.also_hurting ?? []).filter(isValidIssue);
 
-    // Post-processing: category uniqueness across top 3 issue slots
-    // biggest_problem + also_hurting[0] + also_hurting[1] must each have a different category
+    // Category uniqueness across the top 3 issue slots
     {
       const usedCats = new Set<string>();
       if (result.biggest_problem?.category) usedCats.add(result.biggest_problem.category);
       const keptAlso: typeof result.also_hurting = [];
       const demoted: typeof result.also_hurting = [];
       for (const issue of result.also_hurting ?? []) {
-        if (!usedCats.has(issue.category)) {
-          usedCats.add(issue.category);
-          keptAlso.push(issue);
-        } else {
-          demoted.push(issue);
-        }
+        if (!usedCats.has(issue.category)) { usedCats.add(issue.category); keptAlso.push(issue); }
+        else demoted.push(issue);
       }
       result.also_hurting = keptAlso;
       for (const issue of demoted) {
@@ -529,12 +596,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Post-processing: strip invented CARFAX/history/placeholder sentences from after fields
+    // CARFAX / service records / placeholder stripper
+    // Use Stage 2 inventory — not AI-generated verified_facts — for authorization checks.
     {
-      const hasVerifiedCarfax = vf.some(f => /carfax|autocheck|vehicle history report/.test(f));
-      const hasVerifiedServiceRecords = vf.some(f => /service records? (available|on hand|provided)|maintenance records? available/.test(f));
-
-      // Any sentence mentioning carfax/autocheck is unsafe unless CARFAX is in verified_facts
+      const hasVerifiedCarfax = allFacts.some(f => /carfax|autocheck|vehicle history report/.test(f));
+      const hasVerifiedServiceRecords = allFacts.some(f => /service records? (available|on hand|provided)|maintenance records? available/.test(f));
       const carfaxPatterns = [/carfax/i, /autocheck/i];
       const servicePatterns = [
         /service\s+records?\s+available/i, /maintenance\s+records?\s+available/i,
@@ -542,46 +608,30 @@ export async function POST(req: NextRequest) {
       ];
       const placeholderPattern = /\[[^\]]{1,60}\]/;
 
-      const cleanAfter = (text: string): { text: string; hadInvented: boolean } => {
-        if (!text) return { text, hadInvented: false };
-        let hadInvented = false;
-        // Split on sentence boundaries, keeping the delimiter
-        const lines = text.split('\n');
+      let addCarfaxSuggestion = false;
+      const cleanIssueAfter = (issue: { after?: string } | null) => {
+        if (!issue?.after) return;
+        const lines = issue.after.split('\n');
         const cleanedLines = lines.map(line => {
-          // Split line into sentences
           const parts: string[] = [];
           let remaining = line;
           while (remaining.length > 0) {
             const match = remaining.match(/^(.*?[.!?])\s*/);
-            if (match) {
-              parts.push(match[1]);
-              remaining = remaining.slice(match[0].length);
-            } else {
-              parts.push(remaining);
-              break;
-            }
+            if (match) { parts.push(match[1]); remaining = remaining.slice(match[0].length); }
+            else { parts.push(remaining); break; }
           }
-          const kept = parts.filter(s => {
-            if (!hasVerifiedCarfax && carfaxPatterns.some(p => p.test(s))) { hadInvented = true; return false; }
-            if (!hasVerifiedServiceRecords && servicePatterns.some(p => p.test(s))) { hadInvented = true; return false; }
-            if (placeholderPattern.test(s)) { hadInvented = true; return false; }
+          return parts.filter(s => {
+            if (!hasVerifiedCarfax && carfaxPatterns.some(p => p.test(s))) { addCarfaxSuggestion = true; return false; }
+            if (!hasVerifiedServiceRecords && servicePatterns.some(p => p.test(s))) { addCarfaxSuggestion = true; return false; }
+            if (placeholderPattern.test(s)) return false;
             return true;
-          });
-          return kept.join(' ').trim();
+          }).join(' ').trim();
         });
-        return { text: cleanedLines.filter(Boolean).join('\n').trim(), hadInvented };
+        issue.after = cleanedLines.filter(Boolean).join('\n').trim();
       };
 
-      let addCarfaxSuggestion = false;
-      const cleanIssue = (issue: { after?: string } | null) => {
-        if (!issue?.after) return;
-        const { text, hadInvented } = cleanAfter(issue.after);
-        issue.after = text;
-        if (hadInvented) addCarfaxSuggestion = true;
-      };
-
-      cleanIssue(result.biggest_problem);
-      for (const issue of result.also_hurting ?? []) cleanIssue(issue);
+      cleanIssueAfter(result.biggest_problem);
+      for (const issue of result.also_hurting ?? []) cleanIssueAfter(issue);
 
       if (addCarfaxSuggestion) {
         const tip = "If you have a CARFAX, AutoCheck, or service records, mention it — one sentence about vehicle history can significantly increase buyer confidence.";
@@ -591,122 +641,67 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Post-processing: score caps
-    // Rebuilt/salvage without explanation: cap at 58
-    // High mileage without service explanation: cap at 65
-    const allText = [...(result.verified_facts ?? []), ...(result.unsafe_to_claim ?? []), result.biggest_problem?.why_buyers_care ?? ""].join(" ").toLowerCase();
-    const hasRebuiltTitle = vf.some(f => /rebuilt|salvage/.test(f));
-    const hasRebuiltExplanation = vf.some(f => /repair|inspection|damage.*was|rebuilt.*after|rebuilt.*follow/.test(f));
+    // Score caps
+    const hasRebuiltTitle = allFacts.some(f => /rebuilt|salvage/.test(f));
+    const hasRebuiltExplanation = allFacts.some(f => /repair|inspection|damage.*was|rebuilt.*after|rebuilt.*follow/.test(f));
     const isMileageHigh = mileageRateNote.includes("HIGH usage") || mileageRateNote.includes("EXTREME usage");
-    const hasServiceExplanation = vf.some(f => /service|maintenance|oil|timing|record|inspect|highway|commute|fleet/.test(f)) || allText.includes("highway") || allText.includes("service record");
-
+    const hasServiceExplanation = allFacts.some(f => /service|maintenance|oil|timing|record|inspect|commute|fleet/.test(f));
     let scoreCap = 100;
     if (hasRebuiltTitle && !hasRebuiltExplanation) scoreCap = Math.min(scoreCap, 58);
     if (isMileageHigh && !hasServiceExplanation) scoreCap = Math.min(scoreCap, 65);
     if (hasRebuiltTitle && !hasRebuiltExplanation && isMileageHigh && !hasServiceExplanation) scoreCap = Math.min(scoreCap, 55);
     if (result.overall_score > scoreCap) result.overall_score = scoreCap;
 
-    // If AI failed to extract price but we detected it from HTML, use it
-    if (!result.asking_price && detectedPrice) {
-      result.asking_price = detectedPrice;
-    }
+    // Price + monthly payment
+    if (!result.asking_price && detectedPrice) result.asking_price = detectedPrice;
     if (result.asking_price) {
       const p = result.asking_price;
-      const r = 0.07 / 12;
-      const n = 60;
+      const r = 0.07 / 12, n = 60;
       result.monthly_payment = Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
     }
 
-    // Expose photo count for UI bar calibration
-    result.photo_count = parserPhotoCount;
-    if (descriptionWordCount > 0) result.description_word_count = descriptionWordCount;
-
-    // Post-processing: sentence-level safety sanitizer on all issue after fields
+    // Sentence-level safety sanitizer (defense-in-depth — should rarely trigger with V3)
     {
-      // Vague sales clichés — strip the phrase but try to keep the rest of the sentence
       const CLICHE_PHRASES = [
-        /\bbeautiful\b/gi,
-        /\bmust[\s-]see\b/gi,
-        /\bfully[\s-]loaded\b/gi,
-        /\bspotless\b/gi,
-        /\bvery\s+clean\b/gi,
-        /\bperfect\s+condition\b/gi,
-        /\blike[\s-]new\b/gi,
-        /\bimmaculate\b/gi,
+        /\bbeautiful\b/gi, /\bmust[\s-]see\b/gi, /\bfully[\s-]loaded\b/gi,
+        /\bspotless\b/gi, /\bvery\s+clean\b/gi, /\bperfect\s+condition\b/gi,
+        /\blike[\s-]new\b/gi, /\bimmaculate\b/gi,
       ];
-
-      // Mechanical/trust claims — remove the whole sentence unless it can be reframed
       const TRUST_CLAIM_PATTERNS = [
-        /no\s+mechanical\s+issues?/i,
-        /no\s+issues?\b/i,
-        /no\s+problems?\b/i,
+        /no\s+mechanical\s+issues?/i, /no\s+issues?\b/i, /no\s+problems?\b/i,
         /well[\s-]maintained/i,
         /runs\s+and\s+drives\s+(great|well|perfect|fine|smooth)/i,
-        /runs\s+great/i,
-        /drives\s+great/i,
-        /drives\s+like\s+new/i,
-        /no\s+accidents?\b/i,
-        /highway\s+miles/i,
-        /local\s+(miles|driving)/i,
+        /runs\s+great/i, /drives\s+great/i, /drives\s+like\s+new/i,
+        /no\s+accidents?\b/i, /highway\s+miles/i, /local\s+(miles|driving)/i,
       ];
-
-      // These trust claims can be kept if rephrased as a seller statement
       const REFRAMEABLE = [
         { pattern: /runs\s+and\s+drives\s+(great|well|perfect|fine|smooth)/i, claim: "runs and drives well" },
-        { pattern: /no\s+mechanical\s+issues?/i,                              claim: "no mechanical issues" },
-        { pattern: /no\s+accidents?\b/i,                                      claim: "no accidents" },
+        { pattern: /no\s+mechanical\s+issues?/i, claim: "no mechanical issues" },
+        { pattern: /no\s+accidents?\b/i, claim: "no accidents" },
       ];
 
-      const splitSentences = (text: string): string[] =>
-        text.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+      const splitSentences = (t: string) => t.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
 
       const cleanSentence = (s: string): string => {
-        // 1. Strip financing / payment content
         if (/financing|\/mo\b|APR|OAC|monthly\s+payment|estimated\s+payment|buyer\s+payment|bring\s+your\s+own|cash\s+or\s+fin/i.test(s)) return "";
-        // 2. Strip "Example:" lines
         if (/^\s*[\*\-]?\s*example:/i.test(s)) return "";
-        // 3. Strip seller-directed questions
         if (/^\s*[\*\-]?\s*(do you|did you|have you|are you|when did|how long|why are you)/i.test(s)) return "";
-
-        // 4. Check trust claim patterns — try to reframe, else drop
         for (const { pattern, claim } of REFRAMEABLE) {
           if (pattern.test(s)) {
-            // If the sentence is only the claim (nothing else useful), reframe it
             const stripped = s.replace(pattern, "").replace(/[,.\s]+/g, " ").trim();
-            if (stripped.length < 10) {
-              // Entire sentence was the claim — reframe
-              return `Seller states ${claim}.`;
-            }
-            // Sentence has other content — drop just the claim phrase
+            if (stripped.length < 10) return `Seller states ${claim}.`;
             return s.replace(pattern, "").replace(/\s{2,}/g, " ").replace(/^[,\s]+|[,\s]+$/g, "").trim() + ".";
           }
         }
-        // Other trust claims: drop the whole sentence
-        for (const pat of TRUST_CLAIM_PATTERNS) {
-          if (pat.test(s)) return "";
-        }
-
-        // 5. Strip cliché phrases in-place (keep the rest of the sentence)
+        for (const pat of TRUST_CLAIM_PATTERNS) { if (pat.test(s)) return ""; }
         let cleaned = s;
-        for (const pat of CLICHE_PHRASES) {
-          cleaned = cleaned.replace(pat, "").replace(/\s{2,}/g, " ").trim();
-        }
-        // If stripping left a near-empty sentence, drop it
-        const wordCount = cleaned.split(/\s+/).filter(Boolean).length;
-        if (wordCount < 3) return "";
-
+        for (const pat of CLICHE_PHRASES) { cleaned = cleaned.replace(pat, "").replace(/\s{2,}/g, " ").trim(); }
+        if (cleaned.split(/\s+/).filter(Boolean).length < 3) return "";
         return cleaned;
       };
 
-      const cleanAfterCopy = (text: string): string => {
-        const sentences = splitSentences(text);
-        const cleaned = sentences
-          .map(cleanSentence)
-          .filter(Boolean)
-          .join(" ")
-          .trim();
-        return cleaned;
-      };
+      const cleanAfterCopy = (t: string) =>
+        splitSentences(t).map(cleanSentence).filter(Boolean).join(" ").trim();
 
       const processIssue = (issue: { after?: string } | null) => {
         if (!issue) return;
@@ -716,12 +711,15 @@ export async function POST(req: NextRequest) {
       for (const issue of result.also_hurting ?? []) processIssue(issue);
     }
 
-    // Attach listing image if available
+    // Attach parser data
+    result.photo_count = parserPhotoCount;
+    if (descriptionWordCount > 0) result.description_word_count = descriptionWordCount;
     if (firstImgSrc) result.listing_image = firstImgSrc;
     if (!result.listing_image && images && images.length > 0) result.listing_image = images[0];
 
     if (cacheKey) cache.set(cacheKey, result);
     return NextResponse.json(result);
+
   } catch (err) {
     console.error(err);
     const msg = err instanceof Error ? err.message : String(err);

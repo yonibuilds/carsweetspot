@@ -22,8 +22,12 @@ export type AnalysisResult = {
   opportunities: Opportunity[];
   whats_working: string[];
   suggested_additions?: string[];
-  verified_facts?: string[];
-  unsafe_to_claim?: string[];
+  // V3 fact inventory fields (not rendered in UI — used for debugging/QA)
+  structured_facts?: string[];
+  explicit_listing_facts?: string[];
+  seller_claims?: string[];
+  missing_signals?: string[];
+  forbidden_or_unverified_claims?: string[];
   listing_image?: string;
   photo_count?: number;
   description_word_count?: number;
