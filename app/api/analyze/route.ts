@@ -597,15 +597,20 @@ export async function POST(req: NextRequest) {
     // Expose photo count for UI bar calibration
     result.photo_count = parserPhotoCount;
 
-    // Post-processing: fix financing amounts in after fields to match calculated monthly_payment
+    // Post-processing: financing lines belong only in non-trust issues
+    // Strip from trust issues; fix amount in all others
     if (result.monthly_payment) {
       const mo = result.monthly_payment;
+      const stripFinancing = (text: string): string =>
+        text.split('\n').filter(l => !/financing available|est\.\s*\$[\d,]+\/mo/i.test(l)).join('\n').trim();
       const fixFinancing = (text: string): string =>
         text.replace(/est\.\s*\$[\d,]+\/mo\b[^.]*/gi, `est. $${mo}/mo at 7% APR, 60 months`);
-      if (result.biggest_problem?.after) result.biggest_problem.after = fixFinancing(result.biggest_problem.after);
-      for (const issue of result.also_hurting ?? []) {
-        if (issue.after) issue.after = fixFinancing(issue.after);
-      }
+      const processIssue = (issue: { after?: string; category?: string } | null) => {
+        if (!issue?.after) return;
+        issue.after = issue.category === "trust" ? stripFinancing(issue.after) : fixFinancing(issue.after);
+      };
+      processIssue(result.biggest_problem);
+      for (const issue of result.also_hurting ?? []) processIssue(issue);
     }
 
     // Attach listing image if available

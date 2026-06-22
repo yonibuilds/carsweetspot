@@ -584,19 +584,6 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
                     </>
                   )}
 
-                  {calcMo > 0 && idx === 0 && (
-                    <div style={{ marginTop: 16, background: "#1D4ED8", borderRadius: 12, padding: "14px 18px" }}>
-                      <p style={{ ...H, fontSize: 13, fontWeight: 700, color: WHITE, margin: "0 0 3px" }}>
-                        💳 ${calcMo}/mo est.
-                      </p>
-                      <p style={{ ...B, fontSize: 12, color: "#BFDBFE", margin: "0 0 10px", lineHeight: 1.5 }}>
-                        Most Americans buy with financing. Don&apos;t lose them — add this to your listing.
-                      </p>
-                      <div style={{ background: "#1e3a8a", borderRadius: 8, padding: "8px 12px", fontFamily: "monospace", fontSize: 11, color: "#E0F2FE", lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "break-word" }}>
-                        &quot;Financing available OAC — est. ${calcMo}/mo at 7% APR, 60 months.&quot;
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </Card>
