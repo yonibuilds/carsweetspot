@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v8";
+const CACHE_VERSION = "v9";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -59,10 +59,13 @@ CONDITION CLAIMS (always seller_claims + forbidden_or_unverified_claims):
 - "like new", "perfect condition", "spotless", "immaculate" → both buckets
 - "clean interior", "clean inside" → both buckets
 
-TITLE TYPE (explicit_listing_facts — seller can state their own title status):
-- "clean title" → explicit_listing_facts
-- "rebuilt title" / "salvage title" → explicit_listing_facts
-- "title in hand" / "lien-free" → explicit_listing_facts
+TITLE TYPE:
+- Craigslist metadata `title status: clean` → explicit_listing_facts as "Clean title stated in listing metadata" — do NOT upgrade to "clean title in hand"
+- Seller writes "clean title" in description → explicit_listing_facts as "Clean title stated by seller"
+- Seller writes "title in hand" → explicit_listing_facts as "Title in hand — stated by seller"
+- Seller writes "lien-free" → explicit_listing_facts as "Lien-free — stated by seller"
+- "rebuilt title" / "salvage title" from metadata or description → explicit_listing_facts
+- NEVER write "title in hand" in explicit_listing_facts unless the seller explicitly used those words
 
 OWNERSHIP:
 - "one owner" with no CARFAX/title evidence → seller_claims + forbidden_or_unverified_claims
@@ -275,7 +278,8 @@ NEVER write in after_copy without explicit documentation:
 - Mileage per year: if [MILEAGE RATE] note provided, flag >20,000 miles/year as high usage with benchmark language. Never say "highway miles" unless seller explicitly stated it.
 - PPV / Fleet / Commercial use: flag as context-needed if unexplained.
 - Keyword spam: 3+ competitor brand names consecutively → flag under "text".
-- suggested_additions: 2–4 coaching tips. Format: "If you have X, consider adding Y."
+- suggested_additions: 2–4 coaching tips. Format: "If you have X, consider adding Y." Never use bracket placeholders like [X years] or [reason] — write plain guidance instead. Bad: "Add 'Owned for [X years].'" Good: "Add how long you've owned it — even one sentence builds credibility."
+- "title in hand" rule: never write "title in hand" or "clean title in hand" in after_copy or whats_working unless the seller explicitly used the phrase "in hand" in their listing. Craigslist metadata showing `title status: clean` only justifies "clean title stated in listing" — nothing more.
 - Use benchmark language, not emotional language. Be specific with counts and benchmarks.
 - Short description title rule: if the description is under 50 words and you flag it as a text issue, the problem title MUST reflect the word count — not the writing style. Use titles like "Description is 24 words — buyers need more" or "24-word description leaves buyers guessing." Never use "reads like a spec sheet," "lacks a story," or similar style critiques when the real problem is length. Style critiques apply only when the description is 80+ words but poorly written or vague.
 - Seller-claim vs verified proof: "Seller states…" for anything from seller_claims. Only use "verified," "confirmed," "documented" if records/receipts/CARFAX are explicitly in explicit_listing_facts.
