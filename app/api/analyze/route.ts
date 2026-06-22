@@ -483,6 +483,94 @@ export async function POST(req: NextRequest) {
     }
     result.also_hurting = (result.also_hurting ?? []).filter(isValidIssue);
 
+    // Post-processing: category uniqueness across top 3 issue slots
+    // biggest_problem + also_hurting[0] + also_hurting[1] must each have a different category
+    {
+      const usedCats = new Set<string>();
+      if (result.biggest_problem?.category) usedCats.add(result.biggest_problem.category);
+      const keptAlso: typeof result.also_hurting = [];
+      const demoted: typeof result.also_hurting = [];
+      for (const issue of result.also_hurting ?? []) {
+        if (!usedCats.has(issue.category)) {
+          usedCats.add(issue.category);
+          keptAlso.push(issue);
+        } else {
+          demoted.push(issue);
+        }
+      }
+      result.also_hurting = keptAlso;
+      for (const issue of demoted) {
+        const tip = `${issue.title}. ${issue.seller_insight ?? ""}`.trim().slice(0, 180);
+        result.suggested_additions = [...(result.suggested_additions ?? []), tip];
+      }
+    }
+
+    // Post-processing: strip invented CARFAX/history/placeholder sentences from after fields
+    {
+      const hasVerifiedCarfax = vf.some(f => /carfax|autocheck|vehicle history report/.test(f));
+      const hasVerifiedServiceRecords = vf.some(f => /service records? (available|on hand|provided)|maintenance records? available/.test(f));
+
+      // Patterns that are UNSAFE in after unless verified
+      const carfaxPatterns = [
+        /carfax\s+available/i, /autocheck\s+available/i, /history\s+report\s+available/i,
+        /available\s+upon\s+request/i, /no\s+accidents?\s+per\s+carfax/i,
+        /one\s+owner\s+per\s+carfax/i, /clean\s+history\s+confirmed/i,
+      ];
+      const servicePatterns = [
+        /service\s+records?\s+available/i, /maintenance\s+records?\s+available/i,
+        /records?\s+available\s+upon\s+request/i,
+      ];
+      const placeholderPattern = /\[[^\]]{1,60}\]/;
+
+      const cleanAfter = (text: string): { text: string; hadInvented: boolean } => {
+        if (!text) return { text, hadInvented: false };
+        let hadInvented = false;
+        // Split on sentence boundaries, keeping the delimiter
+        const lines = text.split('\n');
+        const cleanedLines = lines.map(line => {
+          // Split line into sentences
+          const parts: string[] = [];
+          let remaining = line;
+          while (remaining.length > 0) {
+            const match = remaining.match(/^(.*?[.!?])\s*/s);
+            if (match) {
+              parts.push(match[1]);
+              remaining = remaining.slice(match[0].length);
+            } else {
+              parts.push(remaining);
+              break;
+            }
+          }
+          const kept = parts.filter(s => {
+            if (!hasVerifiedCarfax && carfaxPatterns.some(p => p.test(s))) { hadInvented = true; return false; }
+            if (!hasVerifiedServiceRecords && servicePatterns.some(p => p.test(s))) { hadInvented = true; return false; }
+            if (placeholderPattern.test(s)) { hadInvented = true; return false; }
+            return true;
+          });
+          return kept.join(' ').trim();
+        });
+        return { text: cleanedLines.filter(Boolean).join('\n').trim(), hadInvented };
+      };
+
+      let addCarfaxSuggestion = false;
+      const cleanIssue = (issue: { after?: string } | null) => {
+        if (!issue?.after) return;
+        const { text, hadInvented } = cleanAfter(issue.after);
+        issue.after = text;
+        if (hadInvented) addCarfaxSuggestion = true;
+      };
+
+      cleanIssue(result.biggest_problem);
+      for (const issue of result.also_hurting ?? []) cleanIssue(issue);
+
+      if (addCarfaxSuggestion) {
+        const tip = "If you have a CARFAX, AutoCheck, or service records, mention it — one sentence about vehicle history can significantly increase buyer confidence.";
+        if (!(result.suggested_additions ?? []).includes(tip)) {
+          result.suggested_additions = [...(result.suggested_additions ?? []), tip];
+        }
+      }
+    }
+
     // Post-processing: score caps
     // Rebuilt/salvage without explanation: cap at 58
     // High mileage without service explanation: cap at 65
