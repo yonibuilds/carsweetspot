@@ -434,9 +434,9 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
   const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Analysis summary card */}
-      <Card style={{ padding: "26px 28px", borderTop: `3px solid ${SUCCESS}`, borderRadius: "0 0 20px 20px" }}>
+      <Card style={{ padding: "20px 24px", background: "#F8FAFC", borderRadius: 16, boxShadow: "none" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
@@ -471,7 +471,7 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
 
       {/* What's Working */}
       {result.whats_working?.length > 0 && (
-        <Card style={{ overflow: "hidden", borderLeft: `4px solid ${SUCCESS}` }}>
+        <Card style={{ overflow: "hidden", borderLeft: `4px solid ${SUCCESS}`, marginTop: 12 }}>
           <div
             onClick={() => setShowWorking(w => !w)}
             style={{
