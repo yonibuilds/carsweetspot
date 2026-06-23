@@ -222,10 +222,13 @@ function BuyerReachCard({ askingPrice, calcMo, isMobile }: { askingPrice: number
 }
 
 // ── Before / After ────────────────────────────────────────────────
-function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: boolean }) {
+function BeforeAfterGrid({ problem, isMobile, hasImprovedDraft }: { problem: Problem; isMobile?: boolean; hasImprovedDraft?: boolean }) {
   const [copied, setCopied] = useState(false);
   const afterText = stripMd(problem.after ?? "");
-  const canGenerate = problem.can_generate_after_copy !== false && afterText.trim().length > 0;
+  const afterWordCount = afterText.trim().split(/\s+/).filter(Boolean).length;
+  // If improved_draft exists and this after is a full rewrite (>40 words), skip showing it
+  const isFullRewrite = hasImprovedDraft && afterWordCount > 40;
+  const canGenerate = !isFullRewrite && problem.can_generate_after_copy !== false && afterText.trim().length > 0;
   const needsInput = problem.can_generate_after_copy === false || problem.issue_type === "needs_seller_input";
   const copy = () => {
     navigator.clipboard.writeText(afterText);
@@ -233,19 +236,27 @@ function BeforeAfterGrid({ problem, isMobile }: { problem: Problem; isMobile?: b
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (needsInput) {
+  if (needsInput || isFullRewrite) {
     return (
       <div style={{ background: "#F8FAFC", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 20, height: 20, borderRadius: 5, background: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={{ fontSize: 10, color: BRAND, fontWeight: 700 }}>i</span>
-          </div>
-          <span style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em" }}>Seller detail needed</span>
-        </div>
-        {problem.seller_insight && (
+        {isFullRewrite ? (
           <p style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.6, margin: 0 }}>
-            {problem.seller_insight}
+            A full rewrite is available in the <span style={{ color: BRAND, fontWeight: 600 }}>Improved Draft</span> below.
           </p>
+        ) : (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 20, height: 20, borderRadius: 5, background: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ fontSize: 10, color: BRAND, fontWeight: 700 }}>i</span>
+              </div>
+              <span style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em" }}>Seller detail needed</span>
+            </div>
+            {problem.seller_insight && (
+              <p style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.6, margin: 0 }}>
+                {problem.seller_insight}
+              </p>
+            )}
+          </>
         )}
       </div>
     );
@@ -820,7 +831,7 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
                     </div>
                   )}
 
-                  <BeforeAfterGrid problem={prob} isMobile={isMobile} />
+                  <BeforeAfterGrid problem={prob} isMobile={isMobile} hasImprovedDraft={!!result.improved_draft} />
 
                   {idx > 0 && (
                     <>

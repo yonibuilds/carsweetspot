@@ -6,7 +6,7 @@ export const maxDuration = 60;
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Bump on any prompt or post-processing change to invalidate in-memory cache
-const CACHE_VERSION = "v15";
+const CACHE_VERSION = "v16";
 const cache = new Map<string, unknown>();
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -761,15 +761,18 @@ ${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || 
         if (/^\s*[\*\-]?\s*(do you|did you|have you|are you|when did|how long|why are you)/i.test(s)) return "";
         for (const { pattern, claim } of REFRAMEABLE) {
           if (pattern.test(s)) {
-            const stripped = s.replace(pattern, "").replace(/[,.\s]+/g, " ").trim();
-            if (stripped.length < 10) return `Seller states ${claim}.`;
-            return s.replace(pattern, "").replace(/\s{2,}/g, " ").replace(/^[,\s]+|[,\s]+$/g, "").trim() + ".";
+            const stripped = s.replace(pattern, "").replace(/\s{2,}/g, " ").replace(/^[,\s]+|[,\s]+$/g, "").trim();
+            // Dangling conjunction or too short → use just the reframed claim
+            if (stripped.length < 10 || /\b(and|or|but)\s*$/.test(stripped)) return `Seller states ${claim}.`;
+            return stripped + ".";
           }
         }
         for (const pat of TRUST_CLAIM_PATTERNS) { if (pat.test(s)) return ""; }
         let cleaned = s;
         for (const pat of CLICHE_PHRASES) { cleaned = cleaned.replace(pat, "").replace(/\s{2,}/g, " ").trim(); }
         if (cleaned.split(/\s+/).filter(Boolean).length < 3) return "";
+        // Final fragment guard: dangling conjunction at end of any sentence
+        if (/\b(and|or|but)\s*[.,]?\s*$/.test(cleaned)) return "";
         return cleaned;
       };
 
@@ -787,6 +790,23 @@ ${factInventory.forbidden_or_unverified_claims.map(f => `- ${f}`).join("\n") || 
     // Re-run hard validator after sanitizer — sanitizer may have emptied an after that was non-empty
     enforceIssueFields(result.biggest_problem);
     for (const issue of result.also_hurting ?? []) enforceIssueFields(issue);
+
+    // Deduplicate suggested_additions against seller_questions topics
+    // If Make it Stronger already asks about ownership/reason/service, remove those from the tips list
+    {
+      const questionTopics: RegExp[] = [];
+      for (const q of result.seller_questions ?? []) {
+        const text = (typeof q === "string" ? q : q.question ?? "").toLowerCase();
+        if (/how long|own|purchas/.test(text)) questionTopics.push(/how long.*own|owned.*how|when.*purchas|length.*own/i);
+        if (/why.*sell|reason.*sell/.test(text)) questionTopics.push(/why.*sell|reason.*sell/i);
+        if (/service|maintenan|record|receipt/.test(text)) questionTopics.push(/service\s+record|maintenan.*record|receipt/i);
+      }
+      if (questionTopics.length > 0) {
+        result.suggested_additions = (result.suggested_additions ?? []).filter(
+          (tip: string) => !questionTopics.some(pat => pat.test(tip))
+        );
+      }
+    }
 
     // Attach parser data
     result.photo_count = parserPhotoCount;
