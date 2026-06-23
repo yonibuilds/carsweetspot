@@ -237,27 +237,13 @@ function BeforeAfterGrid({ problem, isMobile, hasImprovedDraft }: { problem: Pro
   };
 
   if (needsInput || isFullRewrite) {
+    const insight = isFullRewrite
+      ? `A full rewrite is available in the Improved Draft below.`
+      : problem.seller_insight ?? "Adding this detail will help buyers feel more confident.";
     return (
-      <div style={{ background: "#F8FAFC", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-        {isFullRewrite ? (
-          <p style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.6, margin: 0 }}>
-            A full rewrite is available in the <span style={{ color: BRAND, fontWeight: 600 }}>Improved Draft</span> below.
-          </p>
-        ) : (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 5, background: "#EFF6FF", border: "1px solid #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 10, color: BRAND, fontWeight: 700 }}>i</span>
-              </div>
-              <span style={{ ...B, fontSize: 10, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.08em" }}>Seller detail needed</span>
-            </div>
-            {problem.seller_insight && (
-              <p style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.6, margin: 0 }}>
-                {problem.seller_insight}
-              </p>
-            )}
-          </>
-        )}
+      <div style={{ background: "#F8FAFC", border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px" }}>
+        <p style={{ ...B, fontSize: 11, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 6px" }}>What to add</p>
+        <p style={{ ...B, fontSize: 13, color: NAVY, lineHeight: 1.6, margin: 0 }}>{insight}</p>
       </div>
     );
   }
@@ -307,6 +293,54 @@ function BeforeAfterGrid({ problem, isMobile, hasImprovedDraft }: { problem: Pro
         </div>
       )}
     </div>
+  );
+}
+
+// ── Listing Summary ───────────────────────────────────────────────
+function ListingSummary({ result }: { result: AnalysisResult }) {
+  const score = result.overall_score;
+  const vehicle = result.vehicle || "Your listing";
+  const problemTitle = result.biggest_problem?.title ?? "";
+
+  let headline: string;
+  let sub: string;
+  if (score >= 75) {
+    headline = `${vehicle} — solid listing`;
+    sub = problemTitle ? `Buyers may still hesitate about: ${problemTitle.toLowerCase()}.` : "A few details could make it even stronger.";
+  } else if (score >= 60) {
+    headline = `${vehicle} — good start`;
+    sub = problemTitle ? `The main thing buyers may hesitate about: ${problemTitle.toLowerCase()}.` : "A few changes could bring more buyers in.";
+  } else {
+    headline = `${vehicle} — room to improve`;
+    sub = problemTitle ? `The biggest buyer concern right now: ${problemTitle.toLowerCase()}.` : "Some key details are missing.";
+  }
+
+  return (
+    <div style={{ paddingBottom: 4 }}>
+      <p style={{ ...H, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 6px", letterSpacing: "-0.02em", lineHeight: 1.25 }}>{headline}</p>
+      <p style={{ ...B, fontSize: 14, color: NAVY_MUT, margin: "0 0 8px", lineHeight: 1.55 }}>{sub}</p>
+      <span style={{ ...B, fontSize: 12, color: NAVY_MUTED2 }}>Listing strength: {score}/100</span>
+    </div>
+  );
+}
+
+// ── What's Already Good (compact) ─────────────────────────────────
+function WhatsAlreadyGood({ items }: { items: string[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <Card>
+      <div style={{ padding: "16px 20px" }}>
+        <p style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY, margin: "0 0 12px" }}>What&apos;s already good</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {items.map((w, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+              <span style={{ fontSize: 11, color: SUCCESS, flexShrink: 0, marginTop: 3, fontWeight: 700 }}>✓</span>
+              <p style={{ ...B, fontSize: 13, color: NAVY_MUT, margin: 0, lineHeight: 1.55 }}>{w}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -589,35 +623,17 @@ function LeftSidebar({ result, fixProblems, onReset }: {
         )}
       </div>
 
-      {/* Sweet Spot Score */}
-      <p style={lbl}>Sweet Spot Score</p>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+      {/* Score — supporting indicator */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6 }}>
         <ScoreRingDark score={result.overall_score} />
         <div>
+          <p style={{ ...B, fontSize: 10, color: muted, margin: "0 0 5px", textTransform: "uppercase", letterSpacing: "0.07em" }}>Listing strength</p>
           <div style={{ display: "inline-block", background: badge.bg, color: badge.color, fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px", marginBottom: 6 }}>
             {badge.label}
           </div>
-          <p style={{ ...B, fontSize: 11, color: muted, margin: 0, lineHeight: 1.5 }}>Strong listings<br />typically score 75+.</p>
-        </div>
-      </div>
-
-      {/* Potential Score — 3-step */}
-      <p style={lbl}>Potential Score</p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 4 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#60A5FA", flexShrink: 0 }} />
-          <span style={{ ...H, fontSize: 20, fontWeight: 700, color: WHITE, lineHeight: 1 }}>{result.overall_score}</span>
-          <span style={{ ...B, fontSize: 11, color: muted }}>now</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FBBF24", flexShrink: 0 }} />
-          <span style={{ ...H, fontSize: 20, fontWeight: 700, color: WHITE, lineHeight: 1 }}>{quickFixScore}</span>
-          <span style={{ ...B, fontSize: 11, color: muted }}>quick fixes</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4ADE80", flexShrink: 0 }} />
-          <span style={{ ...H, fontSize: 20, fontWeight: 700, color: WHITE, lineHeight: 1 }}>90+</span>
-          <span style={{ ...B, fontSize: 11, color: muted }}>with added details</span>
+          <p style={{ ...B, fontSize: 11, color: muted, margin: 0, lineHeight: 1.5 }}>
+            Can become much stronger<br />with 3 added details.
+          </p>
         </div>
       </div>
 
@@ -682,9 +698,6 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
   result: AnalysisResult; fixProblems: Problem[]; onReset: () => void; isMobile?: boolean;
 }) {
   const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
-  const [showWhy, setShowWhy] = useState<Record<number, boolean>>({});
-  const [showWorking, setShowWorking] = useState(true);
-  const [showSuggested, setShowSuggested] = useState(false);
   const calcMo = calcMonthly(result.asking_price, result.monthly_payment);
 
   const toggle = (idx: number) => setExpandedSet(prev => {
@@ -693,89 +706,33 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
     return next;
   });
 
-  const copyImprovements = fixProblems.filter(p => p.can_generate_after_copy === true).length;
-  const quickFixScore = Math.min(100, result.overall_score + copyImprovements * 4);
-  const topIssue = fixProblems[0];
-  const totalImprovements = fixProblems.length + (calcMo > 0 ? 1 : 0);
   const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* Analysis summary card */}
-      <Card style={{ padding: "20px 24px", background: "#F8FAFC", borderRadius: 16, boxShadow: "none" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8 }}>
-              <span style={{ color: SUCCESS, fontSize: 13, fontWeight: 700 }}>✓</span>
-              <span style={{ ...B, fontSize: 12, fontWeight: 600, color: SUCCESS, textTransform: "uppercase", letterSpacing: "0.06em" }}>Analysis complete</span>
-            </div>
-            <p style={{ ...H, fontSize: 16, fontWeight: 700, color: NAVY, margin: "0 0 6px" }}>
-              {fixProblems.length} fix{fixProblems.length !== 1 ? "es" : ""} found for this listing
-            </p>
-            {topIssue && (
-              <p style={{ ...B, fontSize: 13, color: NAVY_MUT, margin: 0 }}>
-                Start with: <span style={{ color: NAVY, fontWeight: 600 }}>{topIssue.title}</span>
-              </p>
-            )}
-          </div>
-          <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-            <div>
-              <span style={{ ...H, fontSize: 22, fontWeight: 700, color: NAVY_MUT }}>{result.overall_score}</span>
-              <span style={{ ...B, fontSize: 11, color: "#94A3B8", marginLeft: 4 }}>now</span>
-            </div>
-            <div>
-              <span style={{ ...H, fontSize: 18, fontWeight: 700, color: SUCCESS }}>{quickFixScore}</span>
-              <span style={{ ...B, fontSize: 11, color: SUCCESS, marginLeft: 4 }}>quick fixes</span>
-            </div>
-            <div>
-              <span style={{ ...H, fontSize: 16, fontWeight: 700, color: BRAND }}>90+</span>
-              <span style={{ ...B, fontSize: 11, color: BRAND, marginLeft: 4 }}>with added details</span>
-            </div>
-          </div>
-        </div>
-      </Card>
 
-      {/* What's Working */}
-      {result.whats_working?.length > 0 && (
-        <Card style={{ overflow: "hidden", borderLeft: `4px solid ${SUCCESS}`, marginTop: 12 }}>
-          <div
-            onClick={() => setShowWorking(w => !w)}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 22px", cursor: "pointer",
-              background: WHITE,
-              borderBottom: showWorking ? `1px solid ${BORDER}` : "none",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: SUCC_SOFT, border: `1px solid ${SUCC_BOR}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ color: SUCCESS, fontSize: 13, fontWeight: 700 }}>✓</span>
-              </div>
-              <span style={{ ...H, fontSize: 15, fontWeight: 700, color: NAVY }}>What&apos;s Working</span>
-            </div>
-            <span style={{ fontSize: 11, color: NAVY_MUTED2, transform: showWorking ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▲</span>
-          </div>
-          {showWorking && (
-            <div style={{ padding: "18px 22px 22px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px 32px" }}>
-              {result.whats_working.map((w, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <span style={{ fontSize: 12, color: SUCCESS, flexShrink: 0, marginTop: 2, fontWeight: 700 }}>✓</span>
-                  <p style={{ ...B, fontSize: 13, color: NAVY, margin: 0, lineHeight: 1.6 }}>{w}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+      {/* 1. Plain-English summary */}
+      <ListingSummary result={result} />
+
+      {/* 2. Improved Draft */}
+      {result.improved_draft && (
+        <ImprovedDraft draft={result.improved_draft} />
       )}
 
-      {/* Issues header */}
-      <div style={{ paddingTop: 8, paddingBottom: 8 }}>
-        <p style={{ ...B, fontSize: 10, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Why Buyers May Hesitate</p>
-        <p style={{ ...H, fontSize: 18, fontWeight: 700, color: NAVY, letterSpacing: "-0.01em", margin: "0 0 4px" }}>{fixProblems.length} issue{fixProblems.length !== 1 ? "s" : ""} to fix</p>
-        <p style={{ ...B, fontSize: 13, color: NAVY_MUTED2, margin: 0 }}>Each one reduces buyer confidence. Fix what you can.</p>
-      </div>
+      {/* 3. Make it Stronger — directly below draft */}
+      <MakeItStronger
+        questions={result.seller_questions ?? []}
+        result={result}
+      />
 
-      {/* Issue cards */}
+      {/* 4. Why buyers may hesitate */}
+      {fixProblems.length > 0 && (
+        <div style={{ paddingTop: 8 }}>
+          <p style={{ ...B, fontSize: 10, fontWeight: 700, color: NAVY_MUT, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px" }}>Why buyers may hesitate</p>
+          <p style={{ ...B, fontSize: 13, color: NAVY_MUTED2, margin: 0 }}>Each one reduces buyer confidence. Fix what you can.</p>
+        </div>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {fixProblems.map((prob, idx) => {
           const cat = prob?.category ?? "trust";
@@ -788,21 +745,20 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
                 onClick={() => toggle(idx)}
                 style={{
                   display: "flex", alignItems: "center", gap: 14,
-                  padding: "18px 22px", cursor: "pointer", background: WHITE,
+                  padding: "16px 20px", cursor: "pointer", background: WHITE,
                   borderBottom: isOpen ? `1px solid ${BORDER}` : "none",
                   transition: "background 0.15s",
                 }}
                 onMouseEnter={e => { if (!isOpen) (e.currentTarget as HTMLDivElement).style.background = "#FAFBFC"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = WHITE; }}
               >
-                <div style={{ width: 26, height: 26, borderRadius: 8, background: "#FEF6EE", border: "1px solid #FDCFAA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: 24, height: 24, borderRadius: 7, background: "#FEF6EE", border: "1px solid #FDCFAA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontSize: 10, color: "#C2410C", fontWeight: 700 }}>!</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...H, fontSize: 14, fontWeight: 700, color: NAVY, margin: 0, letterSpacing: "-0.01em" }}>{prob?.title ?? (CAT[cat]?.label ?? cat)}</p>
-                  <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "3px 0 0" }}>{CAT[cat]?.label ?? cat} issue</p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                   <span style={{ ...B, fontSize: 10, fontWeight: 600, color: impact.color, background: impact.bg, border: `1px solid ${impact.border}`, borderRadius: 20, padding: "3px 10px" }}>
                     {impact.label}
                   </span>
@@ -811,49 +767,18 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
               </div>
 
               {isOpen && prob && (
-                <div style={{ padding: "22px 24px 20px", background: PAGE_BG }}>
-                  {/* why_buyers_care: always visible for first issue, toggleable for rest */}
-                  {idx === 0 ? (
-                    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "14px 18px", marginBottom: 16 }}>
-                      <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: 0, lineHeight: 1.6 }}>{prob.why_buyers_care}</p>
-                      {prob.seller_insight && (
-                        <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "8px 0 0", lineHeight: 1.5, fontStyle: "italic" }}>{prob.seller_insight}</p>
-                      )}
-                    </div>
-                  ) : null}
+                <div style={{ padding: "18px 20px 16px", background: PAGE_BG }}>
+                  <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: "0 0 14px", lineHeight: 1.6 }}>{prob.why_buyers_care}</p>
 
-                  {/* Word count badge for text issues */}
                   {prob.category === "text" && (result.description_word_count ?? wordCount(prob.before)) > 0 && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                       <span style={{ ...B, fontSize: 11, color: NAVY_MUT }}>Current description:</span>
-                      <span style={{ ...B, fontSize: 11, fontWeight: 700, color: DANGER, background: DANG_SOFT, borderRadius: 6, padding: "2px 8px" }}>~{result.description_word_count ?? wordCount(prob.before)} words</span>
+                      <span style={{ ...B, fontSize: 11, fontWeight: 700, color: DANGER, background: DANG_SOFT, borderRadius: 6, padding: "2px 8px" }}>{result.description_word_count ?? wordCount(prob.before)} words</span>
                       <span style={{ ...B, fontSize: 11, color: NAVY_MUT }}>Strong listings: 150–250 words</span>
                     </div>
                   )}
 
                   <BeforeAfterGrid problem={prob} isMobile={isMobile} hasImprovedDraft={!!result.improved_draft} />
-
-                  {idx > 0 && (
-                    <>
-                      <button
-                        onClick={() => setShowWhy(w => ({ ...w, [idx]: !w[idx] }))}
-                        style={{ background: "none", border: "none", cursor: "pointer", padding: "10px 0", display: "flex", alignItems: "center", gap: 6 }}
-                      >
-                        <span style={{ fontSize: 12, color: "#9CA3AF" }}>ⓘ</span>
-                        <span style={{ ...B, fontSize: 12, color: NAVY_MUT, borderBottom: "1px dashed #D1D5DB" }}>Why does this matter?</span>
-                        <span style={{ fontSize: 10, color: "#9CA3AF", transform: showWhy[idx] ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▾</span>
-                      </button>
-                      {showWhy[idx] && (
-                        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 16px", marginBottom: 8 }}>
-                          <p style={{ ...B, fontSize: 13, color: "#4B5563", margin: 0, lineHeight: 1.6 }}>{prob.why_buyers_care}</p>
-                          {prob.seller_insight && (
-                            <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: "8px 0 0", lineHeight: 1.5, fontStyle: "italic" }}>{prob.seller_insight}</p>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-
                 </div>
               )}
             </Card>
@@ -861,45 +786,11 @@ function MainContent({ result, fixProblems, onReset, isMobile }: {
         })}
       </div>
 
-      {/* Improved Draft — collapsed, below issues */}
-      {result.improved_draft && (
-        <ImprovedDraft draft={result.improved_draft} />
-      )}
+      {/* 5. What's already good — compact */}
+      <WhatsAlreadyGood items={result.whats_working ?? []} />
 
-      {/* Make it Stronger — collapsed, below issues */}
-      <MakeItStronger
-        questions={result.seller_questions ?? []}
-        result={result}
-      />
-
-      {/* Buyer Reach card */}
+      {/* 6. Buyer Reach — secondary */}
       {calcMo > 0 && <BuyerReachCard askingPrice={result.asking_price} calcMo={calcMo} isMobile={isMobile} />}
-
-      {/* Add details to reach 90+ */}
-      {result.suggested_additions && result.suggested_additions.length > 0 && (
-        <Card style={{ overflow: "hidden" }}>
-          <div
-            onClick={() => setShowSuggested(s => !s)}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", cursor: "pointer", background: WHITE, borderBottom: showSuggested ? `1px solid ${BORDER}` : "none" }}
-          >
-            <div>
-              <p style={{ ...H, fontSize: 15, fontWeight: 700, color: BRAND, margin: "0 0 3px" }}>Add a few details to reach 90+</p>
-              <p style={{ ...B, fontSize: 12, color: NAVY_MUT, margin: 0 }}>{result.suggested_additions.length} high-impact details buyers want to see</p>
-            </div>
-            <span style={{ fontSize: 11, color: NAVY_MUTED2, transform: showSuggested ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
-          </div>
-          {showSuggested && (
-            <div style={{ padding: "18px 24px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
-              {result.suggested_additions.map((tip, i) => (
-                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <span style={{ ...B, fontSize: 12, fontWeight: 700, color: BRAND, flexShrink: 0, marginTop: 2, width: 18, textAlign: "right" }}>{i + 1}.</span>
-                  <span style={{ ...B, fontSize: 13, color: NAVY_MUT, lineHeight: 1.65 }}>{tip}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      )}
 
       <button onClick={onReset} style={{
         ...B, width: "100%", padding: "14px", background: WHITE,
