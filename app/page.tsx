@@ -24,14 +24,15 @@ const STEPS = [
 function AnalyzingScreen({ pendingResult }: { pendingResult: AnalysisResult | null }) {
   const [visibleSteps, setVisibleSteps] = useState(0);
   const [showCard, setShowCard] = useState(false);
+  const [showWorking, setShowWorking] = useState(false);
 
-  // Show the affordability card frame early (at step 3, ~2.7s), regardless of API
   useEffect(() => {
     STEPS.forEach((_, i) => {
       setTimeout(() => setVisibleSteps(i + 1), (i + 1) * 900);
     });
     const t = setTimeout(() => setShowCard(true), 2700);
-    return () => clearTimeout(t);
+    const w = setTimeout(() => setShowWorking(true), STEPS.length * 900 + 400);
+    return () => { clearTimeout(t); clearTimeout(w); };
   }, []);
 
   const calcMo = (() => {
@@ -49,6 +50,16 @@ function AnalyzingScreen({ pendingResult }: { pendingResult: AnalysisResult | nu
         <p style={{ ...B, fontSize: 11, fontWeight: 700, color: NAVY_M, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 28, textAlign: "center" }}>
           Analyzing your listing
         </p>
+
+        {/* Spinner */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: "50%",
+            border: "3px solid rgba(255,255,255,0.08)",
+            borderTopColor: "#2563EB",
+            animation: "spin 0.9s linear infinite",
+          }} />
+        </div>
 
         {/* Step checklist */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -69,6 +80,13 @@ function AnalyzingScreen({ pendingResult }: { pendingResult: AnalysisResult | nu
               </div>
             );
           })}
+        </div>
+
+        {/* "Still working" — appears after steps finish */}
+        <div style={{ marginTop: 20, opacity: showWorking ? 1 : 0, transition: "opacity 0.6s ease", textAlign: "center" }}>
+          <p style={{ ...B, fontSize: 12, color: "#475569", margin: 0, letterSpacing: "0.02em" }}>
+            Running AI analysis — this takes about 10 seconds…
+          </p>
         </div>
 
         {/* Affordability card — appears at step 3, updates when API returns */}
